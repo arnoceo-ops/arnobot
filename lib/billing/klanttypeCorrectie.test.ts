@@ -11,6 +11,7 @@ const h = vi.hoisted(() => ({
   teruggestort: null as null | string,
   moneybird: false,
   oudStatus: 'active',
+  terugbetalingen: [] as { status: string }[],
   mail: vi.fn(async () => true),
   tg: vi.fn(async (_t: string) => {}),
   leesFout: false,
@@ -26,6 +27,7 @@ vi.mock('./verwerking', () => ({ stopCorrectieAbonnementen: h.stopExtra }))
 vi.mock('./klanttypeOmzetten', () => ({ zetAbonnementZakelijk: h.omzet, controleerStart: vi.fn(), zakelijkBedragVan: vi.fn() }))
 vi.mock('./mollie', () => ({
   SITE_URL: 'https://x.test', klantBestaat: async () => true, haalAbonnement: async () => ({ status: h.oudStatus }),
+  lijstBetalingTerugbetalingen: async () => h.terugbetalingen,
   betaaldeBetalingVanLink: async () => ({ id: 'tr_1', status: 'paid', amount: { currency: 'EUR', value: '12.39' }, ...(h.teruggestort ? { amountRefunded: { value: h.teruggestort } } : {}) }),
 }))
 vi.mock('./db', () => ({
@@ -70,6 +72,7 @@ beforeEach(() => {
   h.teruggestort = null
   h.moneybird = false
   h.oudStatus = 'active'
+  h.terugbetalingen = []
   h.omzet.mockResolvedValue({ stand: 'omgezet' })
   h.tabellen = {
     arnobot_klanttype_correcties: [rij()],
@@ -155,6 +158,16 @@ describe('betaalde klanttype-correctie', () => {
     Object.assign(h.tabellen.arnobot_subscriptions[0], { klant_type: 'zakelijk', bedrag_cent: 7139 })
     await verwerkKlanttypeCorrectie('pl_1', null)
     expect(h.tg.mock.calls[0][0]).toContain('al omgezet')
+  })
+  it.each(['queued', 'pending', 'processing', 'refunded'])('terugbetaling %s, amountRefunded nog leeg: niet omzetten', async status => {
+    h.terugbetalingen = [{ status }]
+    await verwerkKlanttypeCorrectie('pl_1', null)
+    expect(h.omzet).not.toHaveBeenCalled()
+  })
+  it.each(['failed', 'canceled'])('mislukte terugbetaling (%s) houdt niets tegen', async status => {
+    h.terugbetalingen = [{ status }]
+    await verwerkKlanttypeCorrectie('pl_1', null)
+    expect(h.omzet).toHaveBeenCalledTimes(1)
   })
   it('geen e-mailadres terwijl er gefactureerd moet worden: gemeld, niet stil', async () => {
     h.moneybird = true

@@ -348,6 +348,15 @@ export interface MollieRefund {
   createdAt: string
 }
 
+/**
+ * Alle terugbetalingen van een betaling, ook lopende. Nodig omdat amountRefunded op de betaling 0 blijft zolang een
+ * terugbetaling nog loopt (gemeten in testmodus, 2026-11-26).
+ */
+export async function lijstBetalingTerugbetalingen(betalingId: string): Promise<MollieRefund[]> {
+  const res = await mollie<{ _embedded?: { refunds?: MollieRefund[] } }>(`/payments/${encodeURIComponent(betalingId)}/refunds`)
+  return res._embedded?.refunds ?? []
+}
+
 /** Recente terugbetalingen van het hele profiel, ook die in het Mollie-dashboard zijn gedaan. */
 export async function lijstRecenteTerugbetalingen(limiet = 250): Promise<MollieRefund[]> {
   const res = await mollie<{ _embedded?: { refunds?: MollieRefund[] } }>(`/refunds?limit=${limiet}`)

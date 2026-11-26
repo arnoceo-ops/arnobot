@@ -112,6 +112,12 @@ Bekende rest: is het oude gestopt en blijft de database dagen onbereikbaar, dan 
 
 **Extra voor de proef in testmodus:** is amountRefunded op de betaling van de betaallink al gevuld zolang de terugstorting nog loopt? Zo niet, dan kan de cron na "stort terug om af te breken" toch omzetten.
 
+**SQL uitgevoerd door Arno (26-11):** controle 11 kolommen, rowsecurity true. KLANTTYPE_OPEN niet gezet.
+
+**Mollie-proef in testmodus (26-11, akkoord Arno, lib/billing/klanttype.mollie.live.test.ts, alleen Mollie):** bevestigd: een nieuw abonnement naast het oude is active met nextPaymentDate gelijk aan de startdatum (ook jaar, 300 dagen vooruit); de lijst geeft metadata terug; na stoppen canceled; dezelfde idempotentiesleutel geeft het gestopte abonnement terug als active (B1 was echt); een gelijke omschrijving bij twee actieve abonnementen wordt geweigerd (422, oud en nieuw verschillen door "(zakelijk)"); expiresAt wordt geaccepteerd en een verlopen link is niet betaalbaar. **Weerlegd:** amountRefunded blijft 0,00 zolang een terugbetaling loopt (ook na een minuut); /payments/{id}/refunds toont hem wel als pending. Hersteld: de correctie kijkt nu ook naar die lijst. Dit beantwoordt ook de open vraag hieronder voor teamfacturen: de nacontrole op amountRefunded ziet een terugbetaling pas als die is afgerond (later, niet verloren; niet gewijzigd). **Niet te beproeven met deze proef:** wat stoppen doet met een al aangemaakte incasso; of een betaling die vlak voor het verlopen start nog slaagt; amountChargedBack na een teruggedraaide chargeback.
+
+**Nog open:** proef van de hele keten (betaallink, verwerking, slot tegen de echte database).
+
 Niet vast te stellen uit de Mollie-documentatie (proef in testmodus): of amountRefunded lopende terugbetalingen meetelt en of amountChargedBack weer 0 wordt bij een teruggedraaide chargeback. R5 leunt daarop.
 
 ## Ronde 2: grootboek, **niet klaar om echt te tellen**

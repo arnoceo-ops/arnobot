@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow, type SubRow } from './db'
 import { mollieNaarCenten } from './geld'
-import { betaaldeBetalingVanLink, haalAbonnement, klantBestaat, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
+import { betaaldeBetalingVanLink, haalAbonnement, klantBestaat, lijstBetalingTerugbetalingen, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
 import {
   btwTariefId,
   omzetGrootboekId,
@@ -123,10 +123,14 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
 
   const mp = await betaaldeBetalingVanLink(rij.mollie_payment_id, webhookId)
   if (!mp) return
+  // Een lopende terugbetaling staat nog niet in amountRefunded, dus ook de lijst van terugbetalingen ophalen. Lukt dat
+  // niet, dan gooit het en wordt er niets omgezet.
+  const teruggestort = [mp.amountRefunded, mp.amountChargedBack].some(b => !!b && mollieNaarCenten(b.value) > 0)
+    || (await lijstBetalingTerugbetalingen(mp.id)).some(r => r.status !== 'failed' && r.status !== 'canceled')
   if (rij.afgehandeld_at) {
-    // Het verschil zelf is teruggeboekt of terugbetaald: dat ziet verder niemand.
-    const terug = [mp.amountRefunded, mp.amountChargedBack].some(b => !!b && mollieNaarCenten(b.value) > 0)
-    if (terug && (await nieuwMelden(`klanttype:terug:${rij.id}`, 'mijlpaal'))) {
+    // Het verschil zelf is teruggeboekt of terugbetaald: dat ziet verder niemand. Alleen na een gewone omzetting: bij
+    // handwerk is terugstorten juist de bedoeling.
+    if (teruggestort && !rij.handwerk_reden && (await nieuwMelden(`klanttype:terug:${rij.id}`, 'mijlpaal'))) {
       await notifyTelegram(`Correctiebetaling teruggedraaid op arno.bot\n\nUser: ${rij.user_id}\nBetaling: ${mp.id}\nHet abonnement en de facturen zijn niet aangepast. Beoordeel met de hand.`)
     }
     return
@@ -148,7 +152,6 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
   // Een slot per abonnement: webhook en cron, of twee correcties, nooit tegelijk. Bezet: de houder maakt het af, en
   // breekt die af, dan pakt de cron het op.
   if (!(await neemSlot(rij.subscription_id))) return
-  const teruggestort = [mp.amountRefunded, mp.amountChargedBack].some(b => !!b && mollieNaarCenten(b.value) > 0)
   try {
     await rondCorrectieAf(rij.id, mp.id, teruggestort)
   } finally {
