@@ -41,7 +41,9 @@ Klein (agent): tweede proefperiode (herstart) opent de kortingstermijn opnieuw; 
 
 SQL docs/sql/2026-11-26-team-blokkade-handmatig.sql is door Arno uitgevoerd. Geen blokkerende bevindingen. Opgelost bevonden: R3, R4 (hoofdroute), R8 (signaal), R10, R11, R13, R16, R14 (op een randgeval na). Deels: R2, R5, R6, R7, R9, R12, R15. R12 is daarna hersteld (de mobiele opmaak stond vóór de basisregels en werkte niet) en gemeten op 320 tot 414 pixels.
 
-**Open, volgende stap (wacht op akkoord Arno):**
+Opgave Arno 26-11: er is nog niets met Teams gedaan en er staat geen teamfactuur open. H1 en H3 hebben dus nu geen gevolgen, wel herstellen vóór het eerste echte team.
+
+**Open, volgende stap (nieuwe sessie: "ga verder met de referralautomatisering, herstel H1 tot en met H7"; teksten eerst aan Arno, daarna een gerichte hercontrole door een nieuwe agent, dan pas ronde 2):**
 
 | Nr | Ernst | Bevinding |
 |---|---|---|
