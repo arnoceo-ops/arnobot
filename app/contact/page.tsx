@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import PublicNav from '@/app/components/PublicNav'
+import SmalSchermStijl from '@/app/components/SmalSchermStijl'
 import { BEDRIJF } from '@/lib/bedrijf'
 import { SUPPORT_WHATSAPP_VRAAG } from '@/lib/support'
 
@@ -38,6 +39,8 @@ export default function ContactPage() {
         .contact-links a { font-family: 'Space Mono', monospace; font-size: 13px; letter-spacing: 4px; color: #6b7280; text-decoration: none; text-transform: uppercase; margin-right: 24px; }
         .contact-links a:hover { color: #f1f5f9; }
       `}</style>
+
+      <SmalSchermStijl gestapeldeTabellen />
 
       <PublicNav />
 

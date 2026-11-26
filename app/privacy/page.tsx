@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import PublicNav from '@/app/components/PublicNav'
+import SmalSchermStijl from '@/app/components/SmalSchermStijl'
 
 export const metadata: Metadata = {
   title: 'Privacy: ArnoBot',
@@ -31,6 +32,8 @@ export default function PrivacyPage() {
         td { font-family: 'Space Mono', monospace; font-size: 15px; color: #9ca3af; padding: 10px 14px; border-bottom: 1px solid #374151; vertical-align: top; }
         tr:last-child td { border-bottom: none; }
       `}</style>
+
+      <SmalSchermStijl gestapeldeTabellen />
 
       <PublicNav />
 

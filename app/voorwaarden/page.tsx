@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import PublicNav from '@/app/components/PublicNav'
+import SmalSchermStijl from '@/app/components/SmalSchermStijl'
 
 export const metadata: Metadata = {
   title: 'Algemene voorwaarden: ArnoBot',
@@ -27,6 +28,8 @@ export default function VoorwaardenPage() {
         a { color: #f59e0b; text-decoration: none; }
         a:hover { text-decoration: underline; }
       `}</style>
+
+      <SmalSchermStijl />
 
       <PublicNav />
 

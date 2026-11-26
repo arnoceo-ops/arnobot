@@ -1,4 +1,5 @@
 import PublicNav from '@/app/components/PublicNav'
+import SmalSchermStijl from '@/app/components/SmalSchermStijl'
 
 export const metadata = {
   title: 'Referral Spelregels: ArnoBot',
@@ -28,6 +29,8 @@ export default function ReferralSpelregelsPage() {
           td { font-size: 13px; padding: 8px 6px; overflow-wrap: anywhere; }
         }
       `}</style>
+
+      <SmalSchermStijl />
 
       <PublicNav />
 
