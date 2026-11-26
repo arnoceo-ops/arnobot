@@ -77,6 +77,14 @@ describe('nooit gedraaid sinds de registratie', () => {
   it('een eenmalige cron zonder grens blijft onbekend', () => {
     expect(beoordeelCron(undefined, '0 8 16 10 *', nu, start).staat).toBe('onbekend')
   })
+  it('een net ingeplande cron is nog niet te laat, ook al loopt de registratie al lang', () => {
+    const net = new Date(nu.getTime() - 5 * 3600_000).toISOString()
+    expect(beoordeelCron(undefined, DAGELIJKS, nu, start, net).staat).toBe('onbekend')
+  })
+  it('een ingeplande cron die langer dan zijn interval niet draaide is alsnog te laat', () => {
+    const lang = new Date(nu.getTime() - 40 * 3600_000).toISOString()
+    expect(beoordeelCron(undefined, DAGELIJKS, nu, start, lang).staat).toBe('te_laat')
+  })
   it('zonder registratiestart blijft het onbekend', () => {
     expect(beoordeelCron(undefined, DAGELIJKS, nu, null).staat).toBe('onbekend')
   })

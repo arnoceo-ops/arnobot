@@ -38,11 +38,14 @@ export function registratieStartVan(runs: Record<string, CronRunRij>): number | 
  * nooit gedraaid heeft maar langer dan zijn interval had moeten draaien, geldt als te laat. Dat is
  * het geval dat tot nu toe onzichtbaar was (bijvoorbeeld door een fout in vercel.json). Zonder
  * registratieStart, of bij een eenmalige cron zonder grens, blijft het 'onbekend'.
+ * `ingepland` (CRON_INFO): is de cron later toegevoegd dan de registratie begon, dan telt de wachttijd
+ * vanaf dat moment.
  */
-export function beoordeelCron(run: CronRunRij | null | undefined, schema: string, nu: Date = new Date(), registratieStart: number | null = null): CronGezondheid {
+export function beoordeelCron(run: CronRunRij | null | undefined, schema: string, nu: Date = new Date(), registratieStart: number | null = null, ingepland?: string): CronGezondheid {
   const nooitGedraaid = (): CronGezondheid => {
     const max = maxLeeftijdMs(schema)
-    if (registratieStart !== null && max !== null && nu.getTime() - registratieStart > max) {
+    const wachtVanaf = registratieStart === null ? null : Math.max(registratieStart, ingepland ? Date.parse(ingepland) : registratieStart)
+    if (wachtVanaf !== null && max !== null && nu.getTime() - wachtVanaf > max) {
       return { staat: 'te_laat', tekst: 'nog nooit gedraaid, terwijl de registratie al langer loopt dan zijn interval' }
     }
     return { staat: 'onbekend', tekst: 'nog niet gedraaid sinds registratie' }

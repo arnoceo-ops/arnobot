@@ -168,7 +168,7 @@ export async function haalStatus(actieveGebruikers: number, nu: Date, opties: { 
   if (cronRuns) {
     const runs = cronRuns as Record<string, CronRunRij>
     const start = registratieStartVan(runs)
-    const crons = leesCrons().filter(c => c.pad !== opties.zonderCron).map(c => ({ c, g: beoordeelCron(runs[c.pad], c.schema, nu, start) }))
+    const crons = leesCrons().filter(c => c.pad !== opties.zonderCron).map(c => ({ c, g: beoordeelCron(runs[c.pad], c.schema, nu, start, c.ingepland) }))
     const slecht = crons.filter(({ g }) => g.staat !== 'ok' && g.staat !== 'onbekend')
     const ok = crons.filter(({ g }) => g.staat === 'ok').length
     regels.push({ label: 'Crons', waarde: `${ok} van ${crons.length} in orde`, niveau: slecht.length ? 'fout' : 'ok' })

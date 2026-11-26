@@ -7,7 +7,54 @@ import { CRON_INFO, leesCrons, schemaTekst, cronTrigger } from './cronOverzicht'
 const root = path.resolve(__dirname, '..')
 const padsInVercel = vercelConfig.crons.map(c => c.path)
 
+// Crons van vóór het veld `ingepland`. Deze lijst groeit niet: een nieuwe cron krijgt `ingepland` in CRON_INFO.
+const VAN_VOOR_INGEPLAND = new Set([
+  '/api/cron/blog',
+  '/api/cron/billing',
+  '/api/cron/referral-grootboek',
+  '/api/cron/team-facturatie',
+  '/api/cron/trial-emails',
+  '/api/cron/inactivity-nudge',
+  '/api/cron/weekly-activity',
+  '/api/cron/productvragen',
+  '/api/cron/feitencontrole',
+  '/api/cron/waarheidscontrole',
+  '/api/cron/uitdaging-herinnering',
+  '/api/cron/weekly-top-users',
+  '/api/cron/auto-analyse',
+  '/api/bot/backfill-embeddings',
+  '/api/cron/refresh-openers',
+  '/api/cron/model-check',
+  '/api/cron/competitie',
+  '/api/cron/data-cleanup',
+  '/api/cron/database-wacht',
+  '/api/cron/capaciteitswacht',
+  '/api/cron/cron-wacht',
+  '/api/cron/storing-wacht',
+  '/api/cron/stip-wacht',
+  '/api/cron/team-proef',
+  '/api/cron/update-handover',
+  '/api/cron/meta-analyse',
+  '/api/cron/meta-analyse-reminder',
+  '/api/cron/patroon-samenvatting',
+  '/api/cron/rss-ingest',
+  '/api/cron/team-1on1-ritme',
+  '/api/cron/comp-reminder-nov',
+  '/api/cron/tabelgebruik-meting-nov',
+  '/api/cron/sessies-afsluiten',
+  '/api/cron/kennisbank-controle',
+  '/api/cron/documenten-samenvatten',
+  '/api/cron/documenten-opruimen',
+  '/api/cron/bron-context-opruimen',
+  '/api/cron/leveranciers-wijzigingen',
+])
+
 describe('cron-overzicht blijft gelijk aan vercel.json', () => {
+  it('elke nieuwe cron heeft een geldige datum in ingepland, anders meldt de admin hem meteen als te laat', () => {
+    const zonder = padsInVercel.filter(p => !VAN_VOOR_INGEPLAND.has(p) && Number.isNaN(Date.parse(CRON_INFO[p]?.ingepland ?? '')))
+    expect(zonder, `Zet ingepland (ISO-moment van vandaag) in lib/cronOverzicht.ts: ${zonder.join(', ')}`).toEqual([])
+  })
+
   it('elke cron in vercel.json heeft een beschrijving in CRON_INFO', () => {
     const ontbrekend = padsInVercel.filter(p => !(p in CRON_INFO))
     expect(ontbrekend, `Voeg toe aan lib/cronOverzicht.ts: ${ontbrekend.join(', ')}`).toEqual([])

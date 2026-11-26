@@ -23,7 +23,7 @@ async function cronHandler(req: NextRequest) {
     const problemen = leesCrons()
       // Deze wacht beoordeelt zichzelf niet: zijn eigen run is op dit moment net gestart.
       .filter(c => c.pad !== '/api/cron/cron-wacht')
-      .map(c => ({ c, g: beoordeelCron(runs[c.pad], c.schema, nu, registratieStart) }))
+      .map(c => ({ c, g: beoordeelCron(runs[c.pad], c.schema, nu, registratieStart, c.ingepland) }))
       .filter(x => ALARM_STATEN.includes(x.g.staat))
 
     const nieuw = []

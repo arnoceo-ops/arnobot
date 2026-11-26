@@ -192,7 +192,7 @@ export default async function AdminStatusPage() {
   const cronRuns = await leesCronRuns().catch(() => ({}))
   const cronRunsTyped = cronRuns as Record<string, import('@/lib/cronRun').CronRunRij>
   const registratieStart = registratieStartVan(cronRunsTyped)
-  const cronRegels = leesCrons().map(c => ({ c, g: beoordeelCron(cronRunsTyped[c.pad], c.schema, new Date(), registratieStart) }))
+  const cronRegels = leesCrons().map(c => ({ c, g: beoordeelCron(cronRunsTyped[c.pad], c.schema, new Date(), registratieStart, c.ingepland) }))
   const cronTelling = { ok: 0, probleem: 0, onbekend: 0 }
   for (const { g } of cronRegels) {
     if (g.staat === 'ok') cronTelling.ok++
