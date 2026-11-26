@@ -78,6 +78,18 @@ Geen blokkerende bevindingen. H1 t/m H5 en H7 opgelost, H6 deels (N1).
 - **N5, open, bestond al:** zelf omzetten naar zakelijk blokkeert niet bij een geplande overstap zonder upgraderij; gepland_bedrag_cent en gepland_btw_cent blijven dan particulier (vastgesteld door de agent). Vermoeden van de agent, niet beproefd: het bedrag van het lopende Mollie-abonnement wordt bij een correctie nooit aangepast.
 - **Testdekking:** toegevoegd voor de Moneybird-route van H3 en voor N4. Nog niet gedekt: de webhook met 500, de nieuwe cronfouten, het testteamfilter, de opzegzin in mails, de volgorde van het signaal, N1 en N3.
 
+### N5: plan A (akkoord Arno op de richting 26-11, bouwplan wacht op akkoord)
+
+**Nu geen schade:** de tabel arnobot_klanttype_correcties bestaat niet in productie (query van Arno 26-11 en docs/PRIJSWIJZIGING_PLAN.md). Het starten faalt bij het wegschrijven, voor er een betaallink is, dus niemand is zo omgezet. De link op de accountpagina is wel zichtbaar en geeft een foutmelding. Het SQL-script pas draaien na dit herstel.
+
+**Uitgangspunt:** zelf nagelezen in de code: de verwerking zet klant_type en bedrag alleen in de database; het Mollie-abonnement, gepland_*-kolommen en contract_einde blijven staan; schrijffouten worden genegeerd en na de claim op paid doet een herhaalde webhook niets meer. Particulier jaar zonder abonnement krijgt via stap 2 van de billing-cron alsnog een zakelijk abonnement. Geen bestaande controle vergelijkt het bedrag bij Mollie met de database. Mollie (https://docs.mollie.com/reference/update-subscription, gelezen 26-11): bedrag wijzigen kan met PATCH, geldt voor "future payments", geannuleerde abonnementen niet; niets over een al aangemaakte betaling.
+
+1. Starten weigeren bij een geplande wijziging, een lopende betaling of een incasso binnen 4 dagen. De betaallink moet verlopen voor die grens (of Mollie dat bij betaallinks ondersteunt is nog niet nagekeken).
+2. Na betaling het lopende Mollie-abonnement vervangen zoals bij overstappen: eerst nieuw (zakelijk bedrag, start op de volgende incassodatum, doorlopend), bevestigen, dan het oude stoppen; lukt stoppen niet, dan het nieuwe weghalen en melden. contract_einde leegmaken. Gekozen: vervangen, een weg die ook een verlengd abonnement met vast aantal incasso's dekt. Verworpen: PATCH van het bedrag, want de docs zeggen niet dat het aantal incasso's te wissen is.
+3. Elke schrijffout gooit, en een eigen vinkje "abonnement omgezet" zodat een herhaalde webhook of de cron afmaakt wat bleef liggen. Is omzetten niet meer veilig (incasso te dichtbij of al gedaan), dan melding en later opnieuw of handwerk.
+4. Dagelijkse controle in de billing-cron: bedrag van elk lopend en gepland Mollie-abonnement gelijk aan de database, anders Telegram.
+5. Tests, SQL (bestaande migratie plus de nieuwe kolom), proef in Mollie testmodus (eerst vragen), onafhankelijke controle.
+
 Niet vast te stellen uit de Mollie-documentatie (proef in testmodus): of amountRefunded lopende terugbetalingen meetelt en of amountChargedBack weer 0 wordt bij een teruggedraaide chargeback. R5 leunt daarop.
 
 ## Ronde 2: grootboek, **niet klaar om echt te tellen**

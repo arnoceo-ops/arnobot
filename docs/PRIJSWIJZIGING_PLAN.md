@@ -41,7 +41,7 @@ Mollie, Moneybird en Vercel zijn niet bekeken.
 ## Fase 0: besluiten en voorbereiding
 
 - [ ] Besluiten onder "Nog te beslissen".
-- [ ] SQL `docs/sql/2026-10-13-klanttype-correctie.sql` draaien in Supabase. De tabel `arnobot_klanttype_correcties` ontbreekt in productie. Gevolg nu: particulier zelf omzetten naar zakelijk kan niet slagen. Overstappen werkt wel, omdat daar de fout wordt genegeerd. Dit staat los van de prijswijziging.
+- [ ] **NIET draaien voordat N5 uit docs/REFERRAL_CONTROLE_2026-11-26.md is hersteld (26-11): met de tabel gaat zelf omzetten werken, terwijl het Mollie-abonnement en een geplande overstap dan het particuliere bedrag houden.** SQL `docs/sql/2026-10-13-klanttype-correctie.sql` draaien in Supabase. De tabel `arnobot_klanttype_correcties` ontbreekt in productie. Gevolg nu: particulier zelf omzetten naar zakelijk kan niet slagen. Overstappen werkt wel, omdat daar de fout wordt genegeerd. Dit staat los van de prijswijziging.
 - [ ] ElevenLabs controleren (zie onderaan).
 
 ## Fase 1: rekenlogica Team (eerst, anders wordt verkeerd gefactureerd)
