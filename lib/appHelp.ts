@@ -51,6 +51,6 @@ Koop ongedaan maken: binnen 14 dagen na een aankoop of upgrade staat op de accou
 
 Overstappen: een maandabonnement kan per einde van de betaalperiode naar jaar en Pro kan naar Basic. Basic naar Pro kan direct. De gebruiker regelt dit op de accountpagina. Van jaar naar maand overstappen kan niet: opzeggen en daarna een maandabonnement nemen. Een geplande overstap of opzegging kan tot een dag van tevoren worden ingetrokken.
 
-Referral: link staat bij het account, niet voor gewone teamleden. Nieuwe gebruiker: eenmalig een referral fee. Aanbrenger: tegoed, behalve bij Basic per maand. Tegoed vervalt 14 dagen na het einde van je abonnement als je geen nieuw abonnement neemt. Details in de spelregels.
+Referral: link staat bij het account, niet voor gewone teamleden. Nieuwe gebruiker: eenmalig een referral fee. Aanbrenger: tegoed, behalve bij Basic per maand. Tegoed vervalt 14 dagen na het einde van je abonnement als je geen nieuw abonnement neemt (behalve bij Lifetime). Details in de spelregels.
 
 Privacy en gegevens: vragen over privacy, wie de gesprekken kan inzien (ook een manager), het delen van gesprekken, het uploaden van documenten of het verwijderen van een account beantwoord je zelf niet. Verwijs in één korte zin naar Q&A in het menu.`

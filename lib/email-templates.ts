@@ -278,7 +278,7 @@ export function getEmailTemplate(
       return {
         subject: `${prefix}${naam}, je trial loopt over 5 dagen af.`,
         html: mail(
-          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je een abonnement afsluit.<br><br>Kies hieronder je abonnement en betaal veilig met iDEAL, Bancontact of creditcard.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.${options?.viaReferral ? '<br><br>Via je uitnodiging krijg je korting op je eerste jaar of je vierde maand gratis. Je voordeel geldt als je betaalt binnen je proef of 15 dagen erna (teamproef: 10).' : ''}`,
+          `Over vijf dagen stopt je gratis toegang automatisch, tenzij je een abonnement afsluit.<br><br>Kies hieronder je abonnement en betaal veilig met iDEAL, Bancontact of creditcard.<br><br>Wil je niet doorgaan? Dan hoef je niets te doen. Je data blijft na afloop nog 30 dagen bewaard.${options?.viaReferral ? '<br><br>Via je uitnodiging krijg je korting op je eerste jaar of je vierde maand gratis. Je voordeel geldt als je betaalt binnen je eerste proef of 15 dagen erna (teams: zie de <a href="https://arno.bot/referrals" style="color:#f59e0b;">spelregels</a>).' : ''}`,
           'KIES JE ABONNEMENT →', 'https://arno.bot/bot/doorgaan'
         ),
       }

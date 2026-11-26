@@ -43,7 +43,7 @@ export default function PrivacyPage() {
             Jouw gegevens zijn van jou. Hier lees je precies wat we opslaan, waarom, hoe lang, en wie er verder bij betrokken is.
           </p>
           <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.9, marginBottom: 48 }}>
-            Laatst bijgewerkt: 15 november 2026
+            Laatst bijgewerkt: 26 november 2026
           </p>
 
           <div style={{ borderTop: '3px solid #f59e0b', paddingTop: 32, marginBottom: 48 }}>
@@ -81,6 +81,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade bestanden</td><td>PDF, Word, afbeelding en audiotranscripten die je toevoegt</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Profiel uit een andere AI</td><td>Wat je zelf uit ChatGPT, Claude of een andere AI overneemt en goedkeurt</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>Abonnement, bedrag, betaalmethode en betaalstatus. Zakelijk ook bedrijfsnaam, KvK, BTW-nummer en adres.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Referralgegevens</td><td>Via wiens link je kwam, je naam, de start van je eerste proef, of je teamlid was, en wat voor voordeel en tegoed nodig is van je abonnement en betalingen.</td></tr>
               </tbody>
             </table>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
@@ -115,6 +116,9 @@ export default function PrivacyPage() {
             </p>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
               Jouw gegevens worden nooit verkocht aan derden, gebruikt voor marketing of gedeeld buiten de hieronder genoemde sub-verwerkers.
+            </p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>
+              Uitzondering: meld je je aan via iemands link, dan mailen we die persoon je naam, en het tegoed kan iets zeggen over je abonnement. Wie jouw link opent, kan je voornaam zien.
             </p>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
               Het antwoord dat je plakt, zet Anthropic eenmalig om en bewaren we niet. Alleen wat jij goedkeurt, wordt opgeslagen.
@@ -257,6 +261,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade bestanden</td><td>Bewaard tot jij ze verwijdert. Zet je het vinkje uit, dan uiterlijk 48 uur na je laatste bericht. Van een opname bewaren we alleen het transcript.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Profiel uit een andere AI</td><td>Tot jij het verwijdert of vervangt</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>7 jaar, ook nadat je account is verwijderd (wettelijke bewaarplicht)</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Referralgegevens</td><td>Zolang nodig voor voordeel of tegoed. Verwijderen we je account, dan halen we je naam eruit. De overige gegevens over aanmelding en tegoed blijven staan.</td></tr>
               </tbody>
             </table>
           </div>

@@ -36,12 +36,12 @@ export default function ReferralSpelregelsPage() {
 
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARNOBOT</p>
           <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, color: '#f1f5f9', lineHeight: 1.0, marginBottom: 16 }}>REFERRAL SPELREGELS</h1>
-          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 1.9 · November 2026</p>
+          <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 48 }}>Versie 2.0 · November 2026</p>
 
           <div style={{ borderTop: '3px solid #f59e0b', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 1</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Meedoen</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Deel je link, bijvoorbeeld <strong style={{ color: '#f1f5f9' }}>arno.bot/aanmelden?ref=NAAM-XXXX</strong>. De nieuwe gebruiker meldt zich ermee aan en betaalt binnen de proef of uiterlijk 15 dagen erna (teamproef: 10).</p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Deel je link, bijvoorbeeld <strong style={{ color: '#f1f5f9' }}>arno.bot/aanmelden?ref=NAAM-XXXX</strong>. Wie zich ermee aanmeldt, betaalt binnen de eerste proef of uiterlijk 15 dagen erna. Bij een team maken we de factuur uiterlijk 10 dagen na die proef, met 14 dagen om te betalen.</p>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
@@ -99,8 +99,9 @@ export default function ReferralSpelregelsPage() {
             <ul style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, paddingLeft: 20 }}>
               <li>14 dagen na afloop van je abonnement zonder nieuw abonnement.</li>
               <li>Na 30 dagen teamblokkade wegens niet betalen.</li>
-              <li>Heb je nog geen abonnement, sluit er dan een af binnen je proef of 15 dagen erna (team: 10).</li>
-              <li>Haalt je klant de drempel pas nadat jouw abonnement is gestopt, dan krijg je geen tegoed.</li>
+              <li>Heb je nog geen abonnement, sluit er dan een af binnen je eerste proef of 15 dagen erna (team: 10).</li>
+              <li>Vervallen is definitief: kom je later terug, dan krijg je niets voor klanten van daarvoor.</li>
+              <li>Met Lifetime vervalt je tegoed niet.</li>
               <li>Word je teamlid, dan storten we je tegoed terug, tot maximaal wat je zelf hebt betaald.</li>
               <li>Bij terugbetaling aan je klant vervalt het bijbehorende tegoed. Al gebruikt? Dan verrekenen we het later.</li>
             </ul>
