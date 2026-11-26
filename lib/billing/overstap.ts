@@ -7,6 +7,7 @@ import { berekenUpgradeBedrag } from './upgradeBedrag'
 import { heeftOpenstaandeBetaling } from './openstaandeBetaling'
 import { verstuurBillingMail } from './mails'
 import { stopEnBevestig } from './verwerking'
+import { VEILIG_TERUGSTORTEN } from './referralSignalen'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 
@@ -96,7 +97,10 @@ async function infoVoorTelegram(userId: string): Promise<string> {
   try {
     const { data: betaald } = await billingDb.from('arnobot_payments').select('id').eq('user_id', userId).eq('status', 'paid')
     const { data: verw } = await billingDb.from('arnobot_referrals').select('status').eq('referred_user_id', userId).maybeSingle<{ status: string }>()
-    return `Betalingen tot nu toe: ${betaald?.length ?? 0}\nReferral: ${verw ? `ja, status ${verw.status}` : 'nee'}`
+    const actie = verw
+      ? `\nACTIE bij van maand naar jaar vóór de vierde betaalde maand: deze aangebrachte klant heeft dan recht op een twaalfde korting op de eerste jaarbetaling. Dat gebeurt NIET automatisch. ${VEILIG_TERUGSTORTEN}`
+      : ''
+    return `Betalingen tot nu toe: ${betaald?.length ?? 0}\nReferral: ${verw ? `ja, status ${verw.status}` : 'nee'}${actie}`
   } catch {
     return 'Betalingen en referral niet op te zoeken'
   }

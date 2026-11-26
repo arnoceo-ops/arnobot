@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { vindTeCorrigerenAbonnement, startKlanttypeCorrectie } from '@/lib/billing/klanttypeCorrectie'
 import { berekenBedrag, planNaam } from '@/lib/billing/prijzen'
+import { redenGeenZelfCorrectie } from '@/lib/billing/referralKorting'
 import { controleerBtwBijVies, isKvkFormaat, isNlBtwFormaat, normaliseerBtwNummer, normaliseerPostcode } from '@/lib/billing/btwNummer'
 
 const fout = (status: number, error: string) => NextResponse.json({ error }, { status })
@@ -57,10 +58,16 @@ export async function POST(req: NextRequest) {
   const gevonden = await vindTeCorrigerenAbonnement(userId)
   if (!gevonden) return fout(404, 'Geen particulier abonnement gevonden om te corrigeren')
 
-  // De correctie rekent met de volle abonnementsprijs; met een referral fee op de eerste betaling klopt dat niet.
-  if (gevonden.payment.soort === 'eerste' && gevonden.payment.bedrag_cent < gevonden.sub.bedrag_cent) {
-    return fout(400, 'Op je eerste betaling zit een referral fee. Mail naar admin@arno.bot, dan passen we het voor je aan.')
+  // De correctie rekent met de volle abonnementsprijs en crediteert alleen de laatste betaling.
+  let reden: Awaited<ReturnType<typeof redenGeenZelfCorrectie>>
+  try {
+    reden = await redenGeenZelfCorrectie(gevonden.sub.id)
+  } catch (e) {
+    console.error('[klanttype-correctie] controle mislukt', e instanceof Error ? e.message : e)
+    return fout(500, 'Dat lukt nu even niet. Probeer het later opnieuw.')
   }
+  if (reden === 'referral_fee') return fout(400, 'Op je eerste betaling zit een referral fee. Mail naar admin@arno.bot, dan passen we het voor je aan.')
+  if (reden === 'upgrade') return fout(400, 'Je hebt tussentijds geüpgraded. Mail naar admin@arno.bot, dan passen we het voor je aan.')
 
   const resultaat = await startKlanttypeCorrectie({
     userId,

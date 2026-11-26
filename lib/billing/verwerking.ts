@@ -24,6 +24,7 @@ import {
 import { verstuurBillingMail } from './mails'
 import { creditnotaVoorBetaling, factureerBetaling } from './facturatie'
 import { wieIs } from './wie'
+import { meldGratisVierdeMaand } from './referralSignalen'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { trialEinde } from '@/lib/toegang'
 
@@ -227,6 +228,7 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
 
     await zetToegang(sub.user_id, sub.plan, einde, { eerste: true, betaaldOp })
     await zetReferralConversie(sub.user_id, sub.plan)
+    if (sub.cyclus === 'maandelijks') await meldGratisVierdeMaand(sub.user_id, einde)
     // Vastleggen wat de aangebrachte klant aan referral fee kreeg (euro's).
     if (sub.cyclus === 'jaarlijks' && rij.bedrag_cent < sub.bedrag_cent) {
       await billingDb.from('arnobot_referrals').update({ referred_discount: (sub.bedrag_cent - rij.bedrag_cent) / 100 }).eq('referred_user_id', sub.user_id)
@@ -286,6 +288,7 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
     .update({ periode_start: iso(huidigEinde), periode_einde: iso(nieuwEinde), updated_at: iso(new Date()) })
     .eq('id', huidig.id)
   await legPeriodeVast(rij.id, huidig, huidigEinde, nieuwEinde)
+  if (huidig.cyclus === 'maandelijks') await meldGratisVierdeMaand(huidig.user_id, nieuwEinde)
 
   await zetToegang(huidig.user_id, huidig.plan, nieuwEinde, { eerste: false, betaaldOp })
 

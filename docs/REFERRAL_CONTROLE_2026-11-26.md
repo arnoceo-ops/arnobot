@@ -30,7 +30,10 @@ Klein (agent): tweede proefperiode (herstart) opent de kortingstermijn opnieuw; 
 ### Voortgang ronde 1 (akkoord Arno 26-11)
 
 - **R2 t/m R6 hersteld op 26-11** (teamfacturen, met tests): geen herinnering of blokkade als Mollie niet te controleren is, bij een afwijkend bedrag of zonder betaallink; melding bij deelfouten; botsing met de unieke periode schuift de factuurdatum door (datum gaat nu direct na het aanmaken vooruit); het Teams-formulier stuurt de factuurdatum alleen mee als die is gewijzigd; BETAALD PER BANK controleert eerst Mollie; een niet doorgegane terugdraaiing zet de factuur weer op betaald; een al teruggedraaide betaling telt niet als betaald; opheffen van een blokkade niet bij een eigen blokkade (SQL docs/sql/2026-11-26-team-blokkade-handmatig.sql, nog door Arno uit te voeren) of zolang een andere factuur over de grens open staat. Nieuwe klanttekst, nog door Arno te beoordelen: de foutmelding bij zelf activeren als de factuur niet lukt. Niet opnieuw onafhankelijk gecontroleerd en niet in Mollie beproefd.
-- Open in ronde 1: R1, R7 t/m R16.
+- **Later op 26-11 hersteld:** R7 (zelf omzetten naar zakelijk ook geblokkeerd na een upgrade; de referral fee wordt op de eerste betaling zelf getoetst), R10 en R16 (adminmeldingen), R12 (spelregels op smal scherm, niet in een browser nagekeken).
+- **R8 en R9: alleen het signaal**, het voordeel zelf is nog niet gebouwd: Telegram-actie bij zelf activeren van een aangebracht team, bij de derde betaalde maand van een aangebrachte klant (lib/billing/referralSignalen.ts) en in de overstapmelding.
+- **R1, voorlopige werkwijze:** tegoed of een gratis maand altijd per bankoverschrijving terugstorten met een creditnota in Moneybird, nooit via Mollie (de app ziet een bankoverschrijving niet). Een adminactie die veilig via Mollie terugstort is nog niet gebouwd; die hoort bij het verrekenen in ronde 3, tenzij Arno hem eerder wil.
+- Open in ronde 1: R11, R13, R14, R15 (klantteksten en schermlabels, eerst als platte tekst aan Arno).
 
 ## Ronde 2: grootboek, **niet klaar om echt te tellen**
 

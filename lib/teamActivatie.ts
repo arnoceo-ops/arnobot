@@ -8,6 +8,7 @@ import { isAgentProef, proefEinde, proefStand, toegangTot, type ProefStaat } fro
 import { TEST_PROEF_TEAM_ID } from '@/lib/internalTestAccounts'
 import { logAdminActie } from '@/lib/adminLog'
 import { notifyTelegram } from '@/lib/cron-notify'
+import { VEILIG_TERUGSTORTEN } from '@/lib/billing/referralSignalen'
 
 // Zelf een teamproef omzetten naar een betaald Team (docs/TEAM_PROCES.md, "Zelf activeren").
 // Alleen voor een manager van een agent-proef (isAgentProef). Het doet hetzelfde als stap 7 van de
@@ -100,6 +101,20 @@ export async function leesActivatieStand(userId: string): Promise<ActivatieStand
   }
 }
 
+/**
+ * De referral fee voor een aangebracht team wordt nog niet automatisch verrekend: dan moet Arno het weten. Een fout hier
+ * houdt het activeren niet tegen.
+ */
+async function meldAangebrachtTeam(managerId: string, teamNaam: string): Promise<void> {
+  const { data, error } = await supabase.from('arnobot_referrals').select('code_used').eq('referred_user_id', managerId).maybeSingle<{ code_used: string | null }>()
+  if (error) {
+    await notifyTelegram(`Niet te controleren of een geactiveerd team is aangebracht (arno.bot)\n\nTeam: ${teamNaam}\nZoek zelf in Admin, Referrals.`)
+    return
+  }
+  if (!data) return
+  await notifyTelegram(`ACTIE: aangebracht team op arno.bot\n\nTeam: ${teamNaam} (referralcode ${data.code_used ?? 'onbekend'})\nHet team heeft eenmalig recht op een maand voor het hele team, hooguit de maandprijs bij de start, als het op tijd betaalt (teamproef plus 10 dagen). Dit is NIET op de factuur verrekend. ${VEILIG_TERUGSTORTEN}`)
+}
+
 export type ActivatieUitkomst =
   | { ok: true; bedragCent: number; seats: number; betaalLink: string | null }
   | { ok: false; status: number; fout: string }
@@ -162,6 +177,8 @@ export async function activeerTeam(userId: string, invoer: ActivatieInvoer): Pro
     soort: 'regulier', periodeStart: nu, periodeEinde, seats, nettoCent, btwCent,
     zonderBoekhouding: team.id === TEST_PROEF_TEAM_ID,
   })
+
+  await meldAangebrachtTeam(userId, team.name)
 
   await logAdminActie({
     actie: 'team_geactiveerd', doelUserId: userId, doelTeamId: team.id,

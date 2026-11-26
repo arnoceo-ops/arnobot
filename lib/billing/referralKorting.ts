@@ -1,6 +1,28 @@
 import { billingDb, type PayRow } from './db'
 import { eersteBetalingOpTijd } from './referralRegels'
+import { berekenBedrag, type Cyclus, type KlantType, type Plan } from './prijzen'
 import { TRIAL_DAGEN } from '@/lib/toegang'
+
+/**
+ * Mag een particulier zijn abonnement zelf omzetten naar zakelijk? De correctie rekent met de volle abonnementsprijs en
+ * crediteert alleen de laatste betaling. Na een upgrade of met een referral fee op de eerste betaling klopt dat niet.
+ * Geeft de reden, of null als het kan. Een databasefout wordt doorgegeven.
+ */
+export async function redenGeenZelfCorrectie(abonnementId: string): Promise<'referral_fee' | 'upgrade' | null> {
+  const { data, error } = await billingDb
+    .from('arnobot_payments')
+    .select('*')
+    .eq('subscription_id', abonnementId)
+    .limit(1000)
+    .eq('status', 'paid')
+    .returns<(PayRow & { plan?: Plan | null; cyclus?: Cyclus | null; klant_type?: KlantType | null })[]>()
+  if (error) throw new Error(`betalingen opzoeken mislukt: ${error.message}`)
+  // De korting bestaat alleen bij jaarbetalingen en pas sinds de momentopname per betaling wordt vastgelegd.
+  const metFee = (data ?? []).some(b => b.soort === 'eerste' && b.cyclus === 'jaarlijks' && !!b.plan && !!b.klant_type
+    && b.bedrag_cent < berekenBedrag(b.plan, 'jaarlijks', b.klant_type).brutoCent)
+  if (metFee) return 'referral_fee'
+  return (data ?? []).some(b => b.soort === 'upgrade') ? 'upgrade' : null
+}
 
 /**
  * Heeft deze aangebrachte gebruiker nu recht op de referral fee op een jaarabonnement? Ja als: hij via een

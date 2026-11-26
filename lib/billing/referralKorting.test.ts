@@ -11,13 +11,13 @@ vi.mock('./db', () => ({
         data: tabel === 'arnobot_referrals' ? h.referral : tabel === 'arnobot_payments' ? h.betalingen : h.gebruiker,
         error: h.fout,
       })
-      const q: any = { select: () => q, eq: () => q, returns: () => q, maybeSingle: async () => uit(), then: (res: any) => Promise.resolve(uit()).then(res) }
+      const q: any = { select: () => q, eq: () => q, limit: () => q, returns: () => q, maybeSingle: async () => uit(), then: (res: any) => Promise.resolve(uit()).then(res) }
       return q
     },
   },
 }))
 
-import { heeftRechtOpJaarkorting } from './referralKorting'
+import { heeftRechtOpJaarkorting, redenGeenZelfCorrectie } from './referralKorting'
 import { berekenBedrag } from './prijzen'
 import { metJaarKorting } from './referralRegels'
 
@@ -35,6 +35,31 @@ describe('bedrag van de eerste jaarbetaling', () => {
   })
   it('zakelijk: netto precies een maand minder', () => {
     expect(metJaarKorting(berekenBedrag('premium', 'jaarlijks', 'zakelijk')).bedrag.nettoCent).toBe(42900)
+  })
+})
+
+describe('zelf omzetten naar zakelijk', () => {
+  const eerste = (bedrag_cent: number) => ({ soort: 'eerste', plan: 'basis', cyclus: 'jaarlijks', klant_type: 'particulier', bedrag_cent })
+  beforeEach(() => { h.betalingen = []; h.fout = null })
+  it('volle prijs: mag', async () => {
+    h.betalingen = [eerste(22800)]
+    expect(await redenGeenZelfCorrectie('s')).toBeNull()
+  })
+  it('referral fee op de eerste betaling blokkeert, ook na een upgrade', async () => {
+    h.betalingen = [eerste(20900), { soort: 'upgrade', bedrag_cent: 24000 }]
+    expect(await redenGeenZelfCorrectie('s')).toBe('referral_fee')
+  })
+  it('na een upgrade zonder referral fee: ook niet zelf, en niet de referralmelding', async () => {
+    h.betalingen = [eerste(22800), { soort: 'upgrade', bedrag_cent: 24000 }]
+    expect(await redenGeenZelfCorrectie('s')).toBe('upgrade')
+  })
+  it('betaling van vóór de momentopname: mag', async () => {
+    h.betalingen = [{ soort: 'eerste', bedrag_cent: 100 }]
+    expect(await redenGeenZelfCorrectie('s')).toBeNull()
+  })
+  it('databasefout laat de correctie niet door', async () => {
+    h.fout = { message: 'stuk' }
+    await expect(redenGeenZelfCorrectie('s')).rejects.toThrow()
   })
 })
 

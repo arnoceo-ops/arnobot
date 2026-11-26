@@ -78,6 +78,7 @@ function zet(o: { manager?: Rij; team?: Rij } = {}) {
   db.arnobot_teams = [{ id: 't1', name: 'Team Een', manager_id: 'm1', min_seats: null, cyclus: null, volgende_factuurdatum: null, geblokkeerd_at: null, ...o.team }]
   db.arnobot_team_members = [{ team_id: 't1', user_id: 'm1', role: 'manager' }, { team_id: 't1', user_id: 'l1', role: 'member' }]
   db.arnobot_team_facturen = []
+  db.arnobot_referrals = []
   db.arnobot_billing_customers = []
 }
 

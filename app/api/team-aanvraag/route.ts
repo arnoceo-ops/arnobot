@@ -94,10 +94,8 @@ export async function POST(req: Request) {
 
   const prijsTekst = teamPrijsWeergave(seats, cyclus as Cyclus)
 
-  // Via een referral binnengekomen? Een team via dit formulier heeft geen trial, dus de gratis
-  // eerste maand voor de nieuwe gebruiker en het tegoed voor de aanbrenger moet Arno handmatig
-  // regelen (docs/ABONNEMENTEN.md, referralprogramma). Alleen op te zoeken als de aanvrager
-  // ingelogd is; anders blijft de regel weg.
+  // Via een referral binnengekomen? De referral fee voor het team wordt nog niet automatisch verrekend, dus die moet Arno
+  // meenemen (spelregels artikel 2). Alleen op te zoeken als de aanvrager ingelogd is; anders blijft de regel weg.
   let referralRegel = ''
   if (userId) {
     const { data: verw } = await supabase
@@ -112,7 +110,7 @@ export async function POST(req: Request) {
         .eq('user_id', verw.referrer_user_id)
         .maybeSingle()
       const naam = referrer?.voornaam || (referrer?.full_name ?? '').split(' ')[0] || referrer?.email || 'onbekend'
-      referralRegel = `Via referral van ${naam} (code ${verw.code_used}): regel de gratis eerste maand en het tegoed voor de aanbrenger`
+      referralRegel = `Via referral van ${naam} (code ${verw.code_used}): het team krijgt eenmalig een maand voor het hele team, hooguit de maandprijs bij de start. Dit gaat niet automatisch. Het tegoed voor de aanbrenger volgt de spelregels.`
     }
   }
 
