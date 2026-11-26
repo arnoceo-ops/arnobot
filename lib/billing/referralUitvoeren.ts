@@ -4,7 +4,8 @@ import { mollieIngeschakeld } from './mollie'
 import { actieTabelBestaat } from './referralAutomatisch'
 import { draaiNacontrole } from './referralNacontrole'
 import { planReferral } from './referralPlanner'
-import { creditnotaStap, verwerkOpenTerugstortingen, type ActieRij } from './referralTerugstorten'
+import { creditnotaStap } from './referralCreditnota'
+import { verwerkOpenTerugstortingen, type ActieRij } from './referralTerugstorten'
 import { schakelaarAan } from './referralSchakelaars'
 import { regelTekst } from './referralGrootboek'
 import { splitsBericht } from './berichtDelen'
@@ -95,12 +96,18 @@ export async function draaiReferralUitvoeren(nu: Date): Promise<UitvoerSamenvatt
       await eensPerWeek('open-terwijl-uit', `REFERRAL_TERUGSTORTEN staat uit terwijl er ${open} referralterugstorting(en) openstaan.`)
     }
     let creditnotas = 0
-    for (const a of acties.filter(a => a.status === 'bevestigd' && a.credit_status === 'nodig')) {
-      const stap = await creditnotaStap(a)
-      if (stap !== 'geen-factuur-testmodus' && stap !== 'niet-nodig') creditnotas++
+    for (const a of acties.filter(a => a.status === 'bevestigd' && (a.credit_status === 'nodig' || a.credit_status === 'bezig'))) {
+      try {
+        const stap = await creditnotaStap(a, nu)
+        if (stap === 'handwerk') await eensPerWeek(`creditnota:${a.id}`, `Creditnota niet vanzelf (actie ${a.id}, ${formatEuro(a.bruto_cent)}): ${a.fout}`)
+        else if (stap === 'mislukt') fouten.push(`${a.fout} (actie ${a.id})`)
+        else if (stap === 'uit' || stap === 'wacht-op-factuur') creditnotas++
+      } catch (e) {
+        fouten.push(`creditnota actie ${a.id}: ${e instanceof Error ? e.message : String(e)}`)
+      }
     }
     if (creditnotas) {
-      await eensPerWeek('creditnotas', `${creditnotas} referralterugstorting(en) hebben nog geen creditnota in Moneybird (de automatische creditnota is niet gebouwd).`)
+      await eensPerWeek('creditnotas', `${creditnotas} referralterugstorting(en) hebben nog geen creditnota in Moneybird (de schakelaar REFERRAL_CREDITNOTA staat uit of de factuur ontbreekt).`)
     }
   })
 

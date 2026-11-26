@@ -343,6 +343,72 @@ export async function maakCreditnota(
   return { id: credit.id }
 }
 
+// ── Creditnota voor een deelbedrag (referral). Beproefd in de sandbox op 26-11-2026, zie
+// referralCreditnota.moneybird.live.test.ts. ──
+
+export interface MbCreditfactuur {
+  id: string
+  state: string
+  reference: string | null
+  total_price_incl_tax: string
+  original_sales_invoice_id: string | null
+  details: { id: string; amount: string | null }[]
+  payments: { transaction_identifier: string | null }[]
+}
+
+export async function haalFactuur(id: string): Promise<MbCreditfactuur> {
+  return mb(`/sales_invoices/${id}.json`)
+}
+
+/** Moneybird zoekt alleen op de HELE referentie, niet op een deel ervan. */
+export async function zoekFacturenOpReferentie(referentie: string): Promise<MbCreditfactuur[]> {
+  return mb(`/sales_invoices.json?filter=${encodeURIComponent(`reference:${referentie}`)}`)
+}
+
+/** Een concept dat de hele factuur crediteert. Het bedrag wordt daarna met zetCreditBedrag aangepast. */
+export async function maakCreditConcept(factuurId: string): Promise<MbCreditfactuur> {
+  return mb(`/sales_invoices/${factuurId}/duplicate_creditinvoice.json`, { method: 'PATCH', body: {} })
+}
+
+/**
+ * De regel met het bedrag is die met aantal -1. Moneybird zet er een tekstregel zonder aantal boven: een prijs daarop
+ * telt als EXTRA bedrag. Met prijzen inclusief btw komt elk bedrag op de cent uit, ook bij een zakelijke factuur.
+ */
+export function creditBedragregel(f: Pick<MbCreditfactuur, 'details'>): string | null {
+  const regels = f.details.filter(d => d.amount !== null && Number(d.amount) === -1)
+  return regels.length === 1 ? regels[0].id : null
+}
+
+export async function zetCreditBedrag(creditId: string, invoer: { regelId: string; brutoCent: number; referentie: string }): Promise<MbCreditfactuur> {
+  await mb(`/sales_invoices/${creditId}.json`, {
+    method: 'PATCH',
+    body: {
+      sales_invoice: {
+        reference: invoer.referentie,
+        payment_conditions: CREDIT_VOORWAARDEN,
+        prices_are_incl_tax: true,
+        details_attributes: [{ id: invoer.regelId, price: euro(invoer.brutoCent) }],
+      },
+    },
+  })
+  return haalFactuur(creditId)
+}
+
+/** De terugstorting als negatieve betaling op de creditnota. */
+export async function boekTerugbetaling(creditId: string, invoer: { brutoCent: number; betaaldOp: Date; kenmerk: string }): Promise<void> {
+  await mb(`/sales_invoices/${creditId}/payments.json`, {
+    method: 'POST',
+    body: {
+      payment: {
+        payment_date: dateOnly(invoer.betaaldOp),
+        price: `-${euro(invoer.brutoCent)}`,
+        transaction_identifier: invoer.kenmerk,
+        manual_payment_action: 'payment_without_proof',
+      },
+    },
+  })
+}
+
 /** Gezondheidscheck: een alleen-lezen aanroep die slaagt als token en administratie-ID kloppen. */
 export async function pingMoneybird(): Promise<void> {
   await mb('/sales_invoices.json?per_page=1')

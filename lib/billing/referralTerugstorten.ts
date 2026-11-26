@@ -507,26 +507,6 @@ export async function voerTerugstortingUit(actieId: string, nu: Date = new Date(
   return neemOver(a, betaling, { id: antwoord.id, status: antwoord.status }, nu)
 }
 
-// ── Creditnota: een aparte stap, nog niet gebouwd ──
-
-export type CreditnotaStap = 'niet-nodig' | 'uit' | 'wacht-op-factuur' | 'geen-factuur-testmodus' | 'niet-gebouwd'
-
-/**
- * Doet bewust geen enkele aanroep bij Moneybird: of daar een deelbedrag te crediteren is, is niet beproefd (bouwplan A12
- * en C). De actie houdt credit_status 'nodig' tot de hervatbare deelcreditnota er is (bouwvolgorde stap 5).
- */
-export async function creditnotaStap(a: ActieRij): Promise<CreditnotaStap> {
-  if (a.status !== 'bevestigd' || a.credit_status !== 'nodig') return 'niet-nodig'
-  if (!schakelaarAan('REFERRAL_CREDITNOTA')) return 'uit'
-  const factuur = (await leesBetaling(a))?.moneybird_factuur_id
-  if (!factuur || factuur === 'bezig') return 'wacht-op-factuur'
-  if (factuur === 'testmodus') {
-    await bewaar(a, { credit_status: 'nvt' })
-    return 'geen-factuur-testmodus'
-  }
-  return 'niet-gebouwd'
-}
-
 // ── Alle openstaande acties ──
 
 export interface TerugstortRonde {

@@ -82,7 +82,7 @@ vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: vi.fn(async (t: string) =>
 vi.mock('./wie', () => ({ wieIs: vi.fn(async (id: string) => { if (h.wieStuk) throw new Error('clerk plat'); return id }) }))
 
 import { maakNepDb } from './referralNepDb'
-import { creditnotaStap, reserveerTerugstorting, verwerkOpenTerugstortingen, voerTerugstortingUit } from './referralTerugstorten'
+import { reserveerTerugstorting, verwerkOpenTerugstortingen, voerTerugstortingUit } from './referralTerugstorten'
 import { betaalTerug, haalBetaling, lijstBetalingTerugbetalingen } from './mollie'
 import { MANUAL_TEST_USER_ID } from '@/lib/internalTestAccounts'
 
@@ -509,37 +509,6 @@ describe('alle openstaande acties', () => {
     const ronde = await verwerkOpenTerugstortingen(NU)
     expect(ronde.fouten).toHaveLength(1)
     expect(betaalTerug).toHaveBeenCalledTimes(1)
-  })
-})
-
-describe('creditnota: aparte stap, nog niet gebouwd', () => {
-  const bevestigd = async () => {
-    await reservering()
-    await db().wijzigActie(A, { status: 'bevestigd', credit_status: 'nodig' })
-    return actie()
-  }
-  it('uit: niets, ook bij andere waarden dan true', async () => {
-    const a = await bevestigd()
-    for (const waarde of ['', 'TRUE', '1']) {
-      vi.stubEnv('REFERRAL_CREDITNOTA', waarde)
-      expect(await creditnotaStap(a)).toBe('uit')
-    }
-    expect((await actie()).credit_status).toBe('nodig')
-  })
-  it('aan: wachten op een echte factuur, testmodus overslaan, en verder nog niets', async () => {
-    vi.stubEnv('REFERRAL_CREDITNOTA', 'true')
-    for (const factuur of [null, 'bezig']) {
-      const a = await bevestigd().catch(() => actie())
-      await db().wijzigBetaling(PAY, { moneybird_factuur_id: factuur })
-      expect(await creditnotaStap(a)).toBe('wacht-op-factuur')
-    }
-    await db().wijzigBetaling(PAY, { moneybird_factuur_id: '123' })
-    expect(await creditnotaStap(await actie())).toBe('niet-gebouwd')
-    expect((await actie()).credit_status).toBe('nodig')
-    await db().wijzigBetaling(PAY, { moneybird_factuur_id: 'testmodus' })
-    expect(await creditnotaStap(await actie())).toBe('geen-factuur-testmodus')
-    expect((await actie()).credit_status).toBe('nvt')
-    expect(await creditnotaStap(await actie())).toBe('niet-nodig')
   })
 })
 

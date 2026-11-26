@@ -1,0 +1,187 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+// De creditnota bij een referralterugstorting, met een nagemaakte Moneybird: elke plek waar een run kan afbreken.
+
+const h = vi.hoisted(() => ({
+  db: null as any,
+  facturen: [] as any[],
+  mails: [] as string[],
+  teller: 0,
+  /** Naam van de aanroep die de eerstvolgende keer mislukt, en hoe. */
+  faal: null as null | { bij: string; status: number },
+  /** Het bedrag dat Moneybird teruggeeft wijkt af. */
+  verschil: 0,
+}))
+
+vi.mock('./db', () => ({ billingDb: { from: (t: string) => h.db.from(t), rpc: (n: string, p: any) => h.db.rpc(n, p) } }))
+vi.mock('./moneybird', async origineel => {
+  const echt = await origineel<typeof import('./moneybird')>()
+  const mis = (naam: string) => {
+    if (h.faal?.bij !== naam) return
+    const { status } = h.faal
+    h.faal = null
+    if (status === 0) throw new Error('timeout')
+    throw new echt.MoneybirdError(status, naam)
+  }
+  const vind = (id: string) => h.facturen.find(f => f.id === id)
+  const kopie = <T>(x: T): T => structuredClone(x)
+  return {
+    MoneybirdError: echt.MoneybirdError,
+    creditBedragregel: echt.creditBedragregel,
+    creditMailTekst: echt.creditMailTekst,
+    moneybirdIngeschakeld: () => true,
+    haalFactuur: async (id: string) => { mis('haal'); return kopie(vind(id)) },
+    zoekFacturenOpReferentie: async (ref: string) => { mis('zoek'); return kopie(h.facturen.filter(f => f.reference === ref)) },
+    maakCreditConcept: async (origineelId: string) => {
+      mis('maak')
+      const o = vind(origineelId)
+      const nieuw = {
+        id: `c${++h.teller}`, state: 'draft', reference: o.reference, original_sales_invoice_id: origineelId,
+        total_price_incl_tax: `-${o.total_price_incl_tax}`, details: [{ id: 'tekst', amount: null }, { id: 'bedrag', amount: '-1' }], payments: [],
+      }
+      h.facturen.push(nieuw)
+      return kopie(nieuw)
+    },
+    zetCreditBedrag: async (id: string, i: any) => {
+      mis('zet')
+      expect(i.regelId).toBe('bedrag')
+      Object.assign(vind(id), { reference: i.referentie, total_price_incl_tax: (-(i.brutoCent + h.verschil) / 100).toFixed(2) })
+      return kopie(vind(id))
+    },
+    verstuurFactuur: async (id: string, methode: string) => {
+      mis(`verstuur-${methode}`)
+      vind(id).state = 'open'
+      if (methode === 'Email') h.mails.push(id)
+      return { factuurnummer: '1' }
+    },
+    boekTerugbetaling: async (id: string, i: any) => { mis('boek'); vind(id).payments.push({ transaction_identifier: i.kenmerk }) },
+  }
+})
+
+import { maakKetenDb } from './referralNepKeten'
+import { creditReferentie, creditnotaStap } from './referralCreditnota'
+
+const A = '11111111-1111-4111-8111-111111111111'
+const NU = new Date('2030-01-11T10:00:00.000Z')
+const REF = creditReferentie('tr_x', A)
+
+async function zaai(opties: { klantType?: string; factuur?: string | null; actie?: Record<string, unknown> } = {}) {
+  await h.db.zaai({
+    arnobot_payments: [{ id: 'p1', user_id: 'u', subscription_id: 's1', mollie_payment_id: 'tr_x', moneybird_factuur_id: 'factuur' in opties ? opties.factuur : 'orig' }],
+    arnobot_subscriptions: [{ id: 's1', klant_type: opties.klantType ?? 'particulier' }],
+    approved_users: [{ user_id: 'u', voornaam: 'Test' }],
+    arnobot_referral_acties: [{
+      id: A, status: 'bevestigd', credit_status: 'nodig', credit_id: null, bezig_tot: null, fout: null, user_id: 'u', doel_id: 'p1',
+      bruto_cent: 1900, mollie_refund_id: 're_1', gegevens: {}, ...opties.actie,
+    }],
+  })
+  h.facturen = [{ id: 'orig', state: 'paid', reference: 'tr_x', original_sales_invoice_id: null, total_price_incl_tax: '228.00', details: [], payments: [] }]
+}
+const actie = async () => (await h.db.alle('arnobot_referral_acties'))[0]
+const draai = async (na = 0) => creditnotaStap(await actie(), new Date(NU.getTime() + na))
+const creditnotas = () => h.facturen.filter(f => f.original_sales_invoice_id === 'orig')
+
+beforeEach(async () => {
+  vi.stubEnv('REFERRAL_CREDITNOTA', 'true')
+  vi.stubEnv('MONEYBIRD_BETALING_REGISTREREN', '')
+  h.db ??= maakKetenDb()
+  h.mails = []
+  h.teller = 0
+  h.faal = null
+  h.verschil = 0
+  await zaai()
+})
+afterEach(() => vi.unstubAllEnvs())
+
+describe('wanneer niet', () => {
+  it.each(['', 'TRUE', '1'])('schakelaar "%s" is uit', async waarde => {
+    vi.stubEnv('REFERRAL_CREDITNOTA', waarde)
+    expect(await draai()).toBe('uit')
+    expect(creditnotas()).toHaveLength(0)
+  })
+  it('wacht op een echte factuur en slaat testmodus over', async () => {
+    for (const factuur of [null, 'bezig']) {
+      await zaai({ factuur })
+      expect(await draai()).toBe('wacht-op-factuur')
+    }
+    await zaai({ factuur: 'testmodus' })
+    expect(await draai()).toBe('geen-factuur-testmodus')
+    expect((await actie()).credit_status).toBe('nvt')
+  })
+  it('een lopende claim wordt niet overgenomen, een verlopen claim wel', async () => {
+    await zaai({ actie: { credit_status: 'bezig', bezig_tot: new Date(NU.getTime() + 60_000).toISOString() } })
+    expect(await draai()).toBe('niet-geclaimd')
+    expect(await draai(120_000)).toBe('klaar')
+  })
+})
+
+describe('de creditnota', () => {
+  it('particulier: precies het teruggestorte bedrag, eigen referentie, niet gemaild, een keer', async () => {
+    expect(await draai()).toBe('klaar')
+    expect(creditnotas()).toMatchObject([{ state: 'open', reference: REF, total_price_incl_tax: '-19.00', payments: [] }])
+    expect(await actie()).toMatchObject({ credit_status: 'klaar', credit_id: 'c1', bezig_tot: null, fout: null })
+    expect(await draai()).toBe('niet-nodig')
+    expect(creditnotas()).toHaveLength(1)
+    expect(h.mails).toEqual([])
+  })
+  it('zakelijk: een keer gemaild', async () => {
+    await zaai({ klantType: 'zakelijk' })
+    expect(await draai()).toBe('klaar')
+    expect(h.mails).toEqual(['c1'])
+  })
+  it('met betalingen registreren: de terugstorting een keer op de creditnota', async () => {
+    vi.stubEnv('MONEYBIRD_BETALING_REGISTREREN', 'true')
+    h.faal = { bij: 'boek', status: 500 }
+    expect(await draai()).toBe('mislukt')
+    expect(await draai()).toBe('klaar')
+    expect(creditnotas()[0].payments).toEqual([{ transaction_identifier: 're_1' }])
+  })
+  it('klopt het bedrag niet, dan gaat er niets de deur uit', async () => {
+    h.verschil = 1
+    expect(await draai()).toBe('handwerk')
+    expect(creditnotas()[0].state).toBe('draft')
+    expect(h.mails).toEqual([])
+    expect((await actie()).credit_status).toBe('nodig')
+  })
+})
+
+describe('hervatten na een afgebroken run', () => {
+  it.each(['zoek', 'maak', 'zet', 'verstuur-Manual'])('mislukt bij %s: de volgende ronde maakt het af, met een creditnota', async bij => {
+    h.faal = { bij, status: 500 }
+    expect(await draai()).toBe('mislukt')
+    expect(await draai()).toBe('klaar')
+    expect(creditnotas()).toMatchObject([{ state: 'open', reference: REF, total_price_incl_tax: '-19.00' }])
+  })
+  it('het kenmerk niet bewaard maar de referentie staat al: teruggevonden, niet dubbel', async () => {
+    await draai()
+    await h.db.wijzig('arnobot_referral_acties', A, { credit_status: 'nodig', credit_id: null })
+    expect(await draai()).toBe('klaar')
+    expect(creditnotas()).toHaveLength(1)
+  })
+  it('een onbekend concept op de factuur: niets bijmaken en niets overnemen', async () => {
+    h.facturen.push({ id: 'vreemd', state: 'draft', reference: 'tr_x', original_sales_invoice_id: 'orig', total_price_incl_tax: '-228.00', details: [], payments: [] })
+    expect(await draai()).toBe('handwerk')
+    expect(creditnotas().map(f => f.id)).toEqual(['vreemd'])
+    expect((await actie()).fout).toContain('conceptcreditnota')
+  })
+  it('een eerdere verstuurde creditnota op dezelfde factuur staat niet in de weg', async () => {
+    h.facturen.push({ id: 'eerder', state: 'open', reference: 'tr_x', original_sales_invoice_id: 'orig', total_price_incl_tax: '-5.00', details: [], payments: [] })
+    expect(await draai()).toBe('klaar')
+  })
+  it('mail: een duidelijke weigering wordt opnieuw geprobeerd', async () => {
+    await zaai({ klantType: 'zakelijk' })
+    h.faal = { bij: 'verstuur-Email', status: 422 }
+    expect(await draai()).toBe('mislukt')
+    expect(await draai()).toBe('klaar')
+    expect(h.mails).toEqual(['c1'])
+  })
+  it('mail met onbekende uitkomst: niet nog eens versturen, wel vragen', async () => {
+    await zaai({ klantType: 'zakelijk' })
+    h.faal = { bij: 'verstuur-Email', status: 0 }
+    expect(await draai()).toBe('handwerk')
+    expect((await actie()).fout).toContain('gemaild')
+    await draai()
+    expect(h.mails).toEqual([])
+  })
+})
