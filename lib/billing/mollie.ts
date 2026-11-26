@@ -10,7 +10,14 @@ const API = 'https://api.mollie.com/v2'
 // Altijd www: arno.bot zonder www stuurt een 308-redirect, en een redirect op een
 // webhook-POST breekt de aflevering.
 export const SITE_URL = 'https://www.arno.bot'
-export const MOLLIE_WEBHOOK_URL = `${SITE_URL}/api/webhooks/mollie`
+/**
+ * Voor de testomgeving (docs/REFERRAL_AUTOMATISERING.md): testbetalingen horen niet bij de productie-webhook. Werkt
+ * alleen met een test_-sleutel, zodat een verdwaalde env-variabele echte betalingen nooit kan omleiden.
+ */
+export function webhookAdres(sleutel: string | undefined, testAdres: string | undefined): string {
+  return sleutel?.startsWith('test_') && testAdres ? testAdres : `${SITE_URL}/api/webhooks/mollie`
+}
+export const MOLLIE_WEBHOOK_URL = webhookAdres(process.env.MOLLIE_API_KEY, process.env.MOLLIE_TEST_WEBHOOK_URL)
 
 export function mollieIngeschakeld(): boolean {
   return !!process.env.MOLLIE_API_KEY
