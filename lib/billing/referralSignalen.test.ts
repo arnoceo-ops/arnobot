@@ -77,7 +77,8 @@ describe('signaal gratis vierde maand', () => {
 })
 
 describe('niet dubbel zodra het systeem het zelf doet', () => {
-  const aan = () => { vi.stubEnv('REFERRAL_TERUGSTORTEN', 'true'); h.teksten.voordeel_maand = 'x'; h.acties = [] }
+  const aan = () => { vi.stubEnv('REFERRAL_TERUGSTORTEN', 'true')
+  vi.stubEnv('REFERRAL_TEGOED_VERREKENEN', 'true'); h.teksten.voordeel_maand = 'x'; h.acties = [] }
   const tekst = () => h.tg.mock.calls[0][0]
   it('schakelaar aan, tekst vastgesteld en SQL uitgevoerd: geen verzoek om het met de hand te doen', async () => {
     aan()

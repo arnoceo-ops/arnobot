@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { registreerCronRun } from '@/lib/cronRun'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { wieIs } from '@/lib/billing/wie'
-import { draaiGrootboek, nieuweMijlpalen, regelTekst } from '@/lib/billing/referralGrootboek'
+import { MEELOOP, draaiGrootboek, nieuweMijlpalen, regelTekst } from '@/lib/billing/referralGrootboek'
 import { splitsBericht } from '@/lib/billing/berichtDelen'
 import { herstelGratisKenmerken } from '@/lib/billing/gratisHerstel'
 import * as Sentry from '@sentry/nextjs'
 
-// Dagelijks grootboek van het referraltegoed, MEELOPEND (docs/REFERRAL_AUTOMATISERING.md). Draait na de billing- en
+// Dagelijks grootboek van het referraltegoed, meelopend tot REFERRAL_GROOTBOEK_ECHT (docs/REFERRAL_AUTOMATISERING.md). Draait na de billing- en
 // teamfacturatiecron, zodat de betalingen van vandaag verwerkt zijn. Verandert niets behalve het grootboek zelf en
 // stuurt alleen Arno een melding, en alleen als er iets nieuws is.
 
@@ -26,7 +26,7 @@ async function cronHandler(req: NextRequest) {
       const regels = await Promise.all(run.nieuw.map(async r => regelTekst(r, await wieIs(r.aanbrenger_user_id), await wieIs(r.klant_user_id))))
       for (const m of nieuweMijlpalen(run.regels, run.nieuw)) regels.push(`Mijlpaal: ${await wieIs(m.aanbrengerId)} heeft ${m.aantal} toekenningen.`)
       if (run.fouten.length) regels.push(`Niet te beoordelen (morgen opnieuw):\n${run.fouten.slice(0, 5).join('\n')}`)
-      const delen = splitsBericht('Referraltegoed op arno.bot, meeloopstand: er verandert niets aan tegoed of geld', regels, 'https://www.arno.bot/bot/admin/referrals')
+      const delen = splitsBericht(MEELOOP ? 'Referraltegoed op arno.bot, meeloopstand: er verandert niets aan tegoed of geld' : 'Referraltegoed op arno.bot', regels, 'https://www.arno.bot/bot/admin/referrals')
       let mislukt = 0
       for (const deel of delen) if ((await notifyTelegram(deel)) === false) mislukt++
       if (mislukt) {

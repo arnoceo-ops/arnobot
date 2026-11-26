@@ -1,6 +1,6 @@
 import { billingDb } from './db'
 import { tabelOntbreekt } from './tabel'
-import { schakelaarAan } from './referralSchakelaars'
+import { magTerugstorten } from './referralSchakelaars'
 import { TERUGSTORT_OMSCHRIJVING } from './referralTeksten'
 import { MEELOOP } from './referralStand'
 import type { ReserveerInvoer } from './referralTerugstorten'
@@ -24,7 +24,7 @@ export async function actieTabelBestaat(): Promise<boolean> {
  * uitgevoerd, en voor tegoed ook pas als het grootboek echt telt. Tot dan blijven de signalen om het met de hand te doen.
  */
 export async function gaatAutomatisch(soort: ReserveerInvoer['soort']): Promise<boolean> {
-  if (!schakelaarAan('REFERRAL_TERUGSTORTEN') || !TERUGSTORT_OMSCHRIJVING[soort]) return false
+  if (!magTerugstorten(soort) || !TERUGSTORT_OMSCHRIJVING[soort]) return false
   if (soort === 'tegoed_terugstorten' && MEELOOP) return false
   return actieTabelBestaat()
 }

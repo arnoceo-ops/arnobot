@@ -46,6 +46,7 @@ describe.skipIf(!LIVE)('ketenproef: gratis vierde maand (testmodus, testdatabase
     // Een gereserveerd voorbeelddomein: Mollie krijgt een geldig adres, en niets van ons ontvangt het.
     process.env.MOLLIE_TEST_WEBHOOK_URL = 'https://example.com/arnobot-testwebhook'
     process.env.REFERRAL_TERUGSTORTEN = 'true'
+    process.env.REFERRAL_TEGOED_VERREKENEN = 'true'
 
     const { billingDb } = await import('./db')
     const m = await import('./mollie')
@@ -175,6 +176,7 @@ describe.skipIf(!LIVE)('ketenproef: jaarkorting na maandbetalingen (testmodus, t
     // Een gereserveerd voorbeelddomein: Mollie krijgt een geldig adres, en niets van ons ontvangt het.
     process.env.MOLLIE_TEST_WEBHOOK_URL = 'https://example.com/arnobot-testwebhook'
     process.env.REFERRAL_TERUGSTORTEN = 'true'
+    process.env.REFERRAL_TEGOED_VERREKENEN = 'true'
 
     const { billingDb } = await import('./db')
     const m = await import('./mollie')
@@ -309,6 +311,7 @@ describe.skipIf(!LIVE)('ketenproef: tegoed van de aanbrenger verrekenen (testmod
     const key = eisTestomgeving()
     process.env.MOLLIE_TEST_WEBHOOK_URL = 'https://example.com/arnobot-testwebhook'
     process.env.REFERRAL_TERUGSTORTEN = 'true'
+    process.env.REFERRAL_TEGOED_VERREKENEN = 'true'
 
     const { billingDb } = await import('./db')
     const m = await import('./mollie')
@@ -450,6 +453,7 @@ describe.skipIf(!LIVE)('ketenproef: de klant boekt terug (testmodus, testdatabas
     const key = eisTestomgeving()
     process.env.MOLLIE_TEST_WEBHOOK_URL = 'https://example.com/arnobot-testwebhook'
     process.env.REFERRAL_TERUGSTORTEN = 'true'
+    process.env.REFERRAL_TEGOED_VERREKENEN = 'true'
 
     const { billingDb } = await import('./db')
     const m = await import('./mollie')
@@ -618,6 +622,7 @@ describe.skipIf(process.env.RUN_LIVE_KETEN_NACHECK !== 'true')('ketenproef: naco
     eisTestomgeving()
     process.env.MOLLIE_TEST_WEBHOOK_URL = 'https://example.com/arnobot-testwebhook'
     process.env.REFERRAL_TERUGSTORTEN = 'true'
+    process.env.REFERRAL_TEGOED_VERREKENEN = 'true'
     const { billingDb } = await import('./db')
     const m = await import('./mollie')
     const { POST: webhook } = await import('@/app/api/webhooks/mollie/route')

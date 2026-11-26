@@ -169,7 +169,8 @@ describe('F9: de melding zegt alleen dat het systeem het referraltegoed doet als
     await stopSoloBijJoin('u1', 'Team Een', nu)
     return notify.mock.calls[0][0] as string
   }
-  const alles = () => { vi.stubEnv('REFERRAL_TERUGSTORTEN', 'true'); referral.teksten.tegoed_terugstorten = 'x' }
+  const alles = () => { vi.stubEnv('REFERRAL_TERUGSTORTEN', 'true')
+  vi.stubEnv('REFERRAL_TEGOED_VERREKENEN', 'true'); referral.teksten.tegoed_terugstorten = 'x' }
 
   beforeEach(() => { referral.meeloop = true; delete referral.teksten.tegoed_terugstorten; vi.stubEnv('REFERRAL_TERUGSTORTEN', '') })
 

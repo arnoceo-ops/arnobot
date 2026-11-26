@@ -122,6 +122,7 @@ const vreemde = (extra: any = {}) => ({ id: 're_vreemd', paymentId: TR, status: 
 beforeEach(async () => {
   vi.clearAllMocks()
   vi.stubEnv('REFERRAL_TERUGSTORTEN', 'true')
+  vi.stubEnv('REFERRAL_TEGOED_VERREKENEN', 'true')
   vi.stubEnv('REFERRAL_CREDITNOTA', '')
   h.db ??= maakNepDb()
   h.faalUpdate = null

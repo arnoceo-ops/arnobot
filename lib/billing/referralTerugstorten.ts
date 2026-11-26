@@ -5,7 +5,7 @@ import {
 import { formatEuro, mollieNaarCenten } from './geld'
 import { heeftAndereTerugbetaling } from './terugbetaling'
 import { tabelOntbreekt } from './tabel'
-import { schakelaarAan } from './referralSchakelaars'
+import { magTerugstorten } from './referralSchakelaars'
 import { wieIs } from './wie'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { bewijsToekenningen, maakBewijzer, type Bewijs, type BronRegel } from './referralBronnen'
@@ -110,7 +110,7 @@ export type ReserveerUitkomst =
 
 /** Wanneer en hoeveel er gereserveerd moet worden (verlenging, tegoed actief, geen open vraag) beslist de aanroeper. */
 export async function reserveerTerugstorting(invoer: ReserveerInvoer): Promise<ReserveerUitkomst> {
-  if (!schakelaarAan('REFERRAL_TERUGSTORTEN')) return { stand: 'uit' }
+  if (!magTerugstorten(invoer.soort)) return { stand: 'uit' }
   if (isInternalTestUser(invoer.userId)) return { stand: 'geweigerd', reden: 'testaccount' }
   const omschrijving = invoer.omschrijving.trim()
   if (!omschrijving) return { stand: 'geweigerd', reden: 'omschrijving_ontbreekt' }
@@ -400,7 +400,7 @@ export async function voerTerugstortingUit(actieId: string, nu: Date = new Date(
   if (isInternalTestUser(gevonden.user_id)) return 'testaccount'
   if (!mollieIngeschakeld()) return 'niets-te-doen'
   if (gevonden.status === 'gereserveerd') {
-    if (!schakelaarAan('REFERRAL_TERUGSTORTEN')) return 'zou-doen'
+    if (!magTerugstorten(gevonden.soort)) return 'zou-doen'
     const b = await leesBetaling(gevonden)
     if (b && !wachttijdVoorbij(b, nu)) return 'wacht-7-dagen'
   }
@@ -459,7 +459,7 @@ export async function voerTerugstortingUit(actieId: string, nu: Date = new Date(
       : geefVrij(a, betaling, 'vrijgegeven', bezwaar)
   }
   if ((betaling.referral_refund_cent ?? 0) < a.bruto_cent) return loopVast(a, betaling, 'de reservering staat niet op de betaling geboekt')
-  if (!schakelaarAan('REFERRAL_TERUGSTORTEN')) {
+  if (!magTerugstorten(a.soort)) {
     if (!eerderOnbekend) {
       await legTerug(a)
       return 'schakelaar-uit'

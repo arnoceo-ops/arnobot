@@ -157,6 +157,8 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
   const sqlOntbreekt = !(await actieTabelBestaat())
   const uitvoeren = opties.uitvoeren && schakelaarAan('REFERRAL_TERUGSTORTEN') && !sqlOntbreekt
   const ronde: PlanRonde = { uitvoeren, sqlOntbreekt, opMeeloop: false, voornemens: [], fouten: [] }
+  /** Tegoed van aanbrengers heeft een eigen schakelaar erbovenop. */
+  const tegoedUitvoeren = uitvoeren && schakelaarAan('REFERRAL_TEGOED_VERREKENEN')
 
   const referrals = await haalAlleRijen<Referral>((van, tot) =>
     billingDb.from('arnobot_referrals').select('*').order('id', { ascending: true }).range(van, tot))
@@ -210,7 +212,7 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
   }
 
   async function reserveer(v: Voornemen, invoer: (omschrijving: string) => ReserveerInvoer): Promise<boolean> {
-    if (!uitvoeren || v.stand !== 'klaar') return false
+    if (!uitvoeren || v.stand !== 'klaar' || (v.soort === 'tegoed_terugstorten' && !tegoedUitvoeren)) return false
     const omschrijving = omschrijvingen[v.soort as ReserveerInvoer['soort']]
     if (!omschrijving) {
       Object.assign(v, { stand: 'niet-automatisch', reden: 'de omschrijving die de klant te zien krijgt is niet vastgesteld' })
@@ -378,7 +380,7 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
           return
         }
       }
-      if (v.stand === 'klaar' && uitvoeren && omschrijvingen.tegoed_terugstorten) await stelVast()
+      if (v.stand === 'klaar' && tegoedUitvoeren && omschrijvingen.tegoed_terugstorten) await stelVast()
       await reserveer(v, omschrijving => ({ actieId: randomUUID(), userId, betalingId: b.id, omschrijving, soort: 'tegoed_terugstorten', ...extra }))
       // Wat hier (straks) op gaat, is niet nog eens beschikbaar voor een volgende betaling.
       if (v.stand !== 'niet-automatisch') {
@@ -455,7 +457,7 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
     if (onvolledig) {
       const waarom = 'tegoed lijkt te vervallen, maar de voorgeschiedenis van dit teamlid is niet volledig (met de hand betaald, gratis geweest of als manager teamfacturen betaald)'
       nieuw({ soort: 'verval_teamlid', userId, nettoCent: vervalCent, stand: 'niet-automatisch', reden: `${waarom}: de eigenaar beslist op /bot/admin/referrals`, opMeeloop: ronde.opMeeloop })
-      if (!uitvoeren || !omschrijvingen.tegoed_terugstorten) return
+      if (!tegoedUitvoeren || !omschrijvingen.tegoed_terugstorten) return
       for (const t of teVervallen) {
         const { data, error } = await billingDb.rpc('referral_boek', {
           p_regel: { soort: 'handwerk', event_key: `verval-handwerk:${t.referral_id}`, referral_id: t.referral_id, aanbrenger_user_id: userId, klant_user_id: t.klant_user_id, reden: waarom },
@@ -466,7 +468,7 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
     }
     const v = nieuw({ soort: 'verval_teamlid', userId, nettoCent: vervalCent, stand: 'vervalt', reden: 'past niet meer in zijn eigen betalingen', opMeeloop: ronde.opMeeloop })
     // Definitief: alleen als terugstorten ook echt ingericht is (schakelaar, SQL en vastgestelde klanttekst).
-    if (!uitvoeren || !omschrijvingen.tegoed_terugstorten) return
+    if (!tegoedUitvoeren || !omschrijvingen.tegoed_terugstorten) return
     await stelVast()
     for (const t of teVervallen) {
       const { data, error } = await billingDb.rpc('referral_boek', { p_regel: { soort: 'verval', referral_id: t.referral_id, reden: 'teamlid: past niet meer in eigen betalingen' } })

@@ -7,6 +7,7 @@ import {
   TERMIJN_NA_PROEF_DAGEN, TERMIJN_NA_TEAMPROEF_DAGEN, VERVAL_NA_BLOKKADE_DAGEN, VERVAL_NA_EINDE_DAGEN, maandNettoCent, metJaarKorting, tegoedStatus, tijdigMomentTeam, vervalMoment,
   vervallenNaAanmelding,
   type BetaaldePeriode, type Dekking,
+  kwalificatie,
 } from './referralRegels'
 import { TEAMBEGIN_ONZEKER, beoordeelReferral, type AanbrengerFeiten, type Beoordeling, type KlantFeiten } from './referralBeoordeling'
 import { isTeruggedraaid, vervalBedrag } from './referralSaldo'
@@ -69,6 +70,37 @@ export type ReferralStand =
   | { referral: ReferralRij; stand: 'handwerk_open'; reden: string }
   | { referral: ReferralRij; stand: 'beoordeeld'; beoordeling: Beoordeling }
   | { referral: ReferralRij; stand: 'fout'; fout: string }
+
+/**
+ * De enige plek waar een regel het grootboek in gaat. Meeloopregels: een gewone invoeging. Echte regels: altijd via de
+ * databasefunctie referral_boek, achter hetzelfde slot per aanbrenger als reserveren en terugdraaien. Zij rekent het
+ * bedrag van een verval zelf uit; dat nemen we over.
+ */
+async function bewaarRegel(regel: GrootboekRegel): Promise<'geschreven' | 'bestond'> {
+  if (!regel.meeloop) {
+    const { data, error } = await billingDb.rpc('referral_boek', { p_regel: regel })
+    if (error) throw new Error(`grootboekregel niet opgeslagen: ${error.message}`)
+    const uit = data as { ok?: boolean; reden?: string; bestaand?: boolean; netto_cent?: number | null } | null
+    if (!uit?.ok) throw new Error(`grootboekregel geweigerd: ${uit?.reden ?? 'onbekend'}`)
+    if (uit.bestaand) return 'bestond'
+    if (regel.soort === 'verval') regel.netto_cent = uit.netto_cent ?? 0
+    return 'geschreven'
+  }
+  const invoer = { ...regel }
+  let { error } = await billingDb.from('arnobot_referral_grootboek').insert(invoer)
+  // Deze kolommen bestaan pas na docs/sql/2026-11-26-referral-verrekening.sql: zolang die niet is uitgevoerd gaat de
+  // regel er zonder in. Er wordt per fout een kolom genoemd. Gaat het om iets anders, dan faalt de volgende poging ook.
+  for (let poging = 0; error && poging < 2; poging++) {
+    const kolom = (['bron_ids', 'verdiend_at'] as const).find(k => invoer[k] && error!.message.includes(k))
+    if (!kolom) break
+    delete invoer[kolom]
+    error = (await billingDb.from('arnobot_referral_grootboek').insert({ ...invoer })).error
+  }
+  if (!error) return 'geschreven'
+  // 23505: een gelijktijdige run was ons voor.
+  if ((error as { code?: string }).code === '23505') return 'bestond'
+  throw new Error(`grootboekregel niet opgeslagen: ${error.message}`)
+}
 
 export interface GrootboekRun {
   migratieOntbreekt: boolean
@@ -538,6 +570,17 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
   }
   const schrijf = opties.schrijf && !run.migratieOntbreekt
 
+  // In de echte stand mag er geen meeloopregel meer bestaan: dan is de overgang in de database niet gedaan, en zou alles
+  // opnieuw beoordeeld worden, ook wat de eigenaar met de hand besliste.
+  if (!MEELOOP && !run.migratieOntbreekt) {
+    const oud = await billingDb.from('arnobot_referral_grootboek').select('event_key').eq('meeloop', true).limit(1)
+    if (oud.error) throw new Error(`grootboek ophalen mislukt: ${oud.error.message}`)
+    if (oud.data?.length) {
+      run.fouten.push('REFERRAL_GROOTBOEK_ECHT staat aan terwijl er nog meeloopregels zijn: voer eerst de overgang in de database uit. Er is niets beoordeeld of geschreven.')
+      return run
+    }
+  }
+
   const referrals = await haalAlleRijen<ReferralRij>((van, tot) =>
     billingDb.from('arnobot_referrals').select('id, referrer_user_id, referred_user_id, created_at')
       .order('id', { ascending: true }).range(van, tot))
@@ -546,23 +589,7 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
   const voegToe = async (regel: Omit<GrootboekRegel, 'meeloop'>) => {
     if (bekend.has(regel.event_key)) return
     const volledig: GrootboekRegel = { ...regel, meeloop: MEELOOP }
-    if (schrijf) {
-      const invoer = { ...volledig }
-      let { error } = await billingDb.from('arnobot_referral_grootboek').insert(invoer)
-      // Deze kolommen bestaan pas na docs/sql/2026-11-26-referral-verrekening.sql: zolang die niet is uitgevoerd gaat de
-      // regel er zonder in. Er wordt per fout een kolom genoemd. Gaat het om iets anders, dan faalt de volgende poging ook.
-      for (let poging = 0; error && poging < 2; poging++) {
-        const kolom = (['bron_ids', 'verdiend_at'] as const).find(k => invoer[k] && error!.message.includes(k))
-        if (!kolom) break
-        delete invoer[kolom]
-        error = (await billingDb.from('arnobot_referral_grootboek').insert({ ...invoer })).error
-      }
-      // 23505: een gelijktijdige run was ons voor.
-      if (error) {
-        if ((error as { code?: string }).code === '23505') return
-        throw new Error(`grootboekregel niet opgeslagen: ${error.message}`)
-      }
-    }
+    if (schrijf && await bewaarRegel(volledig) === 'bestond') return
     bekend.add(regel.event_key)
     run.regels.push(volledig)
     run.nieuw.push(volledig)
@@ -692,8 +719,27 @@ export async function legBesluitVast(referralId: string, invoer: HandmatigBeslui
     referral_id: referralId, aanbrenger_user_id: open.aanbrenger_user_id, klant_user_id: open.klant_user_id,
     netto_cent: nettoCent, reden: `${HANDMATIG}${toelichting.slice(0, 300)}`,
     klant_maand_netto_cent: invoer.besluit === 'toekennen' ? nettoCent : null,
+    ...(invoer.besluit === 'toekennen' ? await bewijsOnderBesluit(open.klant_user_id) : {}),
   }
   return schrijfBesluit(regel, regels)
+}
+
+/**
+ * Haalt de klant op grond van zijn betalingen zelf de drempel, dan krijgt ook een handmatige toekenning die betalingen
+ * mee: alleen dan kan zij later uitbetaald en teruggedraaid worden. Niet te bepalen is geen reden om te weigeren.
+ */
+async function bewijsOnderBesluit(klantId: string): Promise<Pick<GrootboekRegel, 'bron_ids' | 'verdiend_at'>> {
+  try {
+    const dossier = await laadDossier(klantId)
+    if (!dossier) return {}
+    const nu = new Date()
+    const feiten = await klantFeiten(dossier, null, nu)
+    const gehaald = kwalificatie(feiten.periodes, nu, feiten.gratisPeriodes)
+    const bronnen = gehaald?.bronnen.map(p => p.bronId).filter((x): x is string => !!x) ?? []
+    return bronnen.length ? { bron_ids: bronnen, verdiend_at: gehaald!.verdiendAt } : {}
+  } catch {
+    return {}
+  }
 }
 
 const VERVAL_VRAAG = 'verval-handwerk:'
@@ -737,10 +783,10 @@ const opgeslagenRegels = () => haalAlleRijen<GrootboekRegel>((van, tot) =>
     .order('created_at', { ascending: true }).order('id').range(van, tot))
 
 async function schrijfBesluit(regel: GrootboekRegel, regels: GrootboekRegel[]): Promise<BesluitUitkomst> {
-  const { error } = await billingDb.from('arnobot_referral_grootboek').insert(regel)
-  if (error) {
-    if ((error as { code?: string }).code === '23505') return { ok: false, status: 409, fout: 'Over deze referral is al beslist' }
-    return { ok: false, status: 500, fout: `Opslaan mislukt: ${error.message}` }
+  try {
+    if (await bewaarRegel(regel) === 'bestond') return { ok: false, status: 409, fout: 'Over deze referral is al beslist' }
+  } catch (e) {
+    return { ok: false, status: 500, fout: `Opslaan mislukt: ${e instanceof Error ? e.message : String(e)}` }
   }
   return { ok: true, regel, mijlpalen: nieuweMijlpalen([...regels, regel], [regel]) }
 }
@@ -755,10 +801,10 @@ export function saldoPerAanbrenger(regels: GrootboekRegel[]): Map<string, number
 export function regelTekst(r: GrootboekRegel, aanbrenger: string, klant: string): string {
   const bedrag = r.netto_cent === null ? null : `${formatEuro(Math.abs(r.netto_cent))} excl. btw`
   switch (r.soort) {
-    case 'toekenning': return `Zou toekennen aan ${aanbrenger} voor ${klant}: ${bedrag ?? 'bedrag volgt'} (${r.reden})`
-    case 'afwijzing': return `Zou niets toekennen aan ${aanbrenger} voor ${klant}: ${r.reden}`
-    case 'vaststelling': return `Bedrag zou vaststaan voor ${aanbrenger} (klant ${klant}): ${bedrag}`
-    case 'verval': return `Zou vervallen bij ${aanbrenger} (klant ${klant}): ${bedrag} (${r.reden})`
+    case 'toekenning': return `${r.meeloop ? 'Zou toekennen' : 'Toegekend'} aan ${aanbrenger} voor ${klant}: ${bedrag ?? 'bedrag volgt'} (${r.reden})`
+    case 'afwijzing': return `${r.meeloop ? 'Zou niets toekennen' : 'Niets toegekend'} aan ${aanbrenger} voor ${klant}: ${r.reden}`
+    case 'vaststelling': return `${r.meeloop ? 'Bedrag zou vaststaan' : 'Bedrag staat vast'} voor ${aanbrenger} (klant ${klant}): ${bedrag}`
+    case 'verval': return `${r.meeloop ? 'Zou vervallen' : 'Vervallen'} bij ${aanbrenger} (klant ${klant}): ${bedrag} (${r.reden})`
     case 'handwerk': return `Zelf beoordelen: ${aanbrenger}, klant ${klant}: ${r.reden}`
     case 'verrekening': return `Verrekend bij ${aanbrenger} (klant ${klant}): ${bedrag} (${r.reden})`
     case 'vrijgave': return `Verrekening teruggezet bij ${aanbrenger} (klant ${klant}): ${bedrag} (${r.reden})`

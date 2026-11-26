@@ -157,6 +157,7 @@ async function voerAllesUit() {
 beforeEach(async () => {
   vi.clearAllMocks()
   vi.stubEnv('REFERRAL_TERUGSTORTEN', 'true')
+  vi.stubEnv('REFERRAL_TEGOED_VERREKENEN', 'true')
   vi.stubEnv('REFERRAL_CREDITNOTA', '')
   vi.stubEnv('CRON_SECRET', 's')
   h.db ??= maakKetenDb()
