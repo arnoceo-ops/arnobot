@@ -3,6 +3,7 @@ import { zetGratisKenmerk } from '@/lib/referralKenmerken'
 import { billingDb } from './db'
 import { mollieNaarCenten, formatEuro } from './geld'
 import { archiveerBetaalLink, lijstBetaalLinkBetalingen, type MolliePayment } from './mollie'
+import { isVolledigTerugbetaald } from './terugbetaling'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { ontblokkeerNaBetaling } from '@/lib/teamOpzegging'
 import { TEST_TEAM_IDS } from '@/lib/internalTestAccounts'
@@ -78,11 +79,11 @@ export async function verwerkTeamNaBetaling(rij: TeamFactuurRow, betalingen: Mol
   const oudTeruggeboekt = rij.teruggeboekt_cent ?? 0
   if (terugbetaald === oudTerugbetaald && teruggeboekt === oudTeruggeboekt) return false
 
-  const volledig = terugbetaald >= rij.bedrag_cent || teruggeboekt > 0
+  const volledig = isVolledigTerugbetaald(rij, terugbetaald) || teruggeboekt > 0
   const draaiNuTerug = volledig && !rij.reversed_at
   // Mislukt of geannuleerd na een volledige terugdraaiing door Mollie: het geld is er toch, de factuur is weer betaald.
   // Een met de hand gezette terugdraaiing (bedragen 0) blijft staan.
-  const wasVolledig = oudTerugbetaald >= rij.bedrag_cent || oudTeruggeboekt > 0
+  const wasVolledig = isVolledigTerugbetaald(rij, oudTerugbetaald) || oudTeruggeboekt > 0
   const herstel = !volledig && wasVolledig && !!rij.reversed_at
   const gedaald = terugbetaald < oudTerugbetaald || teruggeboekt < oudTeruggeboekt
 
@@ -106,6 +107,10 @@ export async function verwerkTeamNaBetaling(rij: TeamFactuurRow, betalingen: Mol
   // De factuur staat weer op betaald: de manager heeft dus toch betaald.
   if (herstel && !vervangen) await beeindigGratisVanManager(rij.team_id)
 
+  // Alleen referralgeld erbij: dat regelt de referralautomatisering zelf, met een eigen creditnota.
+  const referralCent = rij.referral_refund_cent ?? 0
+  if (!volledig && !gedaald && teruggeboekt === oudTeruggeboekt && terugbetaald <= referralCent) return true
+
   let wat: string
   let actie: string
   if (gedaald) {
@@ -121,7 +126,7 @@ export async function verwerkTeamNaBetaling(rij: TeamFactuurRow, betalingen: Mol
       ? 'De factuur staat op teruggedraaid. De toegang van het team is niet veranderd. Maak de creditnota met de hand in Moneybird en beslis zelf over blokkeren.'
       : 'Maak de creditnota voor dit deel met de hand in Moneybird.'
   }
-  await notifyTelegram(`${wat} (arno.bot)\n\nFactuur: ${rij.id}\nBetaling: ${mp.id}\nTerugbetaald: ${formatEuro(terugbetaald)}\nTeruggeboekt: ${formatEuro(teruggeboekt)}\n${actie}`)
+  await notifyTelegram(`${wat} (arno.bot)\n\nFactuur: ${rij.id}\nBetaling: ${mp.id}\nTerugbetaald: ${formatEuro(terugbetaald)}\nTeruggeboekt: ${formatEuro(teruggeboekt)}\n${actie}${referralCent > 0 ? `\nOp deze factuur is ${formatEuro(referralCent)} referralgeld teruggestort. Dat deel krijgt een eigen creditnota: crediteer alleen de rest.` : ''}`)
   return true
 }
 

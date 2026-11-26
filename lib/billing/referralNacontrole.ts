@@ -1,10 +1,11 @@
 import { billingDb, type PayRow } from './db'
 import { MEELOOP, type GrootboekRegel } from './referralGrootboek'
 import { isTeruggedraaid, restVanToekenning, toegekendCent } from './referralSaldo'
-import { isVolledigTerugbetaald } from './terugbetaling'
+import { heeftAndereTerugbetaling, isVolledigTerugbetaald } from './terugbetaling'
 import { haalBetaling, lijstBetalingTerugbetalingen } from './mollie'
 import { formatEuro, mollieNaarCenten } from './geld'
 import { actieTabelBestaat } from './referralAutomatisch'
+import { isTeamDoel, leesDoel } from './referralDoel'
 import type { ActieRij } from './referralTerugstorten'
 import type { TeamFactuurRow } from './teamFacturatie'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
@@ -96,7 +97,7 @@ export async function draaiNacontrole(nu: Date = new Date(), opties: { portie?: 
     }
     onderdelen.push({ sleutel: `t:${t.referral_id}`, toekenning: t })
   }
-  for (const a of acties.filter(a => a.doel_soort === 'betaling' && !a.doel_id.startsWith('handmatig:') && ['verzonden', 'bevestigd', 'vastgelopen'].includes(a.status))) {
+  for (const a of acties.filter(a => ['betaling', 'teamfactuur'].includes(a.doel_soort) && !a.doel_id.startsWith('handmatig:') && ['verzonden', 'bevestigd', 'vastgelopen'].includes(a.status))) {
     if (binnenTermijn(a.created_at) && !isInternalTestUser(a.user_id)) onderdelen.push({ sleutel: `a:${a.id}`, actie: a })
   }
   onderdelen.sort((a, b) => (a.sleutel < b.sleutel ? -1 : 1))
@@ -119,7 +120,7 @@ export async function draaiNacontrole(nu: Date = new Date(), opties: { portie?: 
     const { data, error } = await billingDb.from('arnobot_team_facturen').select('*').eq('id', bronId).maybeSingle<TeamFactuurRow>()
     if (error) throw new Error(`teamfactuur ophalen mislukt: ${error.message}`)
     if (!data) throw new Error(`teamfactuur ${bronId} niet gevonden`)
-    return { stand: data.reversed_at ? 'terug' : data.status === 'paid' ? 'staat' : 'onduidelijk', chargeback: false, deelsTerug: !data.reversed_at && (data.terugbetaald_cent ?? 0) > 0 }
+    return { stand: data.reversed_at ? 'terug' : data.status === 'paid' ? 'staat' : 'onduidelijk', chargeback: false, deelsTerug: !data.reversed_at && heeftAndereTerugbetaling(data, data.terugbetaald_cent ?? 0) }
   }
 
   async function boek(t: GrootboekRegel, soort: 'terugdraaiing' | 'herstel', reden: string): Promise<void> {
@@ -199,10 +200,12 @@ export async function draaiNacontrole(nu: Date = new Date(), opties: { portie?: 
   }
 
   async function controleerActie(a: ActieRij): Promise<void> {
-    const { data, error } = await billingDb.from('arnobot_payments').select('*').eq('id', a.doel_id).eq('user_id', a.user_id).maybeSingle<PayRow>()
-    if (error) throw new Error(`betaling ophalen mislukt: ${error.message}`)
+    const data = await leesDoel(a)
     if (!data) return
-    const s = await betaling(data)
+    // Bij een teamfactuur legt de teamnacontrole vast wat er bij Mollie terug is (teamBetalingen.ts).
+    const s: PaymentStand = isTeamDoel(a)
+      ? { stand: data.terugbetaling_verwerkt_at ? 'terug' : 'staat', chargeback: data.teruggeboekt_cent > 0, deelsTerug: false }
+      : await betaling(data)
     if (s.stand !== 'terug') return
     if (s.chargeback) {
       ronde.meldingen.push({ sleutel: `chargeback:${a.id}`, tekst: `Chargeback op een betaling waarop referralgeld is teruggestort (${data.mollie_payment_id}, ${formatEuro(a.bruto_cent)}, actie ${a.id}). Mogelijk is er meer dan 100 procent terug. Er is niets teruggeboekt; kijk in Mollie.` })

@@ -8,7 +8,8 @@
 -- De code werkt ook zolang dit niet is uitgevoerd. Uitvoeren zet niets aan: geld verplaatsen vraagt daarnaast een
 -- env-schakelaar die exact op 'true' staat (lib/billing/referralSchakelaars.ts).
 --
--- Eerder nodig: 2026-11-25-referral-fundament.sql en 2026-11-25-referral-grootboek.sql.
+-- Eerder nodig: 2026-11-25-referral-fundament.sql, 2026-11-25-referral-grootboek.sql,
+-- 2026-10-13-team-facturatie.sql en 2026-11-25-referral-teambetalingen.sql.
 --
 -- De kolomtypes van arnobot_referrals staan niet in de repo. Daarom vergelijkt alles hieronder die kolommen als tekst.
 -- De controlequery aan het eind laat zien welk type het werkelijk is.
@@ -23,6 +24,10 @@ begin
   if not exists (select 1 from information_schema.columns
       where table_schema = 'public' and table_name = 'arnobot_payments' and column_name = 'referral_refund_cent') then
     raise exception 'Voer eerst docs/sql/2026-11-25-referral-fundament.sql uit';
+  end if;
+  if not exists (select 1 from information_schema.columns
+      where table_schema = 'public' and table_name = 'arnobot_team_facturen' and column_name = 'reversed_at') then
+    raise exception 'Voer eerst docs/sql/2026-11-25-referral-teambetalingen.sql uit';
   end if;
   if to_regclass('public.arnobot_referrals') is null then
     raise exception 'De tabel arnobot_referrals ontbreekt';
@@ -106,6 +111,10 @@ create table if not exists public.arnobot_referral_gratis_periodes (
 create index if not exists referral_gratis_periodes_user_idx on public.arnobot_referral_gratis_periodes (user_id);
 alter table public.arnobot_referral_gratis_periodes enable row level security;
 
+-- Referralgeld dat op een teamfactuur is of wordt teruggestort, zoals referral_refund_cent op arnobot_payments.
+alter table public.arnobot_team_facturen
+  add column if not exists referral_refund_cent integer not null default 0;
+
 -- Zolang dit in de toekomst ligt komt er geen nieuwe reservering op deze betaling: de beheerder of de klant zelf is
 -- hem aan het terugbetalen.
 alter table public.arnobot_payments
@@ -175,9 +184,27 @@ create or replace function public.referral_betaling_ruimte(p_user text, p_doel t
 language plpgsql security invoker set search_path = public as $$
 declare
   b record;
+  f record;
 begin
   select * into b from arnobot_payments p where p.id::text = p_doel and p.user_id::text = p_user for update;
-  if not found then reden := 'betaling_onbekend'; return; end if;
+  if not found then
+    -- Een teamfactuur: alleen van de manager van dat team.
+    select * into f from arnobot_team_facturen x where x.id::text = p_doel
+      and exists (select 1 from arnobot_teams t where t.id = x.team_id and t.manager_id::text = p_user) for update;
+    if not found then reden := 'betaling_onbekend'; return; end if;
+    betaald_at := f.betaald_at;
+    soort := case when f.soort = 'tussentijds' then 'upgrade' else 'verlenging' end;
+    if f.status is distinct from 'paid' or f.betaald_at is null then reden := 'niet_betaald';
+    elsif f.reversed_at is not null then reden := 'terugbetaald';
+    elsif coalesce(f.teruggeboekt_cent, 0) <> 0 then reden := 'teruggeboekt';
+    elsif f.mollie_payment_id is null then reden := 'per_bank';
+    elsif coalesce(f.terugbetaald_cent, 0) > f.referral_refund_cent then reden := 'andere_terugbetaling';
+    else
+      ruimte_cent := f.bedrag_cent - greatest(coalesce(f.terugbetaald_cent, 0), f.referral_refund_cent);
+      if ruimte_cent <= 0 then reden := 'geen_ruimte'; end if;
+    end if;
+    return;
+  end if;
   betaald_at := b.betaald_at;
   soort := b.soort;
   if b.status is distinct from 'paid' or b.betaald_at is null then reden := 'niet_betaald';
@@ -193,6 +220,11 @@ begin
     if ruimte_cent <= 0 then reden := 'geen_ruimte'; end if;
   end if;
 end $$;
+
+create or replace function public.referral_doel_soort(p_doel text) returns text
+language sql stable security invoker set search_path = public as $$
+  select case when exists (select 1 from arnobot_team_facturen f where f.id::text = p_doel) then 'teamfactuur' else 'betaling' end
+$$;
 
 -- ── 1. Tegoed reserveren ────────────────────────────────────────────────────────────────────────────────────────────
 -- Alleen echte regels (meeloop = false). Kan het niet, dan verandert er niets en zegt 'reden' waarom.
@@ -281,7 +313,7 @@ begin
   if v.bruto_cent <= 0 or v.verbruikt_netto_cent <= 0 then return jsonb_build_object('ok', false, 'reden', 'geen_saldo'); end if;
 
   insert into arnobot_referral_acties (id, soort, user_id, doel_soort, doel_id, bruto_cent, netto_cent, gegevens)
-  values (p_actie, 'tegoed_terugstorten', p_user, 'betaling', p_doel, v.bruto_cent, v.verbruikt_netto_cent,
+  values (p_actie, 'tegoed_terugstorten', p_user, public.referral_doel_soort(p_doel), p_doel, v.bruto_cent, v.verbruikt_netto_cent,
     coalesce(p_gegevens, '{}'::jsonb));
 
   nog := v.verbruikt_netto_cent;
@@ -299,14 +331,15 @@ begin
 
   -- In dezelfde transactie: zo ziet de betaalverwerking de terugstorting nooit als volledige terugbetaling.
   update arnobot_payments set referral_refund_cent = coalesce(referral_refund_cent, 0) + v.bruto_cent where id::text = p_doel;
+  update arnobot_team_facturen set referral_refund_cent = referral_refund_cent + v.bruto_cent where id::text = p_doel;
 
   return jsonb_build_object('ok', true, 'bestaand', false, 'status', 'gereserveerd', 'bruto_cent', v.bruto_cent,
     'netto_cent', v.verbruikt_netto_cent);
 end $$;
 
 -- ── 2. Voordeel van de nieuwe klant reserveren (geen saldo) ─────────────────────────────────────────────────────────
--- Nu alleen jaarkorting en gratis maand, terug te storten op een betaling. De teammaand hoort bij de teamfacturatie
--- (nog niet gebouwd) en wordt hier geweigerd.
+-- Jaarkorting en gratis maand, terug te storten op een betaling of op een betaalde teamfactuur (de gratis teammaand is
+-- een voordeel_maand of voordeel_jaar op een teamfactuur).
 create or replace function public.referral_reserveer_voordeel(p_actie uuid, p_user text, p_soort text, p_referral text,
   p_doel text, p_bruto integer, p_gegevens jsonb default '{}'::jsonb)
 returns jsonb language plpgsql security invoker set search_path = public as $$
@@ -356,8 +389,10 @@ begin
   netto := public.referral_rond(p_bruto / (1::float8 + 21::float8 / 100::float8));
 
   insert into arnobot_referral_acties (id, soort, user_id, referral_id, doel_soort, doel_id, bruto_cent, netto_cent, gegevens)
-  values (p_actie, p_soort, p_user, p_referral, 'betaling', p_doel, p_bruto, netto, coalesce(p_gegevens, '{}'::jsonb));
+  values (p_actie, p_soort, p_user, p_referral, public.referral_doel_soort(p_doel), p_doel, p_bruto, netto,
+    coalesce(p_gegevens, '{}'::jsonb));
   update arnobot_payments set referral_refund_cent = coalesce(referral_refund_cent, 0) + p_bruto where id::text = p_doel;
+  update arnobot_team_facturen set referral_refund_cent = referral_refund_cent + p_bruto where id::text = p_doel;
 
   return jsonb_build_object('ok', true, 'bestaand', false, 'status', 'gereserveerd', 'bruto_cent', p_bruto, 'netto_cent', netto);
 end $$;
@@ -431,6 +466,9 @@ begin
     if a.doel_soort = 'betaling' and a.bruto_cent > 0 then
       update arnobot_payments set referral_refund_cent = greatest(0, coalesce(referral_refund_cent, 0) - a.bruto_cent)
         where id::text = a.doel_id and user_id::text = a.user_id;
+    elsif a.doel_soort = 'teamfactuur' and a.bruto_cent > 0 then
+      update arnobot_team_facturen set referral_refund_cent = greatest(0, referral_refund_cent - a.bruto_cent)
+        where id::text = a.doel_id;
     end if;
   end if;
 
@@ -824,12 +862,19 @@ begin
         update arnobot_payments set referral_refund_cent = least(bedrag_cent, coalesce(referral_refund_cent, 0) + a.bruto_cent)
           where id::text = a.doel_id and user_id::text = a.user_id;
       end if;
+    elsif a.doel_soort = 'teamfactuur' and a.bruto_cent > 0 then
+      select * into b from arnobot_team_facturen x where x.id::text = a.doel_id for update;
+      if found then
+        afgekapt := b.referral_refund_cent + a.bruto_cent > b.bedrag_cent;
+        update arnobot_team_facturen set referral_refund_cent = least(bedrag_cent, referral_refund_cent + a.bruto_cent)
+          where id::text = a.doel_id;
+      end if;
     end if;
   end if;
 
   update arnobot_referral_acties set status = 'bevestigd', mollie_refund_id = p_refund_id, bezig_tot = null, melding = null,
     fout = 'met de hand bevestigd: ' || p_reden, updated_at = now(),
-    credit_status = case when doel_soort = 'betaling' and bruto_cent > 0 then 'nodig' else 'nvt' end,
+    credit_status = case when doel_soort in ('betaling', 'teamfactuur') and bruto_cent > 0 then 'nodig' else 'nvt' end,
     gegevens = gegevens || jsonb_build_object('boeking_teruggezet', false, 'bevestigd_met_de_hand', true)
     where id = p_actie;
   return jsonb_build_object('ok', true, 'bestaand', false, 'afgekapt', afgekapt);
@@ -909,7 +954,8 @@ begin
       'referral_betaling_ruimte', 'referral_reserveer', 'referral_reserveer_voordeel', 'referral_vrijgeven', 'referral_boek',
       'referral_claim', 'referral_voor_terugbetaling', 'referral_boeking_terug', 'referral_ongedaan',
       'referral_handmatig_voordeel', 'referral_handmatig_tegoed', 'referral_handmatig_betaling', 'referral_teruggedraaid',
-      'referral_actie_teruggedraaid', 'referral_markeer_versturen', 'referral_geef_teruggedraaid_vrij', 'referral_bevestig_met_de_hand')
+      'referral_actie_teruggedraaid', 'referral_markeer_versturen', 'referral_geef_teruggedraaid_vrij', 'referral_bevestig_met_de_hand',
+      'referral_doel_soort')
   loop
     execute format('revoke execute on function %s from public, anon, authenticated', f.naam);
     execute format('grant execute on function %s to service_role', f.naam);
@@ -930,16 +976,18 @@ with functies as (
     'referral_betaling_ruimte', 'referral_reserveer', 'referral_reserveer_voordeel', 'referral_vrijgeven', 'referral_boek',
     'referral_claim', 'referral_voor_terugbetaling', 'referral_boeking_terug', 'referral_ongedaan',
     'referral_handmatig_voordeel', 'referral_handmatig_tegoed', 'referral_handmatig_betaling', 'referral_teruggedraaid',
-      'referral_actie_teruggedraaid', 'referral_markeer_versturen', 'referral_geef_teruggedraaid_vrij', 'referral_bevestig_met_de_hand')
+      'referral_actie_teruggedraaid', 'referral_markeer_versturen', 'referral_geef_teruggedraaid_vrij', 'referral_bevestig_met_de_hand',
+      'referral_doel_soort')
 )
 select 1 as nr, 'twee nieuwe tabellen met RLS aan' as controle, count(*)::text as uitkomst, count(*) = 2 as goed
   from pg_tables where schemaname = 'public' and rowsecurity
     and tablename in ('arnobot_referral_acties', 'arnobot_referral_gratis_periodes')
 union all
-select 2, 'zeven nieuwe kolommen op grootboek en betalingen', count(*)::text, count(*) = 7
+select 2, 'acht nieuwe kolommen op grootboek, betalingen en teamfacturen', count(*)::text, count(*) = 8
   from information_schema.columns where table_schema = 'public'
     and ((table_name = 'arnobot_referral_grootboek' and column_name in ('bron_ids', 'verdiend_at', 'actie_id', 'hoort_bij', 'mail_at'))
-      or (table_name = 'arnobot_payments' and column_name in ('referral_geblokkeerd_tot', 'referral_bank_cent')))
+      or (table_name = 'arnobot_payments' and column_name in ('referral_geblokkeerd_tot', 'referral_bank_cent'))
+      or (table_name = 'arnobot_team_facturen' and column_name = 'referral_refund_cent'))
 union all
 select 3, 'unieke indexen op de acties', count(*)::text, count(*) = 2
   from pg_indexes where schemaname = 'public' and indexname in ('referral_een_voordeel', 'referral_een_actie_per_doel')
@@ -948,9 +996,9 @@ select 4, 'soortcontrole kent verrekening en herstel', count(*)::text, count(*) 
   from pg_constraint where conrelid = 'public.arnobot_referral_grootboek'::regclass and contype = 'c'
     and pg_get_constraintdef(oid) like '%verrekening%' and pg_get_constraintdef(oid) like '%herstel%'
 union all
-select 5, 'twintig functies, geen enkele security definer', count(*)::text, count(*) = 20 and not bool_or(prosecdef) from functies
+select 5, 'eenentwintig functies, geen enkele security definer', count(*)::text, count(*) = 21 and not bool_or(prosecdef) from functies
 union all
-select 6, 'anon en authenticated mogen geen functie uitvoeren, service_role alle', count(*)::text, count(*) = 20
+select 6, 'anon en authenticated mogen geen functie uitvoeren, service_role alle', count(*)::text, count(*) = 21
   from functies where not has_function_privilege('anon', oid, 'execute') and not has_function_privilege('authenticated', oid, 'execute')
     and has_function_privilege('service_role', oid, 'execute')
 union all

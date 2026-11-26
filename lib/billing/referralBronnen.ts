@@ -26,16 +26,16 @@ function kenmerk(metadata: unknown): string | null {
 }
 
 /** Staat de betaling bij Mollie? Alleen terugbetalingen van onze eigen referralacties op deze betaling mogen er zijn. */
-async function bewijsBijMollie(mollieId: string, betalingRijId: string | null): Promise<Bewijs> {
+async function bewijsBijMollie(mollieId: string, doelId: string): Promise<Bewijs> {
   if (!mollieIngeschakeld()) return nee('Mollie is niet ingeschakeld')
   const mp = await haalBetaling(mollieId)
   if (mp.status !== 'paid') return nee(`${mollieId} staat bij Mollie op ${mp.status}`)
   if (mp.amountChargedBack && mollieNaarCenten(mp.amountChargedBack.value) > 0) return nee(`${mollieId} is teruggeboekt`)
   const lopend = (await lijstBetalingTerugbetalingen(mollieId)).filter(r => !dood(r.status))
   let eigen: { id: string; mollie_refund_id: string | null }[] = []
-  if (betalingRijId && lopend.length) {
+  if (lopend.length) {
     const { data, error } = await billingDb.from('arnobot_referral_acties').select('id, mollie_refund_id')
-      .eq('doel_id', betalingRijId).in('status', ['bezig', 'verzonden', 'bevestigd', 'vastgelopen']).limit(100)
+      .eq('doel_id', doelId).in('status', ['bezig', 'verzonden', 'bevestigd', 'vastgelopen']).limit(100)
     if (error) return nee('de referralacties zijn niet te lezen')
     eigen = (data ?? []) as typeof eigen
   }
@@ -61,11 +61,11 @@ async function bewijs(bronId: string, userId: string): Promise<Bewijs> {
   const { data, error } = await billingDb.from('arnobot_team_facturen').select('*').eq('id', bronId).maybeSingle<TeamFactuurRow>()
   if (error) return nee(`teamfactuur ${bronId} is niet te lezen`)
   if (!data) return nee(`teamfactuur ${bronId} staat niet in onze database`)
-  if (data.status !== 'paid' || data.reversed_at || (data.terugbetaald_cent ?? 0) > 0 || (data.teruggeboekt_cent ?? 0) > 0) {
+  if (data.status !== 'paid' || data.reversed_at || heeftAndereTerugbetaling(data, data.terugbetaald_cent ?? 0) || (data.teruggeboekt_cent ?? 0) > 0) {
     return nee(`teamfactuur ${bronId} staat niet (volledig) betaald`)
   }
   if (!data.mollie_payment_id) return nee(`teamfactuur ${bronId} heeft geen Mollie-betaling (per bank): niet te controleren`)
-  return bewijsBijMollie(data.mollie_payment_id, null)
+  return bewijsBijMollie(data.mollie_payment_id, data.id)
 }
 
 export type Bewijzer = (bronnen: string[], userId: string) => Promise<Bewijs>

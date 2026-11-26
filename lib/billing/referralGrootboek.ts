@@ -197,7 +197,8 @@ export const eigenBetalingStaat = (b: Betaling) =>
 export const eigenBetalingTelt = (b: Betaling) => eigenBetalingStaat(b) && !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0)
 
 const teamFactuurStaat = (f: TeamFactuurRow) => f.status === 'paid' && !f.reversed_at && !(f.teruggeboekt_cent ?? 0)
-const teamFactuurTelt = (f: TeamFactuurRow) => teamFactuurStaat(f) && !(f.terugbetaald_cent ?? 0)
+// Referralgeld dat op de factuur is teruggestort maakt haar geen minder betaalde maand.
+const teamFactuurTelt = (f: TeamFactuurRow) => teamFactuurStaat(f) && !heeftAndereTerugbetaling(f, f.terugbetaald_cent ?? 0)
 
 const teamMaandCent = (seats: number, cyclus: Cyclus) => (berekenTeamPrijsPerMaand(seats, cyclus) ?? 0) * 100
 
@@ -485,12 +486,12 @@ export async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<Aanbrenger
  * Per betaling wat als referralbedrag geboekt staat maar zeker nog niet naar Mollie is gestuurd. Dat verklaart geen
  * terugbetaling die Mollie noemt. Zonder de actietabel is er niets gereserveerd.
  */
-async function nogNietVerstuurd(betalingen: Betaling[]): Promise<Map<string, number>> {
+async function nogNietVerstuurd(betalingen: { id: string; referral_refund_cent?: number | null }[]): Promise<Map<string, number>> {
   const uit = new Map<string, number>()
   const ids = betalingen.filter(b => (b.referral_refund_cent ?? 0) > 0).map(b => b.id)
   if (!ids.length) return uit
   const { data, error } = await billingDb.from('arnobot_referral_acties').select('doel_id, bruto_cent, status, gegevens')
-    .eq('doel_soort', 'betaling').in('doel_id', ids).in('status', ['gereserveerd', 'bezig']).limit(1000)
+    .in('doel_soort', ['betaling', 'teamfactuur']).in('doel_id', ids).in('status', ['gereserveerd', 'bezig']).limit(1000)
   if (error) {
     if (tabelOntbreekt(error)) return uit
     throw new Error(`referralacties ophalen mislukt: ${error.message}`)
@@ -509,10 +510,12 @@ async function nogNietVerstuurd(betalingen: Betaling[]): Promise<Map<string, num
 async function onbekendeTerugbetaling(d: Dossier): Promise<boolean> {
   if (!mollieIngeschakeld()) return false
   const staand = d.betalingen.filter(eigenBetalingTelt)
-  const nietVerstuurd = await nogNietVerstuurd(staand)
+  const facturen = d.facturen.filter(f => teamFactuurTelt(f) && !!f.mollie_payment_id)
+  const nietVerstuurd = await nogNietVerstuurd([...staand, ...facturen])
+  const verklaard = (r: { id: string; referral_refund_cent?: number | null }) => Math.max(0, (r.referral_refund_cent ?? 0) - (nietVerstuurd.get(r.id) ?? 0))
   const betalingen = [
-    ...staand.map(b => ({ id: b.mollie_payment_id, tegoed: Math.max(0, (b.referral_refund_cent ?? 0) - (nietVerstuurd.get(b.id) ?? 0)) })),
-    ...d.facturen.filter(f => teamFactuurTelt(f) && !!f.mollie_payment_id).map(f => ({ id: f.mollie_payment_id!, tegoed: 0 })),
+    ...staand.map(b => ({ id: b.mollie_payment_id, tegoed: verklaard(b) })),
+    ...facturen.map(f => ({ id: f.mollie_payment_id!, tegoed: verklaard(f) })),
   ]
   for (const b of betalingen) {
     const terug = (await lijstBetalingTerugbetalingen(b.id))

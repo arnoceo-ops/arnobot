@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import { billingDb } from './db'
 import {
-  aanbrengerFeiten, betaaldeTeamsVan, eigenBetalingStaat, eigenBetalingTelt, klantFeiten, laadDossier, openVervalVraag, teamGestopt,
+  aanbrengerFeiten, eigenBetalingStaat, eigenBetalingTelt, klantFeiten, laadDossier, openVervalVraag,
   vervalOordeel, type Betaling, type Dossier, type GrootboekRegel, type ReferralRij,
 } from './referralGrootboek'
 import {
-  eersteBetalingOpTijd, gratisVierdeMaand, jaarKortingCent, metJaarKorting, tegoedNettoCent, tegoedStatus, telMaanden, verrekening,
+  eersteBetalingOpTijd, gratisMaandBrutoCent, gratisVierdeMaand, jaarKortingCent, metJaarKorting, tegoedNettoCent, tegoedStatus, telMaanden, verrekening,
   BENODIGDE_MAANDEN, MAX_ONDERBREKING_DAGEN,
 } from './referralRegels'
 import { isTeruggedraaid, restVanToekenning, saldoVan, verdeelVerrekening, type SaldoOpties } from './referralSaldo'
@@ -17,6 +17,7 @@ import { mollieNaarCenten } from './geld'
 import { berekenBedrag } from './prijzen'
 import { schakelaarAan } from './referralSchakelaars'
 import { actieTabelBestaat } from './referralAutomatisch'
+import { factuurAlsBetaling } from './referralDoel'
 import { TERUGSTORT_OMSCHRIJVING } from './referralTeksten'
 import { reserveerTerugstorting, WACHT_NA_BETALING_DAGEN, type ActieRij, type ReserveerInvoer } from './referralTerugstorten'
 import { bewijsToekenningen, maakBewijzer } from './referralBronnen'
@@ -122,6 +123,39 @@ export function kiesVoordeel(d: Pick<Dossier, 'betalingen'>, feiten: Pick<KlantF
     : { ...keuze, nietAutomatisch: `er gingen ${ervoor} betaalde maanden vooraf, niet vier op rij: daarover is niets besloten` }
 }
 
+/**
+ * De gratis teammaand (bouwplan D4): per maand de vierde reguliere teamfactuur op rij, per jaar de eerste jaarfactuur. Nooit
+ * meer dan de maandprijs waarmee het team begon: later toegevoegde gebruikers tellen niet.
+ */
+export function kiesTeamVoordeel(userId: string, d: Pick<Dossier, 'facturen'>, feiten: Pick<KlantFeiten, 'periodes'>): VoordeelKeuze {
+  const regulier = d.facturen.filter(f => f.soort === 'regulier').map(f => factuurAlsBetaling(f, userId))
+    .filter(eigenBetalingStaat).sort((a, b) => Date.parse(a.periode_start!) - Date.parse(b.periode_start!))
+  const start = regulier[0]
+  if (!start) return null
+  const startMaandCent = start.cyclus === 'jaarlijks' ? Math.round(start.bedrag_cent / 12) : start.bedrag_cent
+  const maanden = feiten.periodes.filter(p => p.geldig && p.cyclus === 'maandelijks' && p.plan === 'team')
+  const jaar = regulier.find(b => b.cyclus === 'jaarlijks')
+  const vierde = gratisVierdeMaand(maanden)
+  if (vierde && (!jaar || Date.parse(vierde.periodeStart) < Date.parse(jaar.periode_start!))) {
+    const betaling = regulier.find(b => b.id === vierde.bronId)
+    const stand = telMaanden(maanden).filter(m => m.nieuw)
+    const bronnen = stand.slice(0, stand.findIndex(m => m.periode === vierde)).slice(-BENODIGDE_MAANDEN).map(m => m.periode.bronId ?? '')
+    return betaling
+      ? { soort: 'voordeel_maand', betaling, brutoCent: gratisMaandBrutoCent(betaling.bedrag_cent, startMaandCent), bronnen, uitleg: 'gratis teammaand op de vierde factuur' }
+      : null
+  }
+  if (!jaar || !eigenBetalingTelt(jaar)) return null
+  const eerdere = telMaanden(maanden.filter(p => Date.parse(p.periodeStart) < Date.parse(jaar.periode_start!))).filter(m => m.nieuw)
+  const keuze = {
+    soort: 'voordeel_jaar' as const, betaling: jaar, brutoCent: gratisMaandBrutoCent(jaarKortingCent(jaar.bedrag_cent), startMaandCent),
+    // Zonder eerdere maanden rust het voordeel op de jaarfactuur zelf: zonder kenmerk is er niets te bewijzen.
+    bronnen: eerdere.length ? eerdere.map(m => m.periode.bronId ?? '') : [jaar.id], uitleg: 'gratis teammaand op de eerste jaarfactuur',
+  }
+  return eerdere.length <= BENODIGDE_MAANDEN
+    ? keuze
+    : { ...keuze, nietAutomatisch: `er gingen ${eerdere.length} betaalde teammaanden vooraf, niet vier op rij: daarover is niets besloten` }
+}
+
 // ── B4: welke betalingen zijn een verlenging? ──
 
 /** Nooit een upgrade of de allereerste. Een nieuwe 'eerste' telt als er al betaalde periodes waren die hooguit 14 dagen eerder eindigden. */
@@ -134,9 +168,9 @@ export function isVerlenging(b: Betaling, alle: Betaling[]): boolean {
     && Date.parse(q.periode_start) < start && start - Date.parse(q.periode_einde) <= MAX_ONDERBREKING_DAGEN * DAG_MS)
 }
 
-/** Betaalt deze manager nog (straks) een team? Dan hoort zijn tegoed op de teamfactuur, en dat is nog niet gebouwd. */
-const heeftTeam = (d: Dossier, nu: Date) => d.teams.some(t => !teamGestopt(t, nu)
-  && (betaaldeTeamsVan(d).includes(t) || d.facturen.some(f => f.team_id === t.id) || !!t.volgende_factuurdatum))
+const PER_BANK = 'per bank betaald: daarop is niet terug te storten'
+/** Waaraan de eigenaar de betaling herkent. */
+const kenmerkVan = (b: Betaling) => b.mollie_payment_id || b.id
 
 /** Wat er volgens Mollie zelf nog van deze betaling terug te storten is. */
 async function mollieRuimteCent(b: Betaling): Promise<number> {
@@ -257,11 +291,13 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
       const d = await dossier(klantId)
       if (!d) continue
       const feiten = await klantFeiten(d, referral.created_at, nu)
-      const keuze = kiesVoordeel(d, feiten)
+      // Een manager die ook zelf betaalde (solo naar Team): wat dan het voordeel is, beslist de eigenaar.
+      const gemengd = d.teams.length > 0 && d.betalingen.some(eigenBetalingStaat)
+      const keuze = d.teams.length ? kiesTeamVoordeel(klantId, d, feiten) ?? (gemengd ? kiesVoordeel(d, feiten) : null) : kiesVoordeel(d, feiten)
       if (!keuze) continue
       const eerste = [...feiten.betaalMomenten].sort((a, b) => Date.parse(a.at) - Date.parse(b.at))[0]
       let onzeker: string | null = null
-      if (d.teams.length) onzeker = 'de klant is teammanager: de teammaand is niet gebouwd'
+      if (gemengd) onzeker = 'de klant betaalde zelf en als team'
       else if (!feiten.aangemeldAt || !feiten.proefEindeAt) onzeker = 'de aanmelddatum is onbekend'
       else if (feiten.handmatigBetaald || feiten.ooitMetDeHandBetaald) onzeker = 'de klant stond met de hand op betaald, de betaalde maanden zijn niet zeker te tellen'
       else if (d.betalingen.some(b => eigenBetalingStaat(b) && b.soort !== 'upgrade' && (!b.periode_start || !b.cyclus))) onzeker = 'niet elke betaling heeft een vastgelegde periode'
@@ -272,17 +308,20 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
       }
       const b = keuze.betaling as Rij
       const v = nieuw({
-        soort: keuze.soort, userId: klantId, referralId: id, betalingId: b.id, betaalkenmerk: b.mollie_payment_id,
+        soort: keuze.soort, userId: klantId, referralId: id, betalingId: b.id, betaalkenmerk: kenmerkVan(b),
         brutoCent: keuze.brutoCent, stand: 'klaar', reden: keuze.uitleg,
       })
       eerstVoordeel.add(b.id)
       const nietAuto = onzeker ?? keuze.nietAutomatisch
       if (nietAuto) Object.assign(v, { stand: 'niet-automatisch', reden: `${keuze.uitleg}: ${nietAuto}` })
+      else if (!b.mollie_payment_id) Object.assign(v, { stand: 'niet-automatisch', reden: `${keuze.uitleg}: ${PER_BANK}` })
       else if (feiten.bijbetalingLoopt) Object.assign(v, { stand: 'wacht', reden: 'de bijbetaling van een upgrade loopt nog' })
       else if (ruimteCent(b) < keuze.brutoCent) Object.assign(v, { stand: 'niet-automatisch', reden: `${keuze.uitleg}: past niet, er staat al iets op deze betaling` })
       else toets(v, b, id)
       if (v.stand === 'klaar') {
-        const bewijs = await bewijzer([...keuze.bronnen, b.mollie_payment_id], klantId)
+        // Een teamfactuur is als bron haar eigen id, een eigen betaling haar Mollie-kenmerk.
+        const zelf = d.facturen.some(f => f.id === b.id) ? b.id : b.mollie_payment_id
+        const bewijs = await bewijzer([...new Set([...keuze.bronnen, zelf])], klantId)
         if (!bewijs.staat) onbewezen(v, bewijs.reden)
       }
       if (await reserveer(v, omschrijving => ({
@@ -334,7 +373,6 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
     if (feiten.bijbetalingLoopt) return stil('wacht', 'de bijbetaling van een upgrade van de aanbrenger loopt nog')
     const status = tegoedStatus(feiten.stand, nu)
     if (status !== 'actief' && status !== 'terugstorten') return stil('wacht', `het tegoed staat op '${status}'`)
-    if (status === 'actief' && heeftTeam(d, nu)) return stil('niet-automatisch', 'de aanbrenger betaalt een team: de korting op de teamfactuur is niet gebouwd')
 
     // Een toekenning zonder bedrag krijgt het pas hier: het laagste van beide maandprijzen.
     const vaststellingen = zonderBedrag.flatMap(t => (t.klant_maand_netto_cent !== null && feiten.maandNettoCent !== null
@@ -365,11 +403,12 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
       const bedrag = verrekening(beschikbaar, ruimte)
       if (bedrag.brutoCent <= 0) return
       const v = nieuw({
-        soort: 'tegoed_terugstorten', userId, betalingId: b.id, betaalkenmerk: b.mollie_payment_id, brutoCent: bedrag.brutoCent,
+        soort: 'tegoed_terugstorten', userId, betalingId: b.id, betaalkenmerk: kenmerkVan(b), brutoCent: bedrag.brutoCent,
         nettoCent: bedrag.verbruiktNettoCent, stand: 'klaar', reden: extra.terugwerkend ? 'teamlid: terug over een eigen betaling' : 'verrekenen bij de verlenging',
         opMeeloop: ronde.opMeeloop,
       })
-      if (eerstVoordeel.has(b.id)) Object.assign(v, { stand: 'wacht', reden: 'eerst het eigen voordeel op deze betaling' })
+      if (!b.mollie_payment_id) Object.assign(v, { stand: 'niet-automatisch', reden: PER_BANK })
+      else if (eerstVoordeel.has(b.id)) Object.assign(v, { stand: 'wacht', reden: 'eerst het eigen voordeel op deze betaling' })
       else toets(v, b)
       if (v.stand === 'klaar') {
         const refs = verdeelVerrekening(werk, bedrag.verbruiktNettoCent, saldo).map(deel => deel.referralId)
@@ -392,7 +431,9 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
     }
 
     if (status === 'actief') {
-      const verlengingen = d.betalingen.filter(b => isVerlenging(b, d.betalingen)).sort((a, b) => Date.parse(a.betaald_at!) - Date.parse(b.betaald_at!))
+      // Eigen betalingen en teamfacturen samen: ook de eerste teamfactuur na een eigen abonnement verlengt.
+      const alle = [...d.betalingen, ...d.facturen.map(f => factuurAlsBetaling(f, userId))]
+      const verlengingen = alle.filter(b => isVerlenging(b, alle)).sort((a, b) => Date.parse(a.betaald_at!) - Date.parse(b.betaald_at!))
       for (const b of verlengingen) {
         if (bronWacht) break
         if (bezet(b) || ruimteCent(b) <= 0) continue

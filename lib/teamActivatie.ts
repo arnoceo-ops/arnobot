@@ -8,7 +8,8 @@ import { isAgentProef, proefEinde, proefStand, toegangTot, type ProefStaat } fro
 import { TEST_PROEF_TEAM_ID } from '@/lib/internalTestAccounts'
 import { logAdminActie } from '@/lib/adminLog'
 import { notifyTelegram } from '@/lib/cron-notify'
-import { VEILIG_TERUGSTORTEN, voordeelGebruikt } from '@/lib/billing/referralSignalen'
+import { NIET_MET_DE_HAND, VEILIG_TERUGSTORTEN, voordeelGebruikt } from '@/lib/billing/referralSignalen'
+import { gaatAutomatisch } from '@/lib/billing/referralAutomatisch'
 
 // Zelf een teamproef omzetten naar een betaald Team (docs/TEAM_PROCES.md, "Zelf activeren").
 // Alleen voor een manager van een agent-proef (isAgentProef). Het doet hetzelfde als stap 7 van de
@@ -102,8 +103,8 @@ export async function leesActivatieStand(userId: string): Promise<ActivatieStand
 }
 
 /**
- * De referral fee voor een aangebracht team wordt nog niet automatisch verrekend: dan moet Arno het weten. Een fout hier
- * houdt het activeren niet tegen.
+ * Zolang de referralautomatisering de teammaand niet zelf terugstort, moet Arno van een aangebracht team weten. Een fout
+ * hier houdt het activeren niet tegen.
  */
 async function meldAangebrachtTeam(managerId: string, teamNaam: string): Promise<void> {
   const { data, error } = await supabase.from('arnobot_referrals').select('code_used, referred_discount').eq('referred_user_id', managerId)
@@ -114,6 +115,14 @@ async function meldAangebrachtTeam(managerId: string, teamNaam: string): Promise
   }
   // Het voordeel is eenmalig: wie al een referral fee op een eigen jaarabonnement kreeg, krijgt geen teammaand.
   if (!data || voordeelGebruikt(data)) return
+  // Een fout bij het nakijken telt als niet automatisch: liever een melding te veel.
+  if (await gaatAutomatisch('voordeel_maand').catch(() => false)) {
+    await notifyTelegram(`Aangebracht team op arno.bot
+
+Team: ${teamNaam} (referralcode ${data.code_used ?? 'onbekend'})
+${NIET_MET_DE_HAND}`)
+    return
+  }
   await notifyTelegram(`ACTIE: aangebracht team op arno.bot\n\nTeam: ${teamNaam} (referralcode ${data.code_used ?? 'onbekend'})\nHet team heeft eenmalig recht op een maand voor het hele team, hooguit de maandprijs bij de start, als het op tijd is: factuur aangemaakt binnen de eerste teamproef plus 10 dagen en betaald binnen de betaaltermijn. Dit is NIET op de factuur verrekend. ${VEILIG_TERUGSTORTEN}`)
 }
 

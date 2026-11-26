@@ -66,6 +66,18 @@ describe('terugbetaling en terugboeking van een teamfactuur', () => {
     expect(await verwerk(betaling())).toBe(false)
     expect(h.tg).not.toHaveBeenCalled()
   })
+  it('alleen referralgeld terug: vastgelegd zonder melding, ook als dat de hele factuur is', async () => {
+    h.rijen = [factuur({ referral_refund_cent: 29645 })]
+    await verwerk(betaling({ amountRefunded: eur('296.45') }))
+    expect(h.rijen[0]).toMatchObject({ status: 'paid', terugbetaald_cent: 29645, reversed_at: null })
+    expect(h.tg).not.toHaveBeenCalled()
+  })
+  it('de rest buiten het referralgeld om ook terug: teruggedraaid, met de waarschuwing over de creditnota', async () => {
+    h.rijen = [factuur({ referral_refund_cent: 2299, terugbetaald_cent: 2299 })]
+    await verwerk(betaling({ amountRefunded: eur('296.45') }))
+    expect(h.rijen[0]).toMatchObject({ status: 'refunded' })
+    expect(String(h.tg.mock.calls[0][0])).toContain('crediteer alleen de rest')
+  })
   it('gedeeltelijk terugbetaald: bedrag vastgelegd, factuur blijft betaald', async () => {
     await verwerk(betaling({ amountRefunded: eur('50.00') }))
     expect(h.rijen[0]).toMatchObject({ status: 'paid', terugbetaald_cent: 5000, reversed_at: null })

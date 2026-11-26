@@ -10,6 +10,7 @@ import { wieIs } from './wie'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { bewijsToekenningen, maakBewijzer, type Bewijs, type BronRegel } from './referralBronnen'
 import { isTeruggedraaid } from './referralSaldo'
+import { leesDoel } from './referralDoel'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 
 // De terugstortmachine (docs/REFERRAL_BOUWPLAN_R3.md, B0): reserveren in de database, de rij claimen, eerst bij Mollie
@@ -166,10 +167,7 @@ async function leesActie(id: string): Promise<ActieRij | null> {
   return verplicht('actie ophalen', await billingDb.from('arnobot_referral_acties').select('*').eq('id', id).maybeSingle<ActieRij>())
 }
 
-async function leesBetaling(a: ActieRij): Promise<PayRow | null> {
-  return verplicht('betaling ophalen',
-    await billingDb.from('arnobot_payments').select('*').eq('id', a.doel_id).eq('user_id', a.user_id).maybeSingle<PayRow>())
-}
+const DOEL_SOORTEN = ['betaling', 'teamfactuur']
 
 /** Wijzigt de actie alleen als zij nog de status heeft die wij kennen. Lukt dat niet, dan stopt deze run. */
 async function bewaar(a: ActieRij, patch: Partial<ActieRij>): Promise<void> {
@@ -401,21 +399,21 @@ async function wachtOpBron(a: ActieRij, betaling: PayRow, reden: string, eerderO
 /** Voert een actie zo ver mogelijk uit. Vaker aanroepen is veilig. Gooit bij een storing; dan morgen opnieuw. */
 export async function voerTerugstortingUit(actieId: string, nu: Date = new Date()): Promise<UitvoerUitkomst> {
   const gevonden = await leesActie(actieId)
-  if (!gevonden || gevonden.doel_soort !== 'betaling' || !OPEN_STATUSSEN.includes(gevonden.status)
+  if (!gevonden || !DOEL_SOORTEN.includes(gevonden.doel_soort) || !OPEN_STATUSSEN.includes(gevonden.status)
     || !(TERUGSTORT_SOORTEN as readonly string[]).includes(gevonden.soort)) return 'niets-te-doen'
   if (isInternalTestUser(gevonden.user_id)) return 'testaccount'
   if (!mollieIngeschakeld()) return 'niets-te-doen'
   if (gevonden.status === 'gereserveerd') {
     if (!magTerugstorten(gevonden.soort)) return 'zou-doen'
-    const b = await leesBetaling(gevonden)
+    const b = await leesDoel(gevonden)
     if (b && !wachttijdVoorbij(b, nu)) return 'wacht-7-dagen'
   }
 
   // Stap 2: claimen, achter het slot per gebruiker.
   const a = verplicht('actie claimen', await billingDb.rpc('referral_claim', { p_actie: actieId, p_van: gevonden.status })) as ActieRij | null
   // Geweigerd omdat het tegoed teruggedraaid is: dan geven we haar hier vrij, ook als de nacontrole dat nog niet deed.
-  if (!a) return gevonden.status !== 'verzonden' && isTegoed(gevonden) && await geefTeruggedraaidVrij(gevonden, await leesBetaling(gevonden)) ? 'vrijgegeven' : 'niet-geclaimd'
-  const betaling = await leesBetaling(a)
+  if (!a) return gevonden.status !== 'verzonden' && isTegoed(gevonden) && await geefTeruggedraaidVrij(gevonden, await leesDoel(gevonden)) ? 'vrijgegeven' : 'niet-geclaimd'
+  const betaling = await leesDoel(a)
   if (!betaling) return loopVast(a, null, 'de betaling is niet meer te vinden')
 
   // Stap 3: eerst kijken wat er bij Mollie al is. Nooit blind opnieuw.
@@ -526,7 +524,7 @@ export interface TerugstortRonde {
 export async function verwerkOpenTerugstortingen(nu: Date = new Date()): Promise<TerugstortRonde> {
   const ronde: TerugstortRonde = { sqlOntbreekt: false, uitkomsten: [], fouten: [] }
   const { data, error } = await billingDb.from('arnobot_referral_acties').select('id')
-    .eq('doel_soort', 'betaling').in('soort', [...TERUGSTORT_SOORTEN]).in('status', OPEN_STATUSSEN)
+    .in('doel_soort', DOEL_SOORTEN).in('soort', [...TERUGSTORT_SOORTEN]).in('status', OPEN_STATUSSEN)
     .order('updated_at', { ascending: true }).limit(200)
   if (error) {
     if (sqlOntbreekt(error)) return { ...ronde, sqlOntbreekt: true }

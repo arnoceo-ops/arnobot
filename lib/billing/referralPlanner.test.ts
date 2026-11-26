@@ -368,7 +368,6 @@ describe('B4: verrekenen bij de verlenging', () => {
     ['een gratis account', 'wacht', { approved_users: [gebruiker('aanbrenger', { gratis_sinds: dag('2027-04-01') })] }],
     ['abonnement afgelopen', 'wacht', { arnobot_subscriptions: [sub('aanbrenger', { status: 'ended', periode_einde: dag('2027-08-25') })] }],
     ['een lopende bijbetaling', 'wacht', { arnobot_payments: [...maanden('aanbrenger', 6), bet('aanbrenger', '2027-08-20', '2027-09-01', { soort: 'upgrade', status: 'pending' })] }],
-    ['een eigen team', 'niet-automatisch', { arnobot_teams: [{ id: uuid(800), manager_id: 'aanbrenger', name: 't', min_seats: 3, cyclus: 'maandelijks', geblokkeerd_at: null, stopt_op: null, volgende_factuurdatum: '2027-10-01' }] }],
   ] as [string, string, any][])('niet bij %s', async (_n, stand, extra) => {
     await metTegoed(1900, extra)
     const r = await plan()
@@ -1009,5 +1008,62 @@ describe('F5: een gratis account verdient nooit referraltegoed, ook niet als tea
     await gratisTeamlid({ lifetime_sinds: dag('2027-03-02') })
     await plan()
     expect((await acties()).length).toBeGreaterThan(0)
+  })
+})
+
+describe('teams: de gratis teammaand en tegoed op de teamfactuur', () => {
+  const TEAM = uuid(800)
+  const team = (manager_id: string, cyclus: Cyclus = 'maandelijks') => ({ id: TEAM, manager_id, name: 't', min_seats: 3, cyclus, geblokkeerd_at: null, stopt_op: null, volgende_factuurdatum: '2027-09-01' })
+  const factuur = (n: number, van: string, tot: string, extra: any = {}) => ({
+    id: uuid(600 + n), team_id: TEAM, soort: 'regulier', cyclus: 'maandelijks', periode_start: van, periode_einde: tot, seats_aantal: 3, status: 'paid',
+    bedrag_cent: 20000, btw_cent: 3471, created_at: dag(van), betaald_at: dag(van), mollie_payment_id: `tr_team${n}`, paid_via: 'mollie',
+    terugbetaald_cent: 0, teruggeboekt_cent: 0, referral_refund_cent: 0, reversed_at: null, moneybird_factuur_id: null, ...extra,
+  })
+  const facturen = (aantal: number, extra: (i: number) => any = () => ({})) => MAANDEN.slice(0, aantal).map(([van, tot], i) => factuur(i + 1, van, tot, extra(i)))
+  const factuurrij = async (id: string) => ((await h.db.alle('arnobot_team_facturen')) as any[]).find(f => f.id === id)
+  const alsKlant = (f: any[], cyclus: Cyclus = 'maandelijks') => zaai({ arnobot_subscriptions: [sub('aanbrenger')], arnobot_teams: [team('klant', cyclus)], arnobot_team_facturen: f })
+
+  it('maandteam: de vierde factuur terug, nooit meer dan de maandprijs bij de start; de factuur blijft betaald', async () => {
+    const f = facturen(5, i => (i >= 2 ? { bedrag_cent: 30000, btw_cent: 5207, seats_aantal: 5 } : {}))
+    await alsKlant(f)
+    expect((await plan()).voornemens).toMatchObject([{ soort: 'voordeel_maand', stand: 'gereserveerd', betalingId: f[3].id, brutoCent: 20000 }])
+    expect(await acties()).toMatchObject([{ doel_soort: 'teamfactuur', doel_id: f[3].id }])
+    await voerAllesUit()
+    expect(h.posts.map(p => [p.betalingId, p.brutoCent])).toEqual([['tr_team4', 20000]])
+    expect((await acties())[0]).toMatchObject({ status: 'bevestigd', credit_status: 'nodig' })
+    expect(await factuurrij(f[3].id)).toMatchObject({ referral_refund_cent: 20000, status: 'paid' })
+    await plan()
+    await voerAllesUit()
+    expect(h.posts).toHaveLength(1)
+  })
+  it('jaarteam: meteen op de eerste jaarfactuur, een twaalfde', async () => {
+    const f = [factuur(1, '2027-02-01', '2028-02-01', { cyclus: 'jaarlijks', bedrag_cent: 240000, btw_cent: 41653 })]
+    await alsKlant(f, 'jaarlijks')
+    expect((await plan()).voornemens).toMatchObject([{ soort: 'voordeel_jaar', stand: 'gereserveerd', betalingId: f[0].id, brutoCent: 20000 }])
+    await voerAllesUit()
+    expect(h.posts.map(p => [p.betalingId, p.brutoCent])).toEqual([['tr_team1', 20000]])
+  })
+  it('drie facturen is nog niets', async () => {
+    await alsKlant(facturen(3))
+    expect((await plan()).voornemens).toEqual([])
+  })
+  it('per bank betaalde vierde factuur: niets vanzelf, wel zichtbaar', async () => {
+    await alsKlant(facturen(4, i => (i === 3 ? { paid_via: 'bank', mollie_payment_id: null } : {})))
+    expect((await plan()).voornemens).toMatchObject([{ soort: 'voordeel_maand', stand: 'niet-automatisch' }])
+    expect(await acties()).toEqual([])
+  })
+  it('tegoed van een manager gaat over een volgende reguliere teamfactuur, niet over de eerste of een tussentijdse', async () => {
+    const f = [...facturen(4), factuur(9, '2027-03-20', '2027-04-01', { soort: 'tussentijds' })]
+    await zaai({
+      arnobot_referrals: [], arnobot_subscriptions: [], arnobot_teams: [team('aanbrenger')], arnobot_team_facturen: f,
+      arnobot_referral_grootboek: [regel('toekenning', REF, 1900)],
+    })
+    const r = await plan()
+    // De toekenning is van 15 maart: de eerste verlenging daarna is de factuur van april, niet de tussentijdse van 20 maart.
+    expect(r.voornemens.filter(v => v.stand === 'gereserveerd')).toMatchObject([{ soort: 'tegoed_terugstorten', betalingId: f[2].id, brutoCent: 2299 }])
+    await voerAllesUit()
+    expect(h.posts.map(p => [p.betalingId, p.brutoCent])).toEqual([['tr_team3', 2299]])
+    expect((await acties())[0]).toMatchObject({ status: 'bevestigd', doel_soort: 'teamfactuur' })
+    expect(await eigenSaldo()).toBe(0)
   })
 })

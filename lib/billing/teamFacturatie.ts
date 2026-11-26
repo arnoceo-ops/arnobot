@@ -76,6 +76,8 @@ export interface TeamFactuurRow {
   terugbetaald_cent?: number
   teruggeboekt_cent?: number
   reversed_at?: string | null
+  /** Deel van terugbetaald_cent dat referralgeld is (docs/sql/2026-11-26-referral-verrekening.sql). */
+  referral_refund_cent?: number
   /** Wanneer de factuur de klant echt heeft bereikt (docs/sql/2026-11-26-team-factuur-bezorgd.sql). Leeg: nooit herinneren of blokkeren. */
   bezorgd_at?: string | null
 }

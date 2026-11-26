@@ -47,6 +47,9 @@ export function maakKetenDb() {
   }
 
   const actie = (id: string) => tabel('arnobot_referral_acties').find(a => a.id === id)
+  /** Een eigen betaling of een teamfactuur van de manager, zoals referral_betaling_ruimte. */
+  const doelVan = (id: string, userId: string): Rij | undefined => tabel('arnobot_payments').find(r => r.id === id && r.user_id === userId)
+    ?? tabel('arnobot_team_facturen').find(f => f.id === id && tabel('arnobot_teams').some(t => t.id === f.team_id && t.manager_id === userId))
   const echte = (aanbrenger?: string) => tabel('arnobot_referral_grootboek').filter(r => !r.meeloop && (!aanbrenger || r.aanbrenger_user_id === aanbrenger)) as any[]
   const regel = (r: Rij) => tabel('arnobot_referral_grootboek').push({ id: nieuweId(), created_at: new Date().toISOString(), meeloop: false, klant_maand_netto_cent: null, ...r })
   const nee = (reden: string) => ({ data: { ok: false, reden }, error: null })
@@ -64,9 +67,10 @@ export function maakKetenDb() {
 
   const rpc = async (naam: string, p: Rij): Promise<{ data: any; error: any }> => {
     if (naam === 'referral_reserveer' || naam === 'referral_reserveer_voordeel') {
-      const b = tabel('arnobot_payments').find(r => r.id === p.p_doel && r.user_id === p.p_user)
+      const b = doelVan(p.p_doel, p.p_user)
       if (!b) return nee('betaling_onbekend')
-      if (b.status !== 'paid' || b.terugbetaling_verwerkt_at || b.teruggeboekt_cent > 0) return nee('niet_betaald')
+      if (b.status !== 'paid' || b.terugbetaling_verwerkt_at || b.reversed_at || b.teruggeboekt_cent > 0) return nee('niet_betaald')
+      const doelSoort = 'team_id' in b ? 'teamfactuur' : 'betaling'
       const soort = naam === 'referral_reserveer' ? 'tegoed_terugstorten' : p.p_soort
       if (bezet(a => a.soort === soort && a.doel_id === b.id && a.user_id === p.p_user)) return nee('al_actie')
       const ruimte = Math.min(b.bedrag_cent - Math.max(b.terugbetaald_cent ?? 0, b.referral_refund_cent ?? 0), p.p_max_bruto ?? Infinity)
@@ -75,7 +79,7 @@ export function maakKetenDb() {
         if (bezet(a => a.referral_id === p.p_referral && a.soort.startsWith('voordeel'))) return nee('voordeel_al_gebruikt')
         if (p.p_bruto > ruimte) return nee('bedrag_past_niet')
         const netto = Math.round(p.p_bruto / 1.21)
-        nieuweActie({ id: p.p_actie, soort, user_id: p.p_user, referral_id: p.p_referral, doel_id: b.id, bruto_cent: p.p_bruto, netto_cent: netto, gegevens: p.p_gegevens })
+        nieuweActie({ id: p.p_actie, soort, user_id: p.p_user, referral_id: p.p_referral, doel_soort: doelSoort, doel_id: b.id, bruto_cent: p.p_bruto, netto_cent: netto, gegevens: p.p_gegevens })
         b.referral_refund_cent = (b.referral_refund_cent ?? 0) + p.p_bruto
         return ja({ bruto_cent: p.p_bruto, netto_cent: netto })
       }
@@ -85,7 +89,7 @@ export function maakKetenDb() {
       const v = verrekening(Math.min(beschikbaar, p.p_max_netto ?? beschikbaar), ruimte)
       if (v.brutoCent <= 0) return nee('geen_saldo')
       const delen = verdeelVerrekening(eigen, v.verbruiktNettoCent, opties)
-      nieuweActie({ id: p.p_actie, soort, user_id: p.p_user, doel_id: b.id, bruto_cent: v.brutoCent, netto_cent: v.verbruiktNettoCent, gegevens: p.p_gegevens })
+      nieuweActie({ id: p.p_actie, soort, user_id: p.p_user, doel_soort: doelSoort, doel_id: b.id, bruto_cent: v.brutoCent, netto_cent: v.verbruiktNettoCent, gegevens: p.p_gegevens })
       for (const d of delen) {
         regel({ event_key: `verrekening:${p.p_actie}:${d.referralId}`, soort: 'verrekening', referral_id: d.referralId, hoort_bij: d.referralId, actie_id: p.p_actie, aanbrenger_user_id: p.p_user, klant_user_id: 'k', netto_cent: -d.nettoCent, reden: 'r' })
       }
@@ -135,7 +139,7 @@ export function maakKetenDb() {
     if (naam === 'referral_vrijgeven') {
       if (!a || (p.p_van && a.status !== p.p_van)) return nee('status_gewijzigd')
       terugboeken(a.id)
-      const b = tabel('arnobot_payments').find(r => r.id === a.doel_id)
+      const b = [...tabel('arnobot_payments'), ...tabel('arnobot_team_facturen')].find(r => r.id === a.doel_id)
       if (b && !a.gegevens?.boeking_teruggezet) b.referral_refund_cent = Math.max(0, b.referral_refund_cent - a.bruto_cent)
       Object.assign(a, { status: p.p_eind ?? 'vrijgegeven', bezig_tot: null, fout: p.p_reden, gegevens: { ...a.gegevens, boeking_teruggezet: true } })
       return ja()

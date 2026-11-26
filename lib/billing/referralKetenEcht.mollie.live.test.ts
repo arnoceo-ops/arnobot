@@ -47,6 +47,8 @@ async function omgeving() {
   const grootboek = await import('./referralGrootboek')
   const nacontrole = await import('./referralNacontrole')
   const herroeping = await import('./herroeping')
+  const teamFacturatie = await import('./teamFacturatie')
+  const teamBetalingen = await import('./teamBetalingen')
   const { TERUGSTORT_OMSCHRIJVING } = await import('./referralTeksten')
   const { berekenBedrag } = await import('./prijzen')
   expect(grootboek.MEELOOP).toBe(false)
@@ -66,6 +68,11 @@ async function omgeving() {
   const testpagina = async (url: string, keuze: string) => {
     const pagina = await browser.newPage()
     await pagina.goto(url, { waitUntil: 'networkidle' })
+    // Een betaallink begint bij de keuze van de betaalmethode.
+    if (await pagina.$('button[value=ideal]')) {
+      await pagina.click('button[value=ideal]')
+      await pagina.click('button[value=ideal_INGBNL2A]')
+    }
     await pagina.check(keuze)
     await pagina.click('button:has-text("Ga verder"), button:has-text("Continue")')
     await pagina.waitForLoadState('networkidle')
@@ -126,6 +133,29 @@ async function omgeving() {
     return metAbonnement(id, 'maandelijks', 'particulier', 2)
   }
 
+  const nieuwTeam = async (managerId: string) =>
+    (await moet('team', billingDb.from('arnobot_teams').insert({ name: `Proefteam ${merk()}`, manager_id: managerId, min_seats: 3, cyclus: 'maandelijks' }).select('*').single())) as any
+  /** Een reguliere maandfactuur van zoveel maanden terug, betaald via een echte betaallink en verwerkt door de teamwebhookcode. */
+  const betaalTeamFactuur = async (teamId: string, maandenTerug: number, brutoCent = 20000) => {
+    const dag = (terug: number) => { const d = new Date(); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - terug); return d }
+    const rij = (await moet('teamfactuur', billingDb.from('arnobot_team_facturen').insert({
+      team_id: teamId, periode_start: dag(maandenTerug).toISOString().slice(0, 10), periode_einde: dag(maandenTerug - 1).toISOString().slice(0, 10),
+      cyclus: 'maandelijks', soort: 'regulier', seats_aantal: 3, bedrag_cent: brutoCent, btw_cent: Math.round(brutoCent - brutoCent / 1.21), status: 'open',
+      created_at: dag(maandenTerug).toISOString(),
+    }).select('*').single())) as any
+    const link = await m.maakBetaalLink({
+      brutoCent, omschrijving: `Keten echt team ${merk()}`, redirectUrl: 'https://example.com/terug',
+      webhookUrl: 'https://example.com/arnobot-testwebhook', idempotencyKey: `echt-team-${rij.id}`.slice(-64),
+    })
+    await moet('betaallink', billingDb.from('arnobot_team_facturen').update({ mollie_payment_link_id: link.id, mollie_payment_link_url: link.url }).eq('id', rij.id))
+    await testpagina(link.url, 'input[name=final_state][value=paid]')
+    let uitkomst = 'niets'
+    for (let i = 0; i < 20 && uitkomst === 'niets'; i++) { await wacht(1500); uitkomst = await teamFacturatie.verwerkTeamBetaling(link.id, rij.id) }
+    expect(uitkomst).toBe('betaald')
+    await wacht(2000)
+    return (await moet('teamfactuurrij', billingDb.from('arnobot_team_facturen').select('*').eq('id', rij.id).single())) as any
+  }
+
   const later = () => new Date(Date.now() + 8 * DAG)
   const boekGrootboek = async () => {
     const run = await grootboek.draaiGrootboek(new Date(), { schrijf: true })
@@ -142,6 +172,7 @@ async function omgeving() {
 
   return {
     billingDb, m, ruw, moet, grootboek, nacontrole, machine, herroeping, TERUGSTORT_OMSCHRIJVING, berekenBedrag, later, roepWebhook,
+    nieuwTeam, betaalTeamFactuur, teamFacturatie, teamBetalingen,
     gebruiker, metAbonnement, betaal, terugboeken, nieuweKlant, aanbrengerMetAbonnement, boekGrootboek, plan, verstuur, regels, merk,
   }
 }
@@ -247,6 +278,55 @@ describe.skipIf(!LIVE)('ketenproef met het echte grootboek (testmodus, testdatab
     await o.verstuur()
     expect((await o.m.lijstBetalingTerugbetalingen(verlenging.mollie_payment_id)).map((r: any) => r.amount.value)).toEqual(['22.99'])
     meld('6 handmatige toekenning', { bron_ids: 1, terugbetaald: '22.99' })
+  })
+
+  it('teams: tegoed op de teamfactuur van de aanbrenger en de gratis maand van een aangebracht team', { timeout: 900_000 }, async () => {
+    const o = await omgeving()
+    const refundsVan = async (f: any) => (await o.m.lijstBetalingTerugbetalingen(f.mollie_payment_id)).map((r: any) => [r.amount.value, r.description])
+    const factuurNu = async (id: string) => (await o.moet('factuur', o.billingDb.from('arnobot_team_facturen').select('*').eq('id', id).single())) as any
+    const manager = (soort: string) => o.gebruiker(`user_keten_echt_team_${soort}_${o.merk()}`, new Date(Date.now() - 100 * DAG).toISOString())
+
+    // De aanbrenger betaalt een team: de eerste factuur telt niet als verlenging, de volgende wel.
+    const aanbrenger = await manager('aanbrenger')
+    const team = await o.nieuwTeam(aanbrenger)
+    const eerste = await o.betaalTeamFactuur(team.id, 2)
+    const k = await o.nieuweKlant(aanbrenger)
+    await o.betaal(k.wie)
+    await o.boekGrootboek()
+    const verlenging = await o.betaalTeamFactuur(team.id, 1)
+    const plan1 = await o.plan(aanbrenger)
+    expect(plan1.filter(v => v.stand === 'gereserveerd').map(v => [v.betalingId, v.brutoCent])).toEqual([[verlenging.id, 2299]])
+    await o.verstuur()
+    expect(await refundsVan(verlenging)).toEqual([['22.99', o.TERUGSTORT_OMSCHRIJVING.tegoed_terugstorten]])
+    expect(await refundsVan(eerste)).toEqual([])
+    meld('7 tegoed op teamfactuur', { plan: plan1.map(v => `${v.stand} ${v.brutoCent} ${v.reden}`) })
+
+    // Een aangebracht team: de vierde maandfactuur op rij gaat terug, tot de maandprijs bij de start.
+    const klantManager = await o.gebruiker(`user_keten_echt_team_klant_${o.merk()}`, new Date(Date.now() - 10 * DAG).toISOString())
+    const werver = await manager('werver')
+    const referral = (await o.moet('referral', o.billingDb.from('arnobot_referrals').insert({
+      referrer_user_id: werver, referred_user_id: klantManager, code_used: `ECHT-T-${o.merk()}`, created_at: new Date(Date.now() - 10 * DAG).toISOString(),
+    }).select('*').single())) as any
+    const klantTeam = await o.nieuwTeam(klantManager)
+    const facturen: any[] = []
+    for (const [terug, bedrag] of [[4, 20000], [3, 20000], [2, 30000], [1, 30000]]) facturen.push(await o.betaalTeamFactuur(klantTeam.id, terug, bedrag))
+    const plan2 = await o.plan(klantManager)
+    meld('8 aangebracht team', { plan: plan2.map(v => `${v.soort} ${v.stand} ${v.brutoCent} ${v.reden}`) })
+    expect(plan2.filter(v => v.stand === 'gereserveerd').map(v => [v.soort, v.betalingId, v.brutoCent])).toEqual([['voordeel_maand', facturen[3].id, 20000]])
+    await o.verstuur()
+    expect(await refundsVan(facturen[3])).toEqual([['200.00', o.TERUGSTORT_OMSCHRIJVING.voordeel_maand]])
+
+    // De teamwebhookcode en de nacontroles zien ons eigen referralgeld nooit als terugbetaling van de factuur.
+    for (const f of [verlenging, facturen[3]]) await o.teamFacturatie.verwerkTeamBetaling(f.mollie_payment_link_id, f.id)
+    const controle = await o.nacontrole.draaiNacontrole(o.later())
+    expect(controle.geboekt.filter(r => r.referral_id === k.referral.id || r.referral_id === referral.id)).toEqual([])
+    const na = [await factuurNu(verlenging.id), await factuurNu(facturen[3].id)]
+    expect(na.map(f => [f.status, f.referral_refund_cent, f.reversed_at])).toEqual([['paid', 2299, null], ['paid', 20000, null]])
+    await o.verstuur()
+    expect((await o.plan(klantManager)).filter(v => v.stand === 'gereserveerd')).toHaveLength(0)
+    const acties = (await o.moet('acties', o.billingDb.from('arnobot_referral_acties').select('*').in('user_id', [aanbrenger, klantManager]))) as any[]
+    meld('9 daarna', { acties: acties.map(a => `${a.soort} ${a.doel_soort} ${a.status}`), terugbetaald: na.map(f => f.terugbetaald_cent) })
+    expect(acties.map(a => a.doel_soort)).toEqual(['teamfactuur', 'teamfactuur'])
   })
 
   it.each([

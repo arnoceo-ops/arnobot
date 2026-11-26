@@ -5,6 +5,7 @@ import {
   verstuurFactuur, zetCreditBedrag, zoekFacturenOpReferentie, type MbCreditfactuur,
 } from './moneybird'
 import { schakelaarAan } from './referralSchakelaars'
+import { isTeamDoel, leesDoel } from './referralDoel'
 import type { ActieRij } from './referralTerugstorten'
 
 // De creditnota bij een referralterugstorting: precies het teruggestorte bedrag, hervatbaar en nooit dubbel.
@@ -79,7 +80,11 @@ async function claim(a: Actie, nu: Date): Promise<boolean> {
  * maken en versturen we niets. Niet te zien: een met de hand gemaakte creditnota waarvan de referentie is aangepast.
  */
 async function eisGeenOnbekendeCredit(a: Actie, factuurId: string, betaalkenmerk: string): Promise<void> {
-  const opFactuur = (await zoekFacturenOpReferentie(betaalkenmerk)).filter(f => f.original_sales_invoice_id === factuurId)
+  // Een nieuwe creditnota neemt de referentie van de factuur over. Bij een eigen betaling is dat het Mollie-kenmerk, bij
+  // een teamfactuur de teamnaam met de periode: die staat alleen op de factuur zelf.
+  const referentie = isTeamDoel(a) ? (await haalFactuur(factuurId)).reference : betaalkenmerk
+  if (!referentie) throw new Handwerk('de factuur in Moneybird heeft geen referentie: niet te controleren of er al een creditnota is')
+  const opFactuur = (await zoekFacturenOpReferentie(referentie)).filter(f => f.original_sales_invoice_id === factuurId)
   if (!opFactuur.length) return
   const { data, error } = await billingDb.from('arnobot_referral_acties').select('id, credit_id').eq('doel_id', a.doel_id)
   if (error) throw new Error(`referralacties ophalen mislukt: ${error.message}`)
@@ -136,8 +141,8 @@ async function maak(a: Actie, betaling: PayRow, factuurId: string, nu: Date): Pr
     ? await billingDb.from('arnobot_subscriptions').select('klant_type').eq('id', betaling.subscription_id).maybeSingle<{ klant_type: string }>()
     : { data: null, error: null }
   if (error) throw new Error(`abonnement ophalen mislukt: ${error.message}`)
-  // Zoals bij elke creditnota: zakelijk per mail, particulier alleen in de administratie.
-  const zakelijk = sub?.klant_type === 'zakelijk'
+  // Zoals bij elke creditnota: zakelijk per mail, particulier alleen in de administratie. Een team is altijd zakelijk.
+  const zakelijk = isTeamDoel(a) || sub?.klant_type === 'zakelijk'
   const registreren = process.env.MONEYBIRD_BETALING_REGISTREREN === 'true'
   let concept = credit.state === 'draft'
 
@@ -188,8 +193,7 @@ export async function creditnotaStap(actie: ActieRij, nu: Date = new Date()): Pr
   const a = { ...actie } as Actie
   if (!teDoen(a)) return 'niet-nodig'
   if (!schakelaarAan('REFERRAL_CREDITNOTA') || !moneybirdIngeschakeld()) return 'uit'
-  const { data: betaling, error } = await billingDb.from('arnobot_payments').select('*').eq('id', a.doel_id).eq('user_id', a.user_id).maybeSingle<PayRow>()
-  if (error) throw new Error(`betaling ophalen mislukt: ${error.message}`)
+  const betaling = await leesDoel(a)
   const factuurId = betaling?.moneybird_factuur_id
   if (!betaling || !factuurId || factuurId === 'bezig') return 'wacht-op-factuur'
   if (factuurId === 'testmodus') {
