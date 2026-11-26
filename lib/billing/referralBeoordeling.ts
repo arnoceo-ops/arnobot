@@ -30,6 +30,8 @@ export interface KlantFeiten {
 export interface AanbrengerFeiten {
   stand: AanbrengerStand
   historie: AanbrengerHistorie
+  /** Dezelfde historie, waarin een team pas begint bij een factuur die nu betaald staat. */
+  strengeHistorie?: AanbrengerHistorie
   handmatigBetaald: boolean
   /** Ooit met de hand op betaald gezet, gratis toegang gehad of teamlid geweest: dan nooit automatisch tegen hem beslissen. */
   historieOnvolledig: boolean
@@ -47,7 +49,19 @@ export type Beoordeling =
 const wacht = (reden: string): Beoordeling => ({ uitkomst: 'wacht', reden })
 const handwerk = (reden: string): Beoordeling => ({ uitkomst: 'handwerk', reden })
 
+export const TEAMBEGIN_ONZEKER = 'het begin van het team van de aanbrenger hangt af van een teamfactuur die niet of niet meer betaald is'
+
 export function beoordeelReferral(klant: KlantFeiten, aanbrenger: AanbrengerFeiten, nu: Date): Beoordeling {
+  const uitkomst = beoordeel(klant, aanbrenger, nu)
+  // Zou het tegoed vervallen zijn als een nooit betaalde of teruggedraaide teamfactuur niet meetelt, dan beslist Arno.
+  if (uitkomst.uitkomst === 'toekennen' && aanbrenger.strengeHistorie
+    && vervallenNaAanmelding(aanbrenger.strengeHistorie, klant.aangemeldAt!, nu)) {
+    return handwerk(TEAMBEGIN_ONZEKER)
+  }
+  return uitkomst
+}
+
+function beoordeel(klant: KlantFeiten, aanbrenger: AanbrengerFeiten, nu: Date): Beoordeling {
   const eerste = [...klant.betaalMomenten].sort((a, b) => Date.parse(a.at) - Date.parse(b.at))[0]
   if (!eerste) {
     return klant.handmatigBetaald ? handwerk('klant staat met de hand op betaald') : wacht('klant heeft nog niet betaald')

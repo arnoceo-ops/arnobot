@@ -4,7 +4,7 @@ import AdminNav from '../AdminNav'
 import BesluitFormulier from './BesluitFormulier'
 import { billingDb } from '@/lib/billing/db'
 import { formatEuro } from '@/lib/billing/geld'
-import { draaiGrootboek, saldoPerAanbrenger, type GrootboekRegel, type ReferralStand } from '@/lib/billing/referralGrootboek'
+import { draaiGrootboek, openVervalVraag, saldoPerAanbrenger, type GrootboekRegel, type ReferralStand } from '@/lib/billing/referralGrootboek'
 
 export const dynamic = 'force-dynamic'
 
@@ -107,11 +107,14 @@ export default async function ReferralsAdminPage() {
               {[...opgeslagen].reverse().map(r => (
                 <tr key={r.event_key} style={rijStijl}>
                   <td style={cel}>{dag(r.created_at)}</td>
-                  <td style={cel}>{SOORT_LABEL[r.soort]}</td>
+                  <td style={cel}>{r.event_key.startsWith('verval-behoud:') ? 'Behouden' : SOORT_LABEL[r.soort]}</td>
                   <td style={cel}>{naam(r.aanbrenger_user_id)}</td>
                   <td style={cel}>{naam(r.klant_user_id)}</td>
                   <td style={cel}>{bedrag(r.netto_cent)}</td>
-                  <td style={cel}>{r.reden}</td>
+                  <td style={cel}>
+                    {r.reden}
+                    {openVervalVraag(opgeslagen, r.referral_id)?.event_key === r.event_key && <BesluitFormulier referralId={r.referral_id} verval />}
+                  </td>
                 </tr>
               ))}
             </tbody>

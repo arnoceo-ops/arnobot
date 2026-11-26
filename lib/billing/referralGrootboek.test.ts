@@ -52,7 +52,7 @@ vi.mock('./db', () => ({
   },
 }))
 
-import { draaiGrootboek, legBesluitVast, nieuweMijlpalen, saldoPerAanbrenger } from './referralGrootboek'
+import { draaiGrootboek, legBesluitVast, legVervalBesluitVast, openVervalVraag, nieuweMijlpalen, saldoPerAanbrenger } from './referralGrootboek'
 import { berekenBedrag, type Cyclus, type KlantType, type Plan } from './prijzen'
 
 const gebruiker = (user_id: string, extra: Rij = {}): Rij => ({
@@ -810,7 +810,7 @@ describe('tweede controle', () => {
   it.each([
     ['alleen team', [] as Rij[]],
     ['solo naar team', [soloGestopt('2027-01-20T00:00:00.000Z')]],
-  ])('%s: een teruggedraaide eerste teamfactuur laat een toekenning niet vervallen', async (_naam, solo) => {
+  ])('%s: een teruggedraaide eerste teamfactuur laat een toekenning niet vervallen, Arno krijgt de vraag', async (_naam, solo) => {
     zet({
       approved_users: [gebruiker('aanbrenger', { command_manager: true }), gebruiker('klant')],
       arnobot_subscriptions: [...solo, klantSub()], arnobot_teams: [team({ volgende_factuurdatum: '2027-04-20' })],
@@ -820,6 +820,110 @@ describe('tweede controle', () => {
     expect(boek().map(r => r.soort)).toEqual(['toekenning'])
     draaiTerug()
     await draai(new Date('2027-03-10T06:00:00.000Z'))
+    expect(boek().map(r => r.event_key)).toEqual(['uitkomst:r1', 'verval-handwerk:r1'])
+    expect(saldoPerAanbrenger(boek() as any).get('aanbrenger')).toBe(1900)
+  })
+})
+
+// ── Ronde 3, stap 1 ──
+
+describe('nooit betaalde teamfactuur bepaalt het begin van het team', () => {
+  const metOudeFactuur = (status: string) => zet({
+    arnobot_subscriptions: [soloGestopt('2027-01-20T00:00:00.000Z'), klantSub()], arnobot_teams: [team({ volgende_factuurdatum: '2027-04-20' })],
+    arnobot_team_facturen: [
+      factuur({ id: 'f0', status, betaald_at: null, created_at: '2027-01-20T06:00:00.000Z', periode_start: '2027-01-20', periode_einde: '2027-02-20' }),
+      factuur({ id: 'f1', created_at: '2027-02-20T06:00:00.000Z', betaald_at: '2027-02-21T10:00:00.000Z', periode_start: '2027-02-20', periode_einde: '2027-03-20' }),
+    ],
+  })
+  it.each(['open', 'overdue', 'expired'])('%s: zou het anders vervallen zijn, dan beslist Arno', async status => {
+    metOudeFactuur(status)
+    const run = await draai()
+    expect(uitkomst(run)).toMatchObject({ uitkomst: 'handwerk' })
+    expect(uitkomst(run).reden).toContain('teamfactuur')
+  })
+  it('maakt die factuur geen verschil, dan gewoon toekennen', async () => {
+    metOudeFactuur('expired')
+    h.tabellen.arnobot_subscriptions[0].periode_einde = '2027-02-15T00:00:00.000Z'
+    await draai()
     expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+  })
+})
+
+describe('enige teamfactuur teruggedraaid en team geblokkeerd: 30 dagen', () => {
+  const geblokkeerd = (solo: Rij[]) => ({
+    arnobot_subscriptions: [...solo, klantSub()], arnobot_teams: [team({ geblokkeerd_at: '2027-03-06T06:00:00.000Z' })],
+    arnobot_team_facturen: [factuur({ status: 'refunded', reversed_at: '2027-03-05T00:00:00.000Z' })],
+  })
+  it.each([
+    ['alleen team', [] as Rij[]],
+    ['solo naar team', [soloGestopt('2027-02-01T00:00:00.000Z')]],
+  ])('%s: wachtende referral blijft 30 dagen staan, daarna afgewezen', async (_naam, solo) => {
+    zet(geblokkeerd(solo))
+    await draai(new Date('2027-03-07T06:00:00.000Z'))
+    await draai(new Date('2027-04-04T06:00:00.000Z'))
+    expect(boek()).toHaveLength(0)
+    await draai(new Date('2027-04-07T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['afwijzing'])
+  })
+  it('bestaande toekenning: vervalt pas na 30 dagen', async () => {
+    await draai()
+    Object.assign(h.tabellen, geblokkeerd([]))
+    await draai(new Date('2027-04-04T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+    await draai(new Date('2027-04-07T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['toekenning', 'verval'])
+  })
+})
+
+describe('gratis toegang zonder adminlog', () => {
+  it('lege trial_start is het spoor: niet definitief afwijzen', async () => {
+    zet({
+      approved_users: [gebruiker('aanbrenger', { trial_start: null, expires_at: '2027-02-01T00:00:00.000Z', eerste_proef_start: '2027-01-01T10:00:00.000Z' }), gebruiker('klant')],
+      arnobot_subscriptions: [klantSub()],
+    })
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['handwerk'])
+  })
+})
+
+describe('besluit over een tegoed dat lijkt te vervallen', () => {
+  const log = [{ doel_user_id: 'aanbrenger', actie: 'betaald_gezet' }]
+  const gestopt = (einde: string) => [soloGestopt(einde), klantSub()]
+  async function metVraag() {
+    zet({ arnobot_admin_log: log })
+    await draai()
+    h.tabellen.arnobot_subscriptions = gestopt('2027-02-01T00:00:00.000Z')
+    await draai()
+  }
+  const saldo = () => saldoPerAanbrenger(boek() as any).get('aanbrenger')
+
+  it('laten vervallen: saldo nul, daarna geen vraag en geen tweede besluit', async () => {
+    await metVraag()
+    expect(openVervalVraag(boek() as any, 'r1')?.event_key).toBe('verval-handwerk:r1')
+    expect(await legVervalBesluitVast('r1', { besluit: 'vervallen', toelichting: 'echt gestopt' })).toMatchObject({ ok: true })
+    expect(saldo()).toBe(0)
+    expect(openVervalVraag(boek() as any, 'r1')).toBeNull()
+    expect(await legVervalBesluitVast('r1', { besluit: 'behouden', toelichting: 'toch niet' })).toMatchObject({ ok: false, status: 404 })
+    await draai()
+    expect(boek().map(r => r.event_key)).toEqual(['uitkomst:r1', 'verval-handwerk:r1', 'verval:r1'])
+  })
+  it('behouden: het verleden telt niet meer, een later einde geeft een nieuwe vraag', async () => {
+    await metVraag()
+    vi.useFakeTimers({ now: NU })
+    await legVervalBesluitVast('r1', { besluit: 'behouden', toelichting: 'per bank betaald' })
+    vi.useRealTimers()
+    await draai()
+    expect(saldo()).toBe(1900)
+    expect(boek()).toHaveLength(3)
+    expect(openVervalVraag(boek() as any, 'r1')).toBeNull()
+    h.tabellen.arnobot_subscriptions = gestopt('2027-04-01T00:00:00.000Z')
+    await draai(new Date('2027-05-01T06:00:00.000Z'))
+    expect(openVervalVraag(boek() as any, 'r1')?.event_key).toBe('verval-handwerk:r1:2')
+    expect(saldo()).toBe(1900)
+  })
+  it('niet zonder toelichting of zonder open vraag', async () => {
+    await draai()
+    expect(await legVervalBesluitVast('r1', { besluit: 'vervallen', toelichting: 'x' })).toMatchObject({ status: 404 })
+    expect(await legVervalBesluitVast('r1', { besluit: 'vervallen', toelichting: ' ' })).toMatchObject({ status: 400 })
   })
 })

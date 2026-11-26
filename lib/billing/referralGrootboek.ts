@@ -8,7 +8,7 @@ import {
   vervallenNaAanmelding,
   type BetaaldePeriode, type Dekking,
 } from './referralRegels'
-import { beoordeelReferral, type AanbrengerFeiten, type Beoordeling, type KlantFeiten } from './referralBeoordeling'
+import { TEAMBEGIN_ONZEKER, beoordeelReferral, type AanbrengerFeiten, type Beoordeling, type KlantFeiten } from './referralBeoordeling'
 import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
 import { TRIAL_DAGEN } from '@/lib/toegang'
 import { eersteProefStart } from '@/lib/referralKenmerken'
@@ -137,7 +137,8 @@ async function laadDossier(userId: string): Promise<Dossier | null> {
     teams: eigenTeams,
     facturen,
     ooitMetDeHandBetaald: (verplicht('adminlog', handLog) ?? []).some(r => r.actie === 'betaald_gezet'),
-    ooitGratisToegang: (verplicht('adminlog', handLog) ?? []).some(r => r.actie === 'gratis_toegang'),
+    // Alleen de knop GRATIS maakt trial_start leeg: dat spoor geldt ook voor gratis toegang van voor het adminlog.
+    ooitGratisToegang: !g.trial_start || (verplicht('adminlog', handLog) ?? []).some(r => r.actie === 'gratis_toegang'),
   }
 }
 
@@ -277,7 +278,7 @@ async function klantFeiten(d: Dossier, aangemeldAt: string | null, nu: Date): Pr
 }
 
 /** De tijdvakken waarin de aanbrenger zelf betaalde: eigen abonnementen en betaalde teams. */
-function dekkingVan(d: Dossier, nu: Date): Dekking[] {
+function dekkingVan(d: Dossier, nu: Date, alleenBetaaldeFacturen = false): Dekking[] {
   const uit: Dekking[] = []
   for (const s of d.subs.filter(s => s.status !== 'pending' && s.status !== 'abandoned')) {
     const start = s.created_at ?? s.periode_start
@@ -289,8 +290,9 @@ function dekkingVan(d: Dossier, nu: Date): Dekking[] {
   }
   for (const t of betaaldeTeamsVan(d)) {
     // De vroegste van periodestart en aanmaakdag van de factuur: te laat betalen verschuift het begin niet.
-    // Alle facturen: een later teruggedraaide of onbetaalde eerste factuur maakt het team niet later begonnen.
-    const starts = d.facturen.filter(f => f.team_id === t.id)
+    // Alle facturen: een later teruggedraaide of onbetaalde eerste factuur maakt het team niet later begonnen. Maakt zo
+    // een factuur het verschil, dan beslist Arno: daarvoor rekent aanbrengerFeiten ook de strenge variant uit.
+    const starts = d.facturen.filter(f => f.team_id === t.id && (!alleenBetaaldeFacturen || teamFactuurStaat(f)))
       .flatMap(f => [f.periode_start, f.created_at, f.betaald_at])
       .filter((x): x is string => !!x)
       .sort((a, b) => Date.parse(a) - Date.parse(b))
@@ -309,8 +311,10 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
   const onbetaald = d.teams.filter(t => !gestopt(t) && !betaaldeTeams.includes(t))
   const teamInAfwachting = !lopendTeam
     && onbetaald.some(t => !t.geblokkeerd_at && (heeftOpenFactuur(t) || (t.min_seats !== null && !!t.volgende_factuurdatum)))
-  // Geblokkeerd om een onbetaalde eerste factuur: telt niet als betalend, het tegoed staat wel stil.
-  const geblokkeerdOnbetaald = onbetaald.find(t => !!t.geblokkeerd_at && heeftOpenFactuur(t))
+  // Geblokkeerd om een onbetaalde of teruggedraaide eerste factuur: telt niet als betalend, het tegoed staat wel stil.
+  const heeftTeruggedraaideFactuur = (t: Team) =>
+    d.facturen.some(f => f.team_id === t.id && (f.status === 'refunded' || !!f.reversed_at || (f.teruggeboekt_cent ?? 0) > 0))
+  const geblokkeerdOnbetaald = onbetaald.find(t => !!t.geblokkeerd_at && (heeftOpenFactuur(t) || heeftTeruggedraaideFactuur(t)))
 
   const lopendeSub = d.subs
     .filter(lopend)
@@ -346,6 +350,11 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
   const ooit = !!lopendeSub || !!lopendTeam || !!geblokkeerdTeam || !!laatste
   const uiterlijkZonderAbonnement = d.teams.length ? eersteUiterlijk.team : eersteUiterlijk.solo
 
+  const historie = {
+    dekking: dekkingVan(d, nu), eersteUiterlijk, uiterlijkZonderAbonnement, teamInAfwachting: teamInAfwachting || !!geblokkeerdOnbetaald,
+    isGewoonTeamlid: d.isGewoonTeamlid, lifetimeSinds: g.lifetime_sinds ?? null,
+  }
+
   return {
     stand: {
       loopt,
@@ -359,10 +368,8 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
       teamInAfwachting,
       lifetime: !!g.lifetime_sinds,
     },
-    historie: {
-      dekking: dekkingVan(d, nu), eersteUiterlijk, uiterlijkZonderAbonnement, teamInAfwachting: teamInAfwachting || !!geblokkeerdOnbetaald,
-      isGewoonTeamlid: d.isGewoonTeamlid, lifetimeSinds: g.lifetime_sinds ?? null,
-    },
+    historie,
+    strengeHistorie: { ...historie, dekking: dekkingVan(d, nu, true) },
     // Bij Lifetime vervalt niets: een BETAALD-vlag hoeft dan niets tegen te houden.
     handmatigBetaald: !g.lifetime_sinds && handmatigOpBetaald(d, nu),
     // Als gewoon teamlid is de stand wel zeker; daarna niet meer te zien wanneer dat was.
@@ -498,8 +505,12 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
       const feiten = eigen ? await aanbrengerFeiten(eigen, nu) : null
       if (feiten?.handmatigBetaald) continue
       const aangemeld = referrals.find(r => String(r.id) === t.referral_id)?.created_at
-      // Bij een handmatige toekenning telt alleen wat na dat besluit gebeurt: Arno heeft het verleden al beoordeeld.
-      const besluitAt = t.reden.startsWith(HANDMATIG) ? t.created_at ?? null : null
+      // Na een handmatig besluit (toekennen of tegoed behouden) telt alleen wat daarna gebeurt: Arno heeft het verleden
+      // al beoordeeld.
+      const behouden = behoudRegels(run.regels, t.referral_id)
+      const besluitAt = [t.reden.startsWith(HANDMATIG) ? t.created_at : null, ...behouden.map(r => r.created_at)]
+        .filter((x): x is string => !!x)
+        .sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null
       const vanaf = besluitAt && aangemeld && Date.parse(besluitAt) > Date.parse(aangemeld) ? besluitAt : aangemeld
       const basis = {
         referral_id: t.referral_id, aanbrenger_user_id: t.aanbrenger_user_id, klant_user_id: t.klant_user_id,
@@ -509,17 +520,21 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
         const moment = vervalMoment(feiten.stand)
         const nuVervallen = tegoedStatus(feiten.stand, nu) === 'vervallen'
           && (!besluitAt || (moment !== null && moment > Date.parse(besluitAt)))
-        if (!nuVervallen && !(vanaf && vervallenNaAanmelding(feiten.historie, vanaf, nu))) continue
-        if (feiten.historieOnvolledig) {
-          // Niet zeker: niets laten vervallen, een keer aan Arno melden.
-          await voegToe({ ...basis, event_key: `verval-handwerk:${t.referral_id}`, soort: 'handwerk', netto_cent: 0, reden: 'tegoed lijkt te vervallen, maar de aanbrenger stond met de hand op betaald, had gratis toegang of was teamlid' })
+        const zeker = nuVervallen || (!!vanaf && vervallenNaAanmelding(feiten.historie, vanaf, nu))
+        if (!zeker && !(vanaf && feiten.strengeHistorie && vervallenNaAanmelding(feiten.strengeHistorie, vanaf, nu))) continue
+        const twijfel = !zeker ? TEAMBEGIN_ONZEKER
+          : feiten.historieOnvolledig ? 'de aanbrenger stond met de hand op betaald, had gratis toegang of was teamlid'
+            : null
+        if (twijfel) {
+          // Niet zeker: niets laten vervallen, een keer aan Arno vragen. Na "behouden" is een volgende keer een nieuwe vraag.
+          const nummer = behouden.length ? `:${behouden.length + 1}` : ''
+          await voegToe({ ...basis, event_key: `${VERVAL_VRAAG}${t.referral_id}${nummer}`, soort: 'handwerk', netto_cent: 0, reden: `tegoed lijkt te vervallen, maar ${twijfel}` })
           continue
         }
       }
-      const staat = t.netto_cent ?? run.regels.find(r => r.event_key === `vaststelling:${t.referral_id}`)?.netto_cent ?? 0
       await voegToe({
         ...basis, event_key: `verval:${t.referral_id}`, soort: 'verval',
-        netto_cent: -staat || 0, reden: eigen ? 'abonnement van de aanbrenger is afgelopen of niet op tijd afgesloten' : 'account van de aanbrenger bestaat niet meer',
+        netto_cent: -openstaand(run.regels, t) || 0, reden: eigen ? 'abonnement van de aanbrenger is afgelopen of niet op tijd afgesloten' : 'account van de aanbrenger bestaat niet meer',
       })
     } catch (e) {
       run.fouten.push(`tegoed ${t.referral_id}: ${e instanceof Error ? e.message : String(e)}`)
@@ -549,9 +564,7 @@ export async function legBesluitVast(referralId: string, invoer: HandmatigBeslui
     return { ok: false, status: 400, fout: 'Vul een bedrag in' }
   }
 
-  const regels = await haalAlleRijen<GrootboekRegel>((van, tot) =>
-    billingDb.from('arnobot_referral_grootboek').select('*').eq('meeloop', MEELOOP)
-      .order('created_at', { ascending: true }).order('id').range(van, tot))
+  const regels = await opgeslagenRegels()
   const open = regels.find(r => r.event_key === `handwerk:${referralId}`)
   if (!open) return { ok: false, status: 404, fout: 'Deze referral wacht niet op een besluit' }
   if (regels.some(r => r.event_key === `uitkomst:${referralId}`)) return { ok: false, status: 409, fout: 'Over deze referral is al beslist' }
@@ -562,6 +575,54 @@ export async function legBesluitVast(referralId: string, invoer: HandmatigBeslui
     netto_cent: nettoCent, reden: `${HANDMATIG}${toelichting.slice(0, 300)}`,
     klant_maand_netto_cent: invoer.besluit === 'toekennen' ? nettoCent : null,
   }
+  return schrijfBesluit(regel, regels)
+}
+
+const VERVAL_VRAAG = 'verval-handwerk:'
+
+const behoudRegels = (regels: GrootboekRegel[], referralId: string) =>
+  regels.filter(r => r.referral_id === referralId && r.event_key.startsWith('verval-behoud:'))
+
+/** Het bedrag dat van een toekenning in het saldo staat. */
+const openstaand = (regels: GrootboekRegel[], toekenning: GrootboekRegel) =>
+  toekenning.netto_cent ?? regels.find(r => r.event_key === `vaststelling:${toekenning.referral_id}`)?.netto_cent ?? 0
+
+/** De vraag "laten vervallen of behouden?" die nog op Arno wacht. */
+export function openVervalVraag(regels: GrootboekRegel[], referralId: string): GrootboekRegel | null {
+  if (regels.some(r => r.event_key === `verval:${referralId}`)) return null
+  const beantwoord = behoudRegels(regels, referralId).length
+  const sleutel = `${VERVAL_VRAAG}${referralId}${beantwoord ? `:${beantwoord + 1}` : ''}`
+  return regels.find(r => r.event_key === sleutel) ?? null
+}
+
+export interface VervalBesluit {
+  besluit: 'vervallen' | 'behouden'
+  toelichting: string
+}
+
+/** Legt Arno's besluit vast over een tegoed dat lijkt te vervallen. "Vervallen" is definitief. */
+export async function legVervalBesluitVast(referralId: string, invoer: VervalBesluit): Promise<BesluitUitkomst> {
+  const toelichting = invoer.toelichting.trim()
+  if (!toelichting) return { ok: false, status: 400, fout: 'Geef een toelichting' }
+  const regels = await opgeslagenRegels()
+  const toekenning = regels.find(r => r.event_key === `uitkomst:${referralId}` && r.soort === 'toekenning')
+  if (!toekenning || !openVervalVraag(regels, referralId)) return { ok: false, status: 404, fout: 'Hierover wacht geen besluit' }
+
+  const vervalt = invoer.besluit === 'vervallen'
+  return schrijfBesluit({
+    event_key: vervalt ? `verval:${referralId}` : `verval-behoud:${referralId}:${behoudRegels(regels, referralId).length + 1}`,
+    meeloop: MEELOOP, soort: vervalt ? 'verval' : 'handwerk', referral_id: referralId,
+    aanbrenger_user_id: toekenning.aanbrenger_user_id, klant_user_id: toekenning.klant_user_id,
+    netto_cent: vervalt ? -openstaand(regels, toekenning) || 0 : 0,
+    reden: `${HANDMATIG}${toelichting.slice(0, 300)}`, klant_maand_netto_cent: toekenning.klant_maand_netto_cent,
+  }, regels)
+}
+
+const opgeslagenRegels = () => haalAlleRijen<GrootboekRegel>((van, tot) =>
+  billingDb.from('arnobot_referral_grootboek').select('*').eq('meeloop', MEELOOP)
+    .order('created_at', { ascending: true }).order('id').range(van, tot))
+
+async function schrijfBesluit(regel: GrootboekRegel, regels: GrootboekRegel[]): Promise<BesluitUitkomst> {
   const { error } = await billingDb.from('arnobot_referral_grootboek').insert(regel)
   if (error) {
     if ((error as { code?: string }).code === '23505') return { ok: false, status: 409, fout: 'Over deze referral is al beslist' }
