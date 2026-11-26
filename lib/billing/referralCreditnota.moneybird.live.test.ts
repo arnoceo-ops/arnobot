@@ -57,25 +57,34 @@ describe.skipIf(process.env.RUN_LIVE_CREDITNOTA !== 'true')('proef: creditnota i
         brutoCent, nettoCent: Math.round(brutoCent / 1.21), inclusiefBtw: true, taxRateId: tarief, ledgerAccountId: grootboek,
       })
       await mb.verstuurFactuur(id, 'Manual')
-      await mb.registreerBetaling({ factuurId: id, betaaldOp: nu, brutoCent, mollieId: `tr_proef${label}${merk}` })
+      try {
+        await mb.registreerBetaling({ factuurId: id, betaaldOp: nu, brutoCent, mollieId: `tr_proef${label}${merk}` })
+      } catch (e) {
+        // De sandbox staat betalingen zonder bewijs niet toe: de factuur blijft dan open. De creditnota is wat we toetsen.
+        meld(`betaling ${label} niet geboekt`, e instanceof Error ? e.message : String(e))
+      }
       return id
     }
 
     // 1. Het hele bedrag, met de bestaande functie van de app.
     const heel = await betaaldeFactuur('maand', 2900)
     meld('1 factuur', await beeld(heel))
-    const creditHeel = await mb.maakCreditnota(heel, { terugbetalingRegistreren: true, brutoCent: 2900, betaaldOp: new Date(), mollieId: `re_heel${merk}`, mailen: false })
+    const creditHeel = await mb.maakCreditnota(heel, { terugbetalingRegistreren: false, brutoCent: 2900, betaaldOp: new Date(), mollieId: `re_heel${merk}`, mailen: false })
     const beeldHeel = await beeld(creditHeel.id)
     meld('2 creditnota heel', beeldHeel)
-    expect(beeldHeel.incl).toBe('-29.0')
+    expect(Number(beeldHeel.incl)).toBe(-29)
+    meld('2b oorspronkelijke factuur na creditnota heel', await beeld(heel))
 
     // 2. Een deelbedrag: de jaarkorting van 19,00 op een jaarfactuur van 228,00.
     const jaar = await betaaldeFactuur('jaar', 22800)
     const dup = await api(`/sales_invoices/${jaar}/duplicate_creditinvoice.json`, { method: 'PATCH', body: {} })
     meld('3 concept', { http: dup.status, ...(await beeld(dup.json.id)) })
-    const regel = (await api(`/sales_invoices/${dup.json.id}.json`)).json.details[0]
-    // Het teken staat in de prijs of in het aantal: volg wat Moneybird zelf deed.
-    const prijs = String(regel.price).startsWith('-') ? '-19.00' : '19.00'
+    // Moneybird zet er een regel zonder aantal boven (tekstregel). De bedragregel is die met aantal -1: het teken staat in
+    // het aantal, de prijs blijft positief. Een prijs op de tekstregel telt als bedrag erbij.
+    const bedragregels = (await api(`/sales_invoices/${dup.json.id}.json`)).json.details.filter((d: any) => Number(d.amount) === -1)
+    expect(bedragregels).toHaveLength(1)
+    const regel = bedragregels[0]
+    const prijs = '19.00'
     const wijzig = await api(`/sales_invoices/${dup.json.id}.json`, { method: 'PATCH', body: { sales_invoice: { details_attributes: [{ id: regel.id, price: prijs }] } } })
     meld('4 regel aangepast', { http: wijzig.status, fout: wijzig.status >= 300 ? wijzig.tekst : null, ...(await beeld(dup.json.id)) })
     await mb.verstuurFactuur(dup.json.id, 'Manual')
@@ -84,7 +93,10 @@ describe.skipIf(process.env.RUN_LIVE_CREDITNOTA !== 'true')('proef: creditnota i
       body: { payment: { payment_date: new Date().toISOString().slice(0, 10), price: '-19.00', transaction_identifier: `re_deel${merk}`, manual_payment_action: 'payment_without_proof' } },
     })
     meld('5 terugbetaling geboekt', { http: betaling.status, fout: betaling.status >= 300 ? betaling.tekst : null })
-    meld('6 creditnota deel', await beeld(dup.json.id))
+    const deel = await beeld(dup.json.id)
+    meld('6 creditnota deel', deel)
+    expect(Number(deel.incl)).toBe(-19)
+    expect(Number(deel.excl)).toBe(-15.7)
     meld('7 oorspronkelijke factuur', await beeld(jaar))
 
     // 3. Kan een hervatte run een eerder gemaakte creditnota terugvinden?
