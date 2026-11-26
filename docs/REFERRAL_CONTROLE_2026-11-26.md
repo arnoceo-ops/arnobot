@@ -150,9 +150,11 @@ Ook nog niet gebouwd: terugdraaien, verrekenen, terugstorten aan een teamlid, sa
 3. **Ronde 3:** de niet-gebouwde beloften, met als vroegste datums: teamkorting nu, jaarkorting na overstap rond 24-01-2027, gratis vierde maand begin februari 2027. Verrekenen is nodig bij de eerste verlenging van een aanbrenger met tegoed.
 4. **Daarna:** proef in Mollie testmodus (eerst Arno vragen).
 
-## Besluiten die Arno nog moet nemen (nodig voor ronde 2)
+## Besluiten Arno 26-11 (voor ronde 2, deze gaan vóór oudere regels)
 
-1. Teamklant betaalt binnen de factuurtermijn maar na proef plus 10 dagen: afwijzen (huidige letter) of tellen? Advies: tellen als de factuur binnen de termijn is aangemaakt.
-2. Aanbrenger komt na meer dan 14 dagen terug en daarna haalt een oude referral de drempel: advies geen tegoed.
-3. Tweede proefperiode: advies de eerste termijn telt (rekenen vanaf de aanmelding via de referral).
-4. Later: vervalt tegoed bij een lifetime-houder zonder betaald abonnement?
+1. Teamklant betaalt binnen de factuurtermijn maar na proef plus 10 dagen: **tellen, als de factuur binnen de termijn is aangemaakt.** Verworpen: afwijzen volgens de oude letter.
+2. Aanbrenger komt na meer dan 14 dagen terug en daarna haalt een oude referral de drempel: **geen tegoed.**
+3. Tweede proefperiode: **de eerste termijn telt** (rekenen vanaf de aanmelding via de referral).
+4. Lifetime-houder zonder betaald abonnement: **het tegoed vervalt niet.**
+
+Nog na te gaan in ronde 2: of deze vier besluiten een aanpassing van de spelregels of andere klantteksten vragen (teksten eerst aan Arno).
