@@ -16,7 +16,8 @@ export const GEDRAGSPATRONEN: Gedragspatroon[] = [
     sleutel: 'zelfcorrectie',
     naam: 'Zelfcorrectie midden in het antwoord',
     regel: 'systeemprompt: rekenen',
-    test: /(^|[.!?]\s+)(wacht|nee,? wacht|oeps|sorry,? andersom)\b/i,
+    // "Wacht" telt alleen met leesteken erachter: "Wacht niet tot hij belt" is gewoon advies (vals alarm 19-11).
+    test: /(^|[.!?]\s+)((nee,? )?wacht( even)?(?=\s*([,.!:;…–—]|$))|oeps\b|sorry,? andersom\b)/i,
   },
   {
     sleutel: 'bijval',

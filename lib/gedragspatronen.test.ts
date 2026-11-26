@@ -19,6 +19,11 @@ describe('telGedragspatronen', () => {
     expect(r.zelfcorrectie).toBe(1)
   })
 
+  it('telt wacht als zelfcorrectie alleen met een leesteken erachter, niet als advies', () => {
+    expect(tel(['Wacht niet tot hij weer belt.', 'Goed moment. Wacht tot vrijdag.', 'Nee, wacht niet.']).zelfcorrectie).toBe(0)
+    expect(tel(['47,1%... wacht, andersom.', 'Nee wacht, het is lager.', 'Klopt niet. Wacht even, ik reken opnieuw.']).zelfcorrectie).toBe(3)
+  })
+
   it('telt een gewoon antwoord nergens', () => {
     const r = tel(['Je marge is 47% en daarmee 4 punten boven het gemiddelde. Wat staat er in je pipeline?'])
     expect(Object.values(r).every(n => n === 0)).toBe(true)
