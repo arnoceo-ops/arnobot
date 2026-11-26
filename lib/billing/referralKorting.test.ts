@@ -74,7 +74,7 @@ describe('zelf omzetten naar zakelijk', () => {
 describe('wie krijgt de korting', () => {
   const nu = new Date('2026-12-20T12:00:00Z')
   beforeEach(() => {
-    h.referral = { id: 'r1' }; h.betalingen = []; h.gebruiker = { trial_start: '2026-11-24T19:46:00Z' }; h.fout = null
+    h.referral = { id: 'r1', created_at: '2026-11-24T19:46:00Z' }; h.betalingen = []; h.fout = null
   })
   it('aangebracht, nog niet betaald, binnen de termijn', async () => {
     expect(await heeftRechtOpJaarkorting('u', nu)).toBe(true)
@@ -93,6 +93,14 @@ describe('wie krijgt de korting', () => {
   })
   it('na de proef plus 15 dagen niet meer', async () => {
     expect(await heeftRechtOpJaarkorting('u', new Date('2027-01-12T12:00:00Z'))).toBe(false)
+  })
+  it('tweede proefperiode: de eerste termijn telt, trial_start doet er niet toe', async () => {
+    h.gebruiker = { trial_start: '2027-02-01T00:00:00Z' }
+    expect(await heeftRechtOpJaarkorting('u', new Date('2027-02-05T12:00:00Z'))).toBe(false)
+  })
+  it('zonder aanmelddatum geen korting', async () => {
+    h.referral = { id: 'r1', created_at: null }
+    expect(await heeftRechtOpJaarkorting('u', nu)).toBe(false)
   })
   it('een databasefout wordt niet stil de volle prijs', async () => {
     h.fout = { message: 'stuk' }

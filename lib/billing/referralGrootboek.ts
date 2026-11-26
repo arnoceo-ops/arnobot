@@ -1,13 +1,16 @@
 import { billingDb, type PayRow, type SubRow } from './db'
-import { heeftAndereTerugbetaling } from './terugbetaling'
+import { heeftAndereTerugbetaling, isVolledigTerugbetaald } from './terugbetaling'
+import { lijstBetalingTerugbetalingen, mollieIngeschakeld } from './mollie'
 import { huidigSeats, type TeamFactuurRow, type TeamRow } from './teamFacturatie'
-import { formatEuro } from './geld'
+import { formatEuro, mollieNaarCenten } from './geld'
 import {
-  TERMIJN_NA_PROEF_DAGEN, TERMIJN_NA_TEAMPROEF_DAGEN, maandNettoCent, tegoedNettoCent, tegoedStatus, type BetaaldePeriode,
+  TERMIJN_NA_PROEF_DAGEN, TERMIJN_NA_TEAMPROEF_DAGEN, tegoedStatus, tijdigMomentTeam, vervallenNaAanmelding,
+  type BetaaldePeriode, type Dekking,
 } from './referralRegels'
 import { beoordeelReferral, type AanbrengerFeiten, type Beoordeling, type KlantFeiten } from './referralBeoordeling'
 import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
 import { TRIAL_DAGEN } from '@/lib/toegang'
+import { proefEinde as teamProefEinde } from '@/lib/teamProef'
 import { nlVandaag } from '@/lib/nlTijd'
 import { isInternalTestUser, TEST_TEAM_IDS } from '@/lib/internalTestAccounts'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
@@ -18,6 +21,7 @@ import { haalAlleRijen } from '@/lib/haalAlleRijen'
 // Arno. Bij livegang worden de meeloopregels niet meegenomen. Tabel: docs/sql/2026-11-25-referral-grootboek.sql.
 
 export const MEELOOP = true
+const HANDMATIG = 'handmatig besluit: '
 const DAG_MS = 24 * 60 * 60 * 1000
 
 export type RegelSoort = 'toekenning' | 'afwijzing' | 'vaststelling' | 'verval' | 'handwerk'
@@ -46,6 +50,8 @@ export interface ReferralRij {
 export type ReferralStand =
   | { referral: ReferralRij; stand: 'uitgesloten' }
   | { referral: ReferralRij; stand: 'afgehandeld' }
+  /** Als handwerk vastgelegd: de cron beslist hier nooit meer zelf over, alleen Arno (legBesluitVast). */
+  | { referral: ReferralRij; stand: 'handwerk_open'; reden: string }
   | { referral: ReferralRij; stand: 'beoordeeld'; beoordeling: Beoordeling }
   | { referral: ReferralRij; stand: 'fout'; fout: string }
 
@@ -68,35 +74,49 @@ function verplicht<T>(wat: string, r: Antwoord<T>): T | null {
 }
 
 interface Gebruiker {
+  email: string | null
+  is_active: boolean | null
   trial_start: string | null
+  expires_at: string | null
   paid_at: string | null
   command_manager: boolean | null
   sd_attribution_method: string | null
+  /** Vanaf docs/sql/2026-11-26-referral-lifetime.sql. Door Arno met de hand gezet. */
+  lifetime_sinds?: string | null
 }
 
 type Sub = SubRow & { updated_at?: string | null }
 type Team = TeamRow & { stopt_op?: string | null }
+type Betaling = PayRow & {
+  plan?: BetaaldePeriode['plan'] | null; cyclus?: Cyclus | null; klant_type?: BetaaldePeriode['klantType'] | null
+  periode_start?: string | null; periode_einde?: string | null
+}
 
 interface Dossier {
   gebruiker: Gebruiker
   subs: Sub[]
-  betalingen: (PayRow & { plan?: BetaaldePeriode['plan'] | null; cyclus?: Cyclus | null; klant_type?: BetaaldePeriode['klantType'] | null; periode_start?: string | null; periode_einde?: string | null })[]
+  betalingen: Betaling[]
   isGewoonTeamlid: boolean
   teams: Team[]
   facturen: TeamFactuurRow[]
+  /** Ooit met de knop BETAALD gezet: dan kan er buiten ons systeem betaald zijn en is de voorgeschiedenis niet volledig. */
+  ooitMetDeHandBetaald: boolean
 }
 
-/** null: het account bestaat niet meer. */
+/** null: het account bestaat niet meer, ook als het alleen geanonimiseerd is. */
 async function laadDossier(userId: string): Promise<Dossier | null> {
-  const [gebruiker, subs, betalingen, lid, teams] = await Promise.all([
-    billingDb.from('approved_users').select('trial_start, paid_at, command_manager, sd_attribution_method').eq('user_id', userId).maybeSingle<Gebruiker>(),
+  const [gebruiker, subs, betalingen, lid, teams, handLog] = await Promise.all([
+    // Alle kolommen: lifetime_sinds bestaat pas na de SQL.
+    billingDb.from('approved_users').select('*').eq('user_id', userId).maybeSingle<Gebruiker>(),
     billingDb.from('arnobot_subscriptions').select('*').eq('user_id', userId).returns<Sub[]>(),
-    billingDb.from('arnobot_payments').select('*').eq('user_id', userId).returns<Dossier['betalingen']>(),
+    billingDb.from('arnobot_payments').select('*').eq('user_id', userId).returns<Betaling[]>(),
     billingDb.from('arnobot_team_members').select('team_id').eq('user_id', userId).limit(1),
     billingDb.from('arnobot_teams').select('id, name, manager_id, min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at, stopt_op').eq('manager_id', userId).returns<Team[]>(),
+    billingDb.from('arnobot_admin_log').select('actie').eq('doel_user_id', userId).eq('actie', 'betaald_gezet').limit(1),
   ])
   const g = verplicht('gebruiker', gebruiker)
-  if (!g) return null
+  // Anonimiseren bij een verwijderverzoek: de rij blijft staan, zonder e-mailadres en niet actief.
+  if (!g || (!g.email && g.is_active === false)) return null
   const eigenTeams = (verplicht('teams', teams) ?? []).filter(t => !(TEST_TEAM_IDS as readonly string[]).includes(t.id))
   const facturen = eigenTeams.length
     ? verplicht('teamfacturen', await billingDb.from('arnobot_team_facturen').select('*').in('team_id', eigenTeams.map(t => t.id)).returns<TeamFactuurRow[]>()) ?? []
@@ -108,74 +128,141 @@ async function laadDossier(userId: string): Promise<Dossier | null> {
     isGewoonTeamlid: (verplicht('teamlidmaatschap', lid) ?? []).length > 0 && g.command_manager !== true,
     teams: eigenTeams,
     facturen,
+    ooitMetDeHandBetaald: (verplicht('adminlog', handLog) ?? []).length > 0,
   }
 }
 
-const eigenBetalingTelt = (b: Dossier['betalingen'][number]) =>
-  b.status === 'paid' && !b.terugbetaling_verwerkt_at && !(b.teruggeboekt_cent > 0) && !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0)
+/** Betaald en niet helemaal teruggedraaid. Telt voor "op tijd betaald", ook na een deelterugbetaling. */
+const eigenBetalingStaat = (b: Betaling) =>
+  b.status === 'paid' && !b.terugbetaling_verwerkt_at && !(b.teruggeboekt_cent > 0) && !isVolledigTerugbetaald(b, b.terugbetaald_cent ?? 0)
 
-const teamFactuurTelt = (f: TeamFactuurRow) =>
-  f.status === 'paid' && !f.reversed_at && !(f.terugbetaald_cent ?? 0) && !(f.teruggeboekt_cent ?? 0)
+/** Telt als betaalde periode: er is niets van terug, behalve verrekend referraltegoed. */
+const eigenBetalingTelt = (b: Betaling) => eigenBetalingStaat(b) && !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0)
+
+const teamFactuurStaat = (f: TeamFactuurRow) => f.status === 'paid' && !f.reversed_at && !(f.teruggeboekt_cent ?? 0)
+const teamFactuurTelt = (f: TeamFactuurRow) => teamFactuurStaat(f) && !(f.terugbetaald_cent ?? 0)
 
 const teamMaandCent = (seats: number, cyclus: Cyclus) => (berekenTeamPrijsPerMaand(seats, cyclus) ?? 0) * 100
 
-const subMaandCent = (s: Sub) => maandNettoCent(s.plan, s.cyclus, s.klant_type)
+/** Maandprijs exclusief btw van wat er echt is afgesproken of betaald, niet de huidige prijslijst. */
+function nettoPerMaand(r: { bedrag_cent: number; btw_cent: number }, cyclus: Cyclus): number {
+  const cent = Math.round((r.bedrag_cent - r.btw_cent) / (cyclus === 'jaarlijks' ? 12 : 1))
+  // Een ontbrekend bedrag mag nooit als tegoed in het grootboek komen.
+  if (!Number.isFinite(cent)) throw new Error('bedrag of btw van een abonnement of betaling ontbreekt')
+  return cent
+}
 
-const proefEindeVan = (g: Gebruiker) =>
-  g.trial_start ? new Date(Date.parse(g.trial_start) + TRIAL_DAGEN * DAG_MS).toISOString() : null
+const subMaandCent = (s: Sub) => nettoPerMaand(s, s.cyclus)
 
-const heeftOoitAbonnement = (d: Dossier) => d.subs.some(s => s.status !== 'pending' && s.status !== 'abandoned')
+const lopend = (s: Sub) => s.status === 'active' || s.status === 'cancelled'
 
-async function klantFeiten(d: Dossier): Promise<KlantFeiten> {
+const upgradeBetaaldVoor = (d: Dossier, subId: string) =>
+  d.betalingen.some(b => b.soort === 'upgrade' && b.subscription_id === subId && eigenBetalingTelt(b))
+
+/** Het plan staat al op Pro terwijl de bijbetaling nog niet definitief is. */
+const bijbetalingLoopt = (d: Dossier) => d.betalingen.some(b => b.soort === 'upgrade'
+  && !['paid', 'failed', 'canceled', 'expired'].includes(b.status)
+  && d.subs.some(s => s.id === b.subscription_id && lopend(s)))
+
+const teamGestopt = (t: Team, nu: Date) => !!t.stopt_op && t.stopt_op <= nlVandaag(nu)
+
+/** Alleen een team waarvoor echt betaald is (en niet teruggedraaid), telt als abonnement van de manager. */
+const betaaldeTeamsVan = (d: Dossier) => d.teams.filter(t => d.facturen.some(f => f.team_id === t.id && teamFactuurStaat(f)))
+
+/**
+ * Staat paid_at met de hand gezet (de knop BETAALD) en is er niets in ons systeem dat de toegang nu verklaart? Bij een
+ * online betaling is paid_at precies het betaalmoment van die betaling.
+ */
+function handmatigOpBetaald(d: Dossier, nu: Date): boolean {
+  const paidAt = d.gebruiker.paid_at
+  if (!paidAt || d.isGewoonTeamlid) return false
+  if (d.subs.some(lopend) || betaaldeTeamsVan(d).some(t => !teamGestopt(t, nu))) return false
+  return !d.betalingen.some(b => !!b.betaald_at && Math.abs(Date.parse(b.betaald_at) - Date.parse(paidAt)) < 5 * 60 * 1000)
+}
+
+async function klantFeiten(d: Dossier, aangemeldAt: string | null, nu: Date): Promise<KlantFeiten> {
   const betaalMomenten: KlantFeiten['betaalMomenten'] = []
   const periodes: BetaaldePeriode[] = []
 
   for (const b of d.betalingen) {
-    const telt = eigenBetalingTelt(b)
-    if (telt && b.betaald_at) betaalMomenten.push({ at: b.betaald_at, team: false })
+    if (eigenBetalingStaat(b) && b.betaald_at) betaalMomenten.push({ at: b.betaald_at, team: false })
     if (!b.plan || !b.cyclus || !b.klant_type || !b.periode_start || !b.periode_einde || !b.betaald_at) continue
-    // Na een upgrade binnen hetzelfde jaar telt het abonnement zoals het nu is.
-    const lopend = b.cyclus === 'jaarlijks'
-      ? d.subs.find(s => s.id === b.subscription_id && (s.status === 'active' || s.status === 'cancelled') && s.cyclus === b.cyclus)
+    // Na een upgrade binnen hetzelfde jaar telt het abonnement zoals het nu is, maar pas als de bijbetaling binnen is.
+    const nuSub = b.cyclus === 'jaarlijks'
+      ? d.subs.find(s => s.id === b.subscription_id && lopend(s) && s.cyclus === b.cyclus)
       : undefined
-    const plan = (lopend?.plan ?? b.plan) as 'basis' | 'premium'
+    const onbetaaldeUpgrade = !!nuSub && nuSub.plan === 'premium' && b.plan === 'basis' && !upgradeBetaaldVoor(d, nuSub.id)
+    const plan = (nuSub && !onbetaaldeUpgrade ? nuSub.plan : b.plan) as 'basis' | 'premium'
+    // Per jaar telt de volle prijs van het abonnement: de betaling zelf kan de referral fee al bevatten.
+    const rij = b.cyclus === 'jaarlijks'
+      ? d.subs.find(s => s.id === b.subscription_id && s.cyclus === b.cyclus && s.plan === plan)
+      : undefined
     periodes.push({
       plan, cyclus: b.cyclus, klantType: b.klant_type, periodeStart: b.periode_start, periodeEinde: b.periode_einde,
-      betaaldAt: b.betaald_at, geldig: telt, maandNettoCent: maandNettoCent(plan, b.cyclus, b.klant_type),
+      betaaldAt: b.betaald_at, geldig: eigenBetalingTelt(b), maandNettoCent: rij ? subMaandCent(rij) : nettoPerMaand(b, b.cyclus),
     })
   }
 
-  for (const f of d.facturen.filter(f => f.soort === 'regulier' && f.betaald_at)) {
+  const regulier = d.facturen.filter(f => f.soort === 'regulier' && f.betaald_at)
+  const seatsPerTeam = new Map<string, number>()
+  for (const f of regulier) {
     const team = d.teams.find(t => t.id === f.team_id)!
-    const telt = teamFactuurTelt(f)
-    if (telt) betaalMomenten.push({ at: f.betaald_at!, team: true })
+    if (teamFactuurStaat(f)) betaalMomenten.push({ at: tijdigMomentTeam(f.created_at, f.betaald_at!), team: true })
     // Akkoord Arno: bij een team telt het aantal gebruikers op het moment van toekennen.
-    const seats = await huidigSeats(team.id, team.min_seats ?? TEAM_MIN_GEBRUIKERS)
+    let seats = seatsPerTeam.get(team.id)
+    if (seats === undefined) seatsPerTeam.set(team.id, (seats = await huidigSeats(team.id, team.min_seats ?? TEAM_MIN_GEBRUIKERS)))
     periodes.push({
       plan: 'team', cyclus: f.cyclus, klantType: 'zakelijk', periodeStart: f.periode_start, periodeEinde: f.periode_einde,
-      betaaldAt: f.betaald_at!, geldig: telt, maandNettoCent: teamMaandCent(seats, f.cyclus),
+      betaaldAt: f.betaald_at!, geldig: teamFactuurTelt(f), maandNettoCent: teamMaandCent(seats, f.cyclus),
     })
   }
 
   return {
-    proefEindeAt: proefEindeVan(d.gebruiker),
+    aangemeldAt,
+    // De eerste proefperiode: gerekend vanaf de aanmelding, niet vanaf een tweede trial_start.
+    proefEindeAt: aangemeldAt ? new Date(Date.parse(aangemeldAt) + TRIAL_DAGEN * DAG_MS).toISOString() : null,
     betaalMomenten,
     periodes,
-    handmatigBetaald: !!d.gebruiker.paid_at && !heeftOoitAbonnement(d) && !d.facturen.length,
+    handmatigBetaald: handmatigOpBetaald(d, nu),
     proefMogelijkVerlengd: d.gebruiker.sd_attribution_method === 'link' && betaalMomenten.some(m => m.team),
+    bijbetalingLoopt: bijbetalingLoopt(d),
   }
 }
 
+/** De tijdvakken waarin de aanbrenger zelf betaalde: eigen abonnementen en betaalde teams. */
+function dekkingVan(d: Dossier, nu: Date): Dekking[] {
+  const uit: Dekking[] = []
+  for (const s of d.subs.filter(s => s.status !== 'pending' && s.status !== 'abandoned')) {
+    const start = s.created_at ?? s.periode_start
+    if (!start) continue
+    const einde = s.status === 'active' ? null
+      : s.status === 'refunded' && s.updated_at && (!s.periode_einde || Date.parse(s.updated_at) < Date.parse(s.periode_einde)) ? s.updated_at
+        : s.periode_einde ?? s.updated_at ?? start
+    uit.push({ start, einde, team: false })
+  }
+  for (const t of betaaldeTeamsVan(d)) {
+    // De vroegste van periodestart en aanmaakdag van de factuur: te laat betalen verschuift het begin niet.
+    const starts = d.facturen.filter(f => f.team_id === t.id && teamFactuurStaat(f))
+      .flatMap(f => [f.periode_start, f.created_at, f.betaald_at])
+      .filter((x): x is string => !!x)
+      .sort((a, b) => Date.parse(a) - Date.parse(b))
+    if (starts[0]) uit.push({ start: starts[0], einde: teamGestopt(t, nu) ? `${t.stopt_op}T00:00:00.000Z` : null, team: true })
+  }
+  return uit
+}
+
 async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten> {
-  const vandaag = nlVandaag(nu)
-  // Alleen een team waarvoor echt betaald is, telt als abonnement van de manager.
-  const betaaldeTeams = d.teams.filter(t => d.facturen.some(f => f.team_id === t.id && !!f.betaald_at))
-  const gestopt = (t: Team) => !!t.stopt_op && t.stopt_op <= vandaag
+  const betaaldeTeams = betaaldeTeamsVan(d)
+  const gestopt = (t: Team) => teamGestopt(t, nu)
   const lopendTeam = betaaldeTeams.find(t => !gestopt(t) && !t.geblokkeerd_at)
   const geblokkeerdTeam = betaaldeTeams.find(t => !gestopt(t) && !!t.geblokkeerd_at)
+  // Facturatie staat aan en er is nog niets betaald: de eerste factuur komt nog of staat open (ook solo naar Team).
+  const teamInAfwachting = !lopendTeam && d.teams.some(t => !gestopt(t) && !t.geblokkeerd_at && !betaaldeTeams.includes(t)
+    && (d.facturen.some(f => f.team_id === t.id && (f.status === 'open' || f.status === 'overdue'))
+      || (t.min_seats !== null && !!t.volgende_factuurdatum)))
 
   const lopendeSub = d.subs
-    .filter(s => s.status === 'active' || s.status === 'cancelled')
+    .filter(lopend)
     .sort((a, b) => Date.parse(b.periode_einde ?? '0') - Date.parse(a.periode_einde ?? '0'))[0]
 
   const teamPrijs = async (t: Team) => teamMaandCent(await huidigSeats(t.id, t.min_seats ?? TEAM_MIN_GEBRUIKERS), t.cyclus ?? 'maandelijks')
@@ -196,8 +283,12 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
       : geblokkeerdTeam ? await teamPrijs(geblokkeerdTeam)
         : laatste ? await laatste.prijs() : null
 
-  const proefEinde = proefEindeVan(d.gebruiker)
-  const termijn = d.teams.length ? TERMIJN_NA_TEAMPROEF_DAGEN : TERMIJN_NA_PROEF_DAGEN
+  // De uiterste dag voor een eerste abonnement. Een verlengde teamproef schuift de teamtermijn mee.
+  const g = d.gebruiker
+  const proefEinde = g.trial_start ? Date.parse(g.trial_start) + TRIAL_DAGEN * DAG_MS : null
+  const teamEinde = g.paid_at ? proefEinde : teamProefEinde(g)?.getTime() ?? null
+  const na = (basis: number | null, dagen: number) => (basis === null ? null : new Date(basis + dagen * DAG_MS).toISOString())
+  const eersteUiterlijk = { solo: na(proefEinde, TERMIJN_NA_PROEF_DAGEN), team: na(teamEinde, TERMIJN_NA_TEAMPROEF_DAGEN) }
   const ooit = !!lopendeSub || !!lopendTeam || !!geblokkeerdTeam || !!laatste
 
   return {
@@ -209,11 +300,39 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
         : laatste?.at ?? null,
       geblokkeerdSindsAt: !lopendTeam && !lopendeSub ? geblokkeerdTeam?.geblokkeerd_at ?? null : null,
       isGewoonTeamlid: d.isGewoonTeamlid,
-      eersteBetalingUiterlijkAt: !ooit && proefEinde ? new Date(Date.parse(proefEinde) + termijn * DAG_MS).toISOString() : null,
+      eersteBetalingUiterlijkAt: ooit ? null : d.teams.length ? eersteUiterlijk.team : eersteUiterlijk.solo,
+      teamInAfwachting,
+      lifetime: !!g.lifetime_sinds,
     },
-    handmatigBetaald: !!d.gebruiker.paid_at && !heeftOoitAbonnement(d) && !d.facturen.length && !d.isGewoonTeamlid,
+    historie: {
+      dekking: dekkingVan(d, nu), eersteUiterlijk, teamInAfwachting,
+      isGewoonTeamlid: d.isGewoonTeamlid, lifetimeSinds: g.lifetime_sinds ?? null,
+    },
+    handmatigBetaald: handmatigOpBetaald(d, nu),
+    historieOnvolledig: d.ooitMetDeHandBetaald,
     maandNettoCent: maand,
+    bijbetalingLoopt: bijbetalingLoopt(d),
   }
+}
+
+/**
+ * Loopt er bij de klant een terugbetaling die onze database nog niet kent? amountRefunded op de betaling blijft 0 zolang
+ * een terugbetaling loopt (gemeten in testmodus, 26-11-2026), de lijst met terugbetalingen toont haar wel. Een
+ * toekenning is definitief, dus dit gaat er vlak voor. Een fout bij Mollie wordt doorgegeven: morgen opnieuw.
+ */
+async function onbekendeTerugbetaling(d: Dossier): Promise<boolean> {
+  if (!mollieIngeschakeld()) return false
+  const betalingen = [
+    ...d.betalingen.filter(eigenBetalingTelt).map(b => ({ id: b.mollie_payment_id, tegoed: b.referral_refund_cent ?? 0 })),
+    ...d.facturen.filter(f => teamFactuurTelt(f) && !!f.mollie_payment_id).map(f => ({ id: f.mollie_payment_id!, tegoed: 0 })),
+  ]
+  for (const b of betalingen) {
+    const terug = (await lijstBetalingTerugbetalingen(b.id))
+      .filter(r => r.status !== 'failed' && r.status !== 'canceled')
+      .reduce((som, r) => som + mollieNaarCenten(r.amount.value), 0)
+    if (terug > b.tegoed) return true
+  }
+  return false
 }
 
 const tabelOntbreekt = (e: { code?: string; message: string }) =>
@@ -277,6 +396,11 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
       run.referrals.push({ referral, stand: 'afgehandeld' })
       continue
     }
+    const open = run.regels.find(r => r.event_key === `handwerk:${id}`)
+    if (open) {
+      run.referrals.push({ referral, stand: 'handwerk_open', reden: open.reden })
+      continue
+    }
     try {
       const wederzijds = aanbrengerId === klantId
         || referrals.some(r => r.referrer_user_id === klantId && r.referred_user_id === aanbrengerId)
@@ -284,7 +408,11 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
         if (wederzijds) return { uitkomst: 'afwijzen', reden: 'wederzijdse verwijzing' }
         const [klant, aanbrenger] = await Promise.all([dossier(klantId), dossier(aanbrengerId)])
         if (!klant || !aanbrenger) return { uitkomst: 'handwerk', reden: `account van de ${klant ? 'aanbrenger' : 'nieuwe gebruiker'} bestaat niet meer` }
-        return beoordeelReferral(await klantFeiten(klant), await aanbrengerFeiten(aanbrenger, nu), nu)
+        const uitkomst = beoordeelReferral(await klantFeiten(klant, referral.created_at, nu), await aanbrengerFeiten(aanbrenger, nu), nu)
+        if (uitkomst.uitkomst === 'toekennen' && await onbekendeTerugbetaling(klant)) {
+          return { uitkomst: 'wacht', reden: 'bij de klant loopt een terugbetaling' }
+        }
+        return uitkomst
       }
       const beoordeling = await beoordeel()
       run.referrals.push({ referral, stand: 'beoordeeld', beoordeling })
@@ -304,28 +432,75 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
     }
   }
 
-  // 2. Per toekenning die nog niet vervallen is: vervalt het, of kan het bedrag nu worden vastgesteld?
+  // 2. Per toekenning die nog niet vervallen is: vervalt het? Heeft de aanbrenger nog geen bedrag, dan wordt dat pas
+  // bij de eerste verrekening vastgesteld (soort 'vaststelling', nog niet gebouwd).
   for (const t of run.regels.filter(r => r.soort === 'toekenning')) {
     if (bekend.has(`verval:${t.referral_id}`)) continue
     try {
       const eigen = await dossier(t.aanbrenger_user_id)
       const feiten = eigen ? await aanbrengerFeiten(eigen, nu) : null
       if (feiten?.handmatigBetaald) continue
-      const status = feiten ? tegoedStatus(feiten.stand, nu) : 'vervallen'
-      const vastgesteld = run.regels.find(r => r.event_key === `vaststelling:${t.referral_id}`)
-      const basis = { referral_id: t.referral_id, aanbrenger_user_id: t.aanbrenger_user_id, klant_user_id: t.klant_user_id, klant_maand_netto_cent: t.klant_maand_netto_cent }
-      if (status === 'vervallen') {
-        const staat = t.netto_cent ?? vastgesteld?.netto_cent ?? 0
-        await voegToe({ ...basis, event_key: `verval:${t.referral_id}`, soort: 'verval', netto_cent: -staat || 0, reden: eigen ? 'abonnement van de aanbrenger is afgelopen of niet op tijd afgesloten' : 'account van de aanbrenger bestaat niet meer' })
-      } else if (feiten && t.netto_cent === null && !vastgesteld && status !== 'wacht' && feiten.maandNettoCent !== null && t.klant_maand_netto_cent !== null) {
-        await voegToe({ ...basis, event_key: `vaststelling:${t.referral_id}`, soort: 'vaststelling', netto_cent: tegoedNettoCent(t.klant_maand_netto_cent, feiten.maandNettoCent), reden: 'eerste abonnement van de aanbrenger' })
-      }
+      const aangemeld = referrals.find(r => String(r.id) === t.referral_id)?.created_at
+      // Bij een handmatige toekenning tellen alleen gaten van na dat besluit: Arno heeft het verleden al beoordeeld.
+      const vanaf = aangemeld && t.reden.startsWith(HANDMATIG) && t.created_at && Date.parse(t.created_at) > Date.parse(aangemeld)
+        ? t.created_at
+        : aangemeld
+      const vervallen = !feiten || tegoedStatus(feiten.stand, nu) === 'vervallen'
+        || (!!vanaf && !feiten.historieOnvolledig && vervallenNaAanmelding(feiten.historie, vanaf, nu))
+      if (!vervallen) continue
+      const staat = t.netto_cent ?? run.regels.find(r => r.event_key === `vaststelling:${t.referral_id}`)?.netto_cent ?? 0
+      await voegToe({
+        referral_id: t.referral_id, aanbrenger_user_id: t.aanbrenger_user_id, klant_user_id: t.klant_user_id,
+        klant_maand_netto_cent: t.klant_maand_netto_cent, event_key: `verval:${t.referral_id}`, soort: 'verval',
+        netto_cent: -staat || 0, reden: eigen ? 'abonnement van de aanbrenger is afgelopen of niet op tijd afgesloten' : 'account van de aanbrenger bestaat niet meer',
+      })
     } catch (e) {
       run.fouten.push(`tegoed ${t.referral_id}: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
   return run
+}
+
+export interface HandmatigBesluit {
+  besluit: 'toekennen' | 'afwijzen'
+  /** Bedrag in centen exclusief btw, verplicht bij toekennen. */
+  nettoCent: number | null
+  toelichting: string
+}
+
+export type BesluitUitkomst =
+  | { ok: true; regel: GrootboekRegel; mijlpalen: Mijlpaal[] }
+  | { ok: false; status: number; fout: string }
+
+/** Legt Arno's besluit vast over een referral die als handwerk is aangemerkt. Eén keer, daarna definitief. */
+export async function legBesluitVast(referralId: string, invoer: HandmatigBesluit): Promise<BesluitUitkomst> {
+  const toelichting = invoer.toelichting.trim()
+  if (!toelichting) return { ok: false, status: 400, fout: 'Geef een toelichting' }
+  const nettoCent = invoer.besluit === 'toekennen' ? invoer.nettoCent : 0
+  if (invoer.besluit === 'toekennen' && !(Number.isInteger(nettoCent) && nettoCent! > 0 && nettoCent! <= 1_000_000)) {
+    return { ok: false, status: 400, fout: 'Vul een bedrag in' }
+  }
+
+  const regels = await haalAlleRijen<GrootboekRegel>((van, tot) =>
+    billingDb.from('arnobot_referral_grootboek').select('*').eq('meeloop', MEELOOP)
+      .order('created_at', { ascending: true }).order('id').range(van, tot))
+  const open = regels.find(r => r.event_key === `handwerk:${referralId}`)
+  if (!open) return { ok: false, status: 404, fout: 'Deze referral wacht niet op een besluit' }
+  if (regels.some(r => r.event_key === `uitkomst:${referralId}`)) return { ok: false, status: 409, fout: 'Over deze referral is al beslist' }
+
+  const regel: GrootboekRegel = {
+    event_key: `uitkomst:${referralId}`, meeloop: MEELOOP, soort: invoer.besluit === 'toekennen' ? 'toekenning' : 'afwijzing',
+    referral_id: referralId, aanbrenger_user_id: open.aanbrenger_user_id, klant_user_id: open.klant_user_id,
+    netto_cent: nettoCent, reden: `${HANDMATIG}${toelichting.slice(0, 300)}`,
+    klant_maand_netto_cent: invoer.besluit === 'toekennen' ? nettoCent : null,
+  }
+  const { error } = await billingDb.from('arnobot_referral_grootboek').insert(regel)
+  if (error) {
+    if ((error as { code?: string }).code === '23505') return { ok: false, status: 409, fout: 'Over deze referral is al beslist' }
+    return { ok: false, status: 500, fout: `Opslaan mislukt: ${error.message}` }
+  }
+  return { ok: true, regel, mijlpalen: nieuweMijlpalen([...regels, regel], [regel]) }
 }
 
 export function saldoPerAanbrenger(regels: GrootboekRegel[]): Map<string, number> {
@@ -348,10 +523,17 @@ export function regelTekst(r: GrootboekRegel, aanbrenger: string, klant: string)
 
 export const MIJLPALEN = [50, 100, 250]
 
-/** De mijlpalen die er met deze run bij zijn gekomen (aantal toekenningen). */
-export function nieuweMijlpalen(regels: GrootboekRegel[], nieuw: GrootboekRegel[]): number[] {
-  const tel = (r: GrootboekRegel[]) => r.filter(x => x.soort === 'toekenning').length
-  const na = tel(regels)
-  const voor = na - tel(nieuw)
-  return MIJLPALEN.filter(m => voor < m && na >= m)
+export interface Mijlpaal {
+  aanbrengerId: string
+  aantal: number
+}
+
+/** De mijlpalen die een aanbrenger er met deze regels bij heeft gehaald (aantal toekenningen per persoon). */
+export function nieuweMijlpalen(regels: GrootboekRegel[], nieuw: GrootboekRegel[]): Mijlpaal[] {
+  const tel = (r: GrootboekRegel[], id: string) => r.filter(x => x.soort === 'toekenning' && x.aanbrenger_user_id === id).length
+  return [...new Set(nieuw.filter(r => r.soort === 'toekenning').map(r => r.aanbrenger_user_id))].flatMap(aanbrengerId => {
+    const na = tel(regels, aanbrengerId)
+    const voor = na - tel(nieuw, aanbrengerId)
+    return MIJLPALEN.filter(m => voor < m && na >= m).map(aantal => ({ aanbrengerId, aantal }))
+  })
 }

@@ -16,6 +16,10 @@ export const TERMIJN_NA_PROEF_DAGEN = 15
 export const TERMIJN_NA_TEAMPROEF_DAGEN = 10
 /** Zo lang na het einde zonder nieuw abonnement vervalt het tegoed. */
 export const VERVAL_NA_EINDE_DAGEN = 14
+/** Zoveel dagen mag een periode de vorige overlappen en toch als nieuwe maand tellen. */
+export const OVERLAP_MARGE_DAGEN = 1
+/** Betaaltermijn van een teamfactuur (TEAM_BETAALTERMIJN_DAGEN in teamFacturatie.ts). */
+export const FACTUURTERMIJN_DAGEN = 14
 /** Een om wanbetaling geblokkeerd team verliest zijn tegoed na zoveel dagen blokkade. */
 export const VERVAL_NA_BLOKKADE_DAGEN = 30
 
@@ -57,6 +61,43 @@ export function eersteBetalingOpTijd(eersteBetalingAt: string, proefEindeAt: str
   return amsterdamDatum(new Date(eersteBetalingAt)) <= uiterlijk
 }
 
+/**
+ * Het moment dat telt voor "op tijd" bij een teamfactuur (besluit Arno 26-11-2026): betaald binnen de factuurtermijn,
+ * dan telt de dag dat de factuur is aangemaakt. Later betaald, dan telt de betaaldag.
+ */
+export function tijdigMomentTeam(factuurAt: string | null | undefined, betaaldAt: string): string {
+  if (!factuurAt || Date.parse(factuurAt) >= Date.parse(betaaldAt)) return betaaldAt
+  const uiterlijk = amsterdamDatum(new Date(Date.parse(factuurAt) + FACTUURTERMIJN_DAGEN * DAG_MS))
+  return amsterdamDatum(new Date(betaaldAt)) <= uiterlijk ? factuurAt : betaaldAt
+}
+
+export interface Maand<T> {
+  periode: T
+  /** Aantal aaneengesloten maanden tot en met deze periode. */
+  reeks: number
+  /** false: deze periode overlapt de vorige (dubbele betaling, opnieuw afgesloten) en is geen extra maand. */
+  nieuw: boolean
+}
+
+/** Telt aaneengesloten maanden. Overlappende periodes tellen niet dubbel, ze verlengen alleen het einde. */
+export function telMaanden<T extends { periodeStart: string; periodeEinde: string }>(periodes: T[]): Maand<T>[] {
+  let reeks = 0
+  let vorigeEinde: number | null = null
+  return [...periodes]
+    .sort((a, b) => Date.parse(a.periodeStart) - Date.parse(b.periodeStart) || Date.parse(a.periodeEinde) - Date.parse(b.periodeEinde))
+    .map(periode => {
+      const start = Date.parse(periode.periodeStart)
+      const einde = Date.parse(periode.periodeEinde)
+      if (vorigeEinde !== null && start < vorigeEinde - OVERLAP_MARGE_DAGEN * DAG_MS) {
+        vorigeEinde = Math.max(vorigeEinde, einde)
+        return { periode, reeks, nieuw: false }
+      }
+      reeks = vorigeEinde !== null && start - vorigeEinde <= MAX_ONDERBREKING_DAGEN * DAG_MS ? reeks + 1 : 1
+      vorigeEinde = einde
+      return { periode, reeks, nieuw: true }
+    })
+}
+
 /** Een betaalde periode van de aangebrachte klant. `geldig` is false bij niet betaald, terugbetaald of teruggeboekt. */
 export interface BetaaldePeriode {
   plan: ReferralPlan
@@ -80,24 +121,16 @@ export interface Kwalificatie {
  * aaneengesloten maanden die betaald en verstreken zijn. Alleen abonnementen die tegoed opleveren tellen mee.
  */
 export function kwalificatie(periodes: BetaaldePeriode[], nu: Date): Kwalificatie | null {
-  const telt = periodes
-    .filter(p => p.geldig && levertTegoedOp(p.plan, p.cyclus))
+  const telt = periodes.filter(p => p.geldig && levertTegoedOp(p.plan, p.cyclus))
+  const jaar = telt
+    .filter(p => p.cyclus === 'jaarlijks')
     .sort((a, b) => Date.parse(a.periodeStart) - Date.parse(b.periodeStart))
-
-  let reeks = 0
-  let vorigeEinde: number | null = null
-  for (const p of telt) {
-    if (p.cyclus === 'jaarlijks') {
-      const bedenktijdVoorbij = amsterdamDatum(nu) > laatsteDagBedenktijd(p.betaaldAt)
-      if (p.klantType === 'zakelijk' || bedenktijdVoorbij) return { periode: p }
-      continue
-    }
-    const aansluitend = vorigeEinde !== null && Date.parse(p.periodeStart) - vorigeEinde <= MAX_ONDERBREKING_DAGEN * DAG_MS
-    reeks = aansluitend ? reeks + 1 : 1
-    vorigeEinde = Date.parse(p.periodeEinde)
-    if (reeks >= BENODIGDE_MAANDEN && Date.parse(p.periodeEinde) <= nu.getTime()) return { periode: p }
-  }
-  return null
+    .find(p => p.klantType === 'zakelijk' || amsterdamDatum(nu) > laatsteDagBedenktijd(p.betaaldAt))
+  const maand = telMaanden(telt.filter(p => p.cyclus === 'maandelijks'))
+    .find(m => m.nieuw && m.reeks >= BENODIGDE_MAANDEN && Date.parse(m.periode.periodeEinde) <= nu.getTime())?.periode
+  // Allebei gehaald: de eerste in de tijd.
+  const periode = jaar && maand ? (Date.parse(jaar.periodeStart) <= Date.parse(maand.periodeStart) ? jaar : maand) : jaar ?? maand
+  return periode ? { periode } : null
 }
 
 export interface AanbrengerStand {
@@ -111,6 +144,56 @@ export interface AanbrengerStand {
   isGewoonTeamlid?: boolean
   /** Nooit een abonnement gehad: de uiterste dag voor een eerste betaling. */
   eersteBetalingUiterlijkAt?: string | null
+  /** Team met facturatie dat nog niet betaald heeft en niet geblokkeerd is: nog niets beslissen. */
+  teamInAfwachting?: boolean
+  /** Lifetime-houder: het tegoed vervalt niet (besluit Arno 26-11-2026). */
+  lifetime?: boolean
+}
+
+/** Een tijdvak waarin de aanbrenger zelf een abonnement of betaald team had. einde null: loopt nog. */
+export interface Dekking {
+  start: string
+  einde: string | null
+  team: boolean
+}
+
+export interface AanbrengerHistorie {
+  dekking: Dekking[]
+  /** Uiterste dag voor het allereerste abonnement, voor een solo- en voor een teamstart. */
+  eersteUiterlijk: { solo: string | null; team: string | null }
+  teamInAfwachting?: boolean
+  isGewoonTeamlid?: boolean
+  lifetimeSinds?: string | null
+}
+
+const naDag = (moment: number, grensIso: string) => amsterdamDatum(new Date(moment)) > amsterdamDatum(new Date(grensIso))
+
+/**
+ * Is het tegoed na deze aanmelding ooit definitief vervallen: het eerste abonnement kwam te laat, of er zat langer dan
+ * 14 dagen niets tussen? Wie daarna terugkomt krijgt niets meer (besluit Arno 26-11-2026). Een aanmelding van ná
+ * zo'n gat telt gewoon.
+ */
+export function vervallenNaAanmelding(h: AanbrengerHistorie, aangemeldAt: string, nu: Date): boolean {
+  // Wie teamlid wordt stopt niet.
+  if (h.isGewoonTeamlid) return false
+  const aangemeld = Date.parse(aangemeldAt)
+  const raakt = (vervalMoment: number) => aangemeld < vervalMoment
+    && !(h.lifetimeSinds && Date.parse(h.lifetimeSinds) <= vervalMoment)
+  const blokken = [...h.dekking].sort((a, b) => Date.parse(a.start) - Date.parse(b.start))
+  const eerste = blokken[0]
+  // Nooit iets afgesloten: dat beoordeelt tegoedStatus.
+  if (!eerste) return false
+  const uiterlijk = eerste.team ? h.eersteUiterlijk.team : h.eersteUiterlijk.solo
+  if (uiterlijk && naDag(Date.parse(eerste.start), uiterlijk) && raakt(Date.parse(uiterlijk))) return true
+
+  const respijt = VERVAL_NA_EINDE_DAGEN * DAG_MS
+  const eind = (d: Dekking) => (d.einde === null ? Infinity : Date.parse(d.einde))
+  let tot = eind(eerste)
+  for (const d of blokken.slice(1)) {
+    if (Date.parse(d.start) > tot + respijt && raakt(tot + respijt)) return true
+    tot = Math.max(tot, eind(d))
+  }
+  return !h.teamInAfwachting && nu.getTime() > tot + respijt && raakt(tot + respijt)
 }
 
 /**
@@ -122,13 +205,16 @@ export type TegoedStatus = 'actief' | 'terugstorten' | 'wacht' | 'vervallen'
 
 export function tegoedStatus(s: AanbrengerStand, nu: Date): TegoedStatus {
   const voorbij = (vanaf: string, dagen: number) => nu.getTime() > Date.parse(vanaf) + dagen * DAG_MS
+  const vervallen: TegoedStatus = s.lifetime ? 'wacht' : 'vervallen'
   // Wie teamlid wordt stopt niet. Heeft hij ooit zelf betaald, dan is er iets om op terug te storten.
-  if (s.isGewoonTeamlid) return s.laatsteEindeAt ? 'terugstorten' : 'vervallen'
-  if (s.geblokkeerdSindsAt) return voorbij(s.geblokkeerdSindsAt, VERVAL_NA_BLOKKADE_DAGEN) ? 'vervallen' : 'wacht'
+  if (s.isGewoonTeamlid) return s.laatsteEindeAt ? 'terugstorten' : vervallen
+  if (s.geblokkeerdSindsAt) return voorbij(s.geblokkeerdSindsAt, VERVAL_NA_BLOKKADE_DAGEN) ? vervallen : 'wacht'
   if (s.loopt) return 'actief'
-  if (s.laatsteEindeAt) return voorbij(s.laatsteEindeAt, VERVAL_NA_EINDE_DAGEN) ? 'vervallen' : 'wacht'
-  // Nog nooit betaald (proef): het tegoed wacht tot de termijn voor een eerste abonnement voorbij is.
-  if (s.eersteBetalingUiterlijkAt && nu.getTime() > Date.parse(s.eersteBetalingUiterlijkAt)) return 'vervallen'
+  // Solo naar Team, of een eerste teamfactuur die nog openstaat.
+  if (s.teamInAfwachting) return 'wacht'
+  if (s.laatsteEindeAt) return voorbij(s.laatsteEindeAt, VERVAL_NA_EINDE_DAGEN) ? vervallen : 'wacht'
+  // Nog nooit betaald (proef): het tegoed wacht tot en met de laatste dag voor een eerste abonnement.
+  if (s.eersteBetalingUiterlijkAt && naDag(nu.getTime(), s.eersteBetalingUiterlijkAt)) return vervallen
   return 'wacht'
 }
 
@@ -182,18 +268,8 @@ export function metJaarKorting(jaar: Bedrag): { bedrag: Bedrag; kortingBrutoCent
  * aaneengesloten betaalde maanden. null zolang die er niet is.
  */
 export function gratisVierdeMaand(periodes: BetaaldePeriode[]): BetaaldePeriode | null {
-  const maanden = periodes
-    .filter(p => p.geldig && p.cyclus === 'maandelijks')
-    .sort((a, b) => Date.parse(a.periodeStart) - Date.parse(b.periodeStart))
-  let reeks = 0
-  let vorigeEinde: number | null = null
-  for (const p of maanden) {
-    const aansluitend = vorigeEinde !== null && Date.parse(p.periodeStart) - vorigeEinde <= MAX_ONDERBREKING_DAGEN * DAG_MS
-    reeks = aansluitend ? reeks + 1 : 1
-    vorigeEinde = Date.parse(p.periodeEinde)
-    if (reeks === BENODIGDE_MAANDEN + 1) return p
-  }
-  return null
+  return telMaanden(periodes.filter(p => p.geldig && p.cyclus === 'maandelijks'))
+    .find(m => m.nieuw && m.reeks === BENODIGDE_MAANDEN + 1)?.periode ?? null
 }
 
 /** Bij een team is de gratis maand nooit meer dan de maandprijs waarmee het team begon (later toegevoegde gebruikers tellen niet). */

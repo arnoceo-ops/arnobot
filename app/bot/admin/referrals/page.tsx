@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import AdminNav from '../AdminNav'
+import BesluitFormulier from './BesluitFormulier'
 import { billingDb } from '@/lib/billing/db'
 import { formatEuro } from '@/lib/billing/geld'
 import { draaiGrootboek, saldoPerAanbrenger, type GrootboekRegel, type ReferralStand } from '@/lib/billing/referralGrootboek'
@@ -25,6 +26,7 @@ const bedrag = (cent: number | null) => (cent === null ? 'bedrag volgt' : cent =
 function standTekst(s: ReferralStand): { tekst: string; kleur: string } {
   if (s.stand === 'uitgesloten') return { tekst: 'Testaccount, telt niet mee', kleur: '#6b7280' }
   if (s.stand === 'afgehandeld') return { tekst: 'Beslist, zie de regels hieronder', kleur: '#6b7280' }
+  if (s.stand === 'handwerk_open') return { tekst: `Zelf beoordelen: ${s.reden}`, kleur: '#f59e0b' }
   if (s.stand === 'fout') return { tekst: `Niet te beoordelen: ${s.fout}`, kleur: '#ef4444' }
   const b = s.beoordeling
   if (b.uitkomst === 'wacht') return { tekst: `Wacht: ${b.reden}`, kleur: '#9ca3af' }
@@ -75,7 +77,10 @@ export default async function ReferralsAdminPage() {
                     <td style={cel}>{dag(s.referral.created_at)}</td>
                     <td style={cel}>{naam(s.referral.referrer_user_id)}</td>
                     <td style={cel}>{naam(s.referral.referred_user_id)}</td>
-                    <td style={{ ...cel, color: t.kleur }}>{t.tekst}</td>
+                    <td style={{ ...cel, color: t.kleur }}>
+                      {t.tekst}
+                      {s.stand === 'handwerk_open' && <BesluitFormulier referralId={String(s.referral.id)} />}
+                    </td>
                   </tr>
                 )
               })}

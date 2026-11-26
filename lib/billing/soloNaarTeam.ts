@@ -137,7 +137,13 @@ export async function bekijkSoloNaarTeam(teamId: string, invoer: SoloNaarTeamInv
 
   const periodeEinde = new Date(sub.periode_einde)
   const bedrag = berekenBedrag(sub.plan, 'maandelijks', 'zakelijk')
-  const seats = await huidigSeats(team.id, invoer.minSeats)
+  let seats: number
+  try {
+    seats = await huidigSeats(team.id, invoer.minSeats)
+  } catch (e) {
+    Sentry.captureException(e, { tags: { onderdeel: 'billing-solo-naar-team' } })
+    return weiger(502, 'De teamleden konden niet worden geteld. Probeer het zo opnieuw.')
+  }
   const teamNettoCent = berekenReguliereBedrag(seats, invoer.cyclus).nettoCent
   const basis = {
     ok: true as const,

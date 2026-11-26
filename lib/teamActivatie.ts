@@ -168,6 +168,14 @@ export async function activeerTeam(userId: string, invoer: ActivatieInvoer): Pro
   )
   if (klantFout) return { ok: false, status: 500, fout: 'Bedrijfsgegevens opslaan mislukt' }
 
+  // Vóór de claim: mislukt het tellen, dan is er nog niets geactiveerd.
+  let seats: number
+  try {
+    seats = await huidigSeats(stand.teamId, invoer.seats)
+  } catch {
+    return { ok: false, status: 500, fout: 'Team activeren mislukt' }
+  }
+
   const nu = new Date()
   const vandaag = nu.toISOString().slice(0, 10)
   const { data: geclaimd, error: claimFout } = await supabase
@@ -183,7 +191,6 @@ export async function activeerTeam(userId: string, invoer: ActivatieInvoer): Pro
   const team = geclaimd?.[0]
   if (!team) return { ok: false, status: 409, fout: 'Dit team is al geactiveerd' }
 
-  const seats = await huidigSeats(team.id, invoer.seats)
   const { nettoCent, btwCent, brutoCent } = berekenReguliereBedrag(seats, invoer.cyclus)
   const periodeEinde = voegMaandenToe(nu, invoer.cyclus === 'jaarlijks' ? 12 : 1)
   const gemaakt = await maakTeamFactuur(team, {

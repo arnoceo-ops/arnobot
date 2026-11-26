@@ -1,6 +1,6 @@
 import { billingDb, type PayRow } from './db'
 import { heeftAndereTerugbetaling } from './terugbetaling'
-import { BENODIGDE_MAANDEN, MAX_ONDERBREKING_DAGEN } from './referralRegels'
+import { BENODIGDE_MAANDEN, telMaanden } from './referralRegels'
 import { wieIs } from './wie'
 import { notifyTelegram } from '@/lib/cron-notify'
 
@@ -12,8 +12,6 @@ import { notifyTelegram } from '@/lib/cron-notify'
  * abonnement, en ook een deel laat de betaling niet meer meetellen. Een bankoverschrijving ziet de app niet.
  */
 export const VEILIG_TERUGSTORTEN = 'Stort per bankoverschrijving en maak een creditnota in Moneybird. NIET via een terugbetaling in Mollie: dan kan het abonnement stoppen.'
-
-const DAG_MS = 24 * 60 * 60 * 1000
 
 type Rij = PayRow & { cyclus?: string | null; periode_start?: string | null; periode_einde?: string | null }
 
@@ -30,16 +28,9 @@ export function maandReeks(betalingen: Rij[]): { reeks: number; eerderGehaald: b
   const maanden = betalingen
     .filter(b => b.status === 'paid' && b.cyclus === 'maandelijks' && !!b.periode_start && !!b.periode_einde
       && !b.terugbetaling_verwerkt_at && !(b.teruggeboekt_cent > 0) && !heeftAndereTerugbetaling(b, b.terugbetaald_cent ?? 0))
-    .sort((a, b) => Date.parse(a.periode_start!) - Date.parse(b.periode_start!))
-  let reeks = 0
-  let vorigeEinde: number | null = null
-  let eerderGehaald = false
-  for (const m of maanden) {
-    if (reeks >= BENODIGDE_MAANDEN) eerderGehaald = true
-    const aansluitend = vorigeEinde !== null && Date.parse(m.periode_start!) - vorigeEinde <= MAX_ONDERBREKING_DAGEN * DAG_MS
-    reeks = aansluitend ? reeks + 1 : 1
-    vorigeEinde = Date.parse(m.periode_einde!)
-  }
+  const stand = telMaanden(maanden.map(m => ({ periodeStart: m.periode_start!, periodeEinde: m.periode_einde! })))
+  const reeks = stand.at(-1)?.reeks ?? 0
+  const eerderGehaald = stand.slice(0, -1).some(m => m.reeks >= BENODIGDE_MAANDEN)
   return { reeks, eerderGehaald }
 }
 

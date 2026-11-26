@@ -25,6 +25,7 @@ export type AdminActie =
   | 'team_gestopt'
   | 'team_factuur_betaald_bank'
   | 'team_factuur_teruggedraaid'
+  | 'referral_besluit'
 
 export const ACTIE_LABEL: Record<AdminActie, string> = {
   betaald_gezet: 'BETAALD GEZET',
@@ -46,6 +47,7 @@ export const ACTIE_LABEL: Record<AdminActie, string> = {
   team_gestopt: 'TEAM GESTOPT',
   team_factuur_betaald_bank: 'TEAMFACTUUR BETAALD PER BANK',
   team_factuur_teruggedraaid: 'TEAMFACTUUR TERUGGEDRAAID',
+  referral_besluit: 'REFERRAL BESLUIT',
 }
 
 export type AdminLogDetails = {

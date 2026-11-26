@@ -82,11 +82,13 @@ export interface TeamFactuurRow {
 
 /** Actueel ledenaantal van een team, nooit onder het afgesproken minimum. Nep-/testaccounts tellen nooit mee. */
 export async function huidigSeats(teamId: string, minSeats: number): Promise<number> {
-  const { data } = await billingDb
+  const { data, error } = await billingDb
     .from('arnobot_team_members')
     .select('user_id')
     .eq('team_id', teamId)
     .returns<{ user_id: string }[]>()
+  // Stil het minimum teruggeven zou een te lage factuur (en te laag referraltegoed) geven.
+  if (error) throw new Error(`teamleden tellen mislukt: ${error.message}`)
   const echt = (data ?? []).filter(m => !isFakeDemoUser(m.user_id) && !isInternalTestUser(m.user_id))
   return Math.max(echt.length, minSeats)
 }
