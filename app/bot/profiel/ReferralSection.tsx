@@ -6,7 +6,7 @@ import { formatEuro } from '@/lib/billing/geld'
 
 export default function ReferralSection({ inAccount }: { inAccount?: boolean }) {
   const isMobile = useIsMobile()
-  const [data, setData] = useState<{ code: string; link: string; referrals: number; betalend: number | null; tegoedCent: number | null } | null>(null)
+  const [data, setData] = useState<{ code: string; link: string; referrals: number | null; betalend: number | null; tegoedCent: number | null } | null>(null)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
           verdwijnt, liever dat dan een nul die niet klopt. */}
       <div style={{ display: 'flex', gap: 2, flexDirection: isMobile ? 'column' : 'row' }}>
         {[
-          { label: 'AANGEMELD', value: String(data.referrals) },
+          ...(data.referrals === null ? [] : [{ label: 'AANGEMELD', value: String(data.referrals) }]),
           ...(data.betalend === null ? [] : [{ label: 'BETALEND', value: String(data.betalend) }]),
           ...(data.tegoedCent === null ? [] : [{ label: 'TEGOED EXCL. BTW', value: formatEuro(data.tegoedCent) }]),
         ].map(({ label, value }) => (

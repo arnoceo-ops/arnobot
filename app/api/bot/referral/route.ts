@@ -57,7 +57,7 @@ export async function GET() {
     await supabase.from('approved_users').update({ referral_code: code }).eq('user_id', userId)
   }
 
-  const [{ count }, cijfers] = await Promise.all([
+  const [{ count, error: telFout }, cijfers] = await Promise.all([
     supabase.from('arnobot_referrals').select('*', { count: 'exact', head: true }).eq('referrer_user_id', userId),
     referralCijfers(userId),
   ])
@@ -65,7 +65,8 @@ export async function GET() {
   return NextResponse.json({
     code,
     link: `https://arno.bot/aanmelden?ref=${code}`,
-    referrals: count ?? 0,
+    // null: tellen mislukt. Liever geen teller dan een nul die niet klopt.
+    referrals: telFout ? null : count ?? 0,
     betalend: cijfers.betalend,
     tegoedCent: cijfers.tegoedCent,
   })

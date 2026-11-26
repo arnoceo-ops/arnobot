@@ -225,7 +225,7 @@ const bijbetalingLoopt = (d: Dossier) => d.betalingen.some(b => b.soort === 'upg
 export const teamGestopt = (t: Team, nu: Date) => !!t.stopt_op && t.stopt_op <= nlVandaag(nu)
 
 /** Alleen een team waarvoor echt betaald is (en niet teruggedraaid), telt als abonnement van de manager. */
-export const betaaldeTeamsVan = (d: Dossier) => d.teams.filter(t => d.facturen.some(f => f.team_id === t.id && teamFactuurStaat(f)))
+export const betaaldeTeamsVan = (d: Pick<Dossier, 'teams' | 'facturen'>) => d.teams.filter(t => d.facturen.some(f => f.team_id === t.id && teamFactuurStaat(f)))
 
 const heeftTeruggedraaideFactuur = (d: Dossier, t: Team) =>
   d.facturen.some(f => f.team_id === t.id && (f.status === 'refunded' || !!f.reversed_at || (f.teruggeboekt_cent ?? 0) > 0))
