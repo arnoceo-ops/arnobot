@@ -148,6 +148,6 @@ Deze code rekent met de huidige prijslijst waar een opgeslagen bedrag had moeten
 ## Nog te beslissen
 
 1. **Artikel 4 van de voorwaarden:** prijswijzigingen worden minimaal drie maanden vooraf per e-mail aangekondigd, hooguit één keer per jaar. De tekst zondert verlagingen niet uit. Geen enkel lopend abonnement verandert van bedrag. Advies: de alinea laten gelden voor het bedrag van een lopend abonnement. Artikel 11 vraagt dat een wijziging van de voorwaarden 14 dagen vooraf per e-mail aan actieve gebruikers wordt aangekondigd.
-2. **Elite binnen Team:** €338 houden of €348. Advies: €338; `PRICING_DECISIONS.md` noemt het sinds 2026-08-25 een los vast bedrag.
-3. **Prijs van een klein team:** advies de gewone formule.
+2. **Besloten door Arno (2026-11-26): de Elite-toeslag binnen Team blijft €338.** Verworpen: €348.
+3. **Besloten door Arno (2026-11-26): een klein team betaalt de gewone formule** (uitzondering op het minimum, niet op de prijs). Verworpen: een aparte prijs.
 4. **Spraakkostengrenzen** (`lib/maandKosten.ts`, `lib/voiceLimiet.ts`) zijn afgestemd op Pro €39. Advies: nu niet wijzigen en na de ElevenLabs-controle bekijken.
