@@ -19,6 +19,7 @@ import { stopCorrectieAbonnementen } from './verwerking'
 import { tabelOntbreekt } from './tabel'
 import { redenGeenZelfCorrectie } from './referralKorting'
 import { notifyTelegram } from '@/lib/cron-notify'
+import { wieIs } from './wie'
 
 // Zelf-bediening: een particulier die eigenlijk zakelijk had moeten afrekenen, corrigeert dit
 // zelf (app/bot/account/zakelijk-corrigeren). Geen nieuwe schakelaar voor testmodus: deze flow
@@ -131,7 +132,7 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
     // Het verschil zelf is teruggeboekt of terugbetaald: dat ziet verder niemand. Alleen na een gewone omzetting: bij
     // handwerk is terugstorten juist de bedoeling.
     if (teruggestort && !rij.handwerk_reden && (await nieuwMelden(`klanttype:terug:${rij.id}`, 'mijlpaal'))) {
-      await notifyTelegram(`Correctiebetaling teruggedraaid op arno.bot\n\nUser: ${rij.user_id}\nBetaling: ${mp.id}\nHet abonnement en de facturen zijn niet aangepast. Beoordeel met de hand.`)
+      await notifyTelegram(`Correctiebetaling teruggedraaid op arno.bot\n\nWie: ${await wieIs(rij.user_id)}\nBetaling: ${mp.id}\nHet abonnement en de facturen zijn niet aangepast. Beoordeel met de hand.`)
     }
     return
   }
@@ -195,8 +196,8 @@ async function vinkAf(rijId: string, handwerkReden: string | null = null): Promi
   return (data?.length ?? 0) === 1
 }
 
-const meldHandwerk = (rij: KlanttypeCorrectieRow, betaalId: string, reden: string) =>
-  notifyTelegram(`Klanttype-correctie betaald, NIET omgezet op arno.bot\n\nUser: ${rij.user_id}\nBetaling: ${betaalId}\nBedrag: €${(rij.verschil_cent / 100).toFixed(2)}\nReden: ${reden}\nEr is niet gefactureerd. Stort het verschil terug of regel het met de hand.`)
+const meldHandwerk = async (rij: KlanttypeCorrectieRow, betaalId: string, reden: string) =>
+  notifyTelegram(`Klanttype-correctie betaald, NIET omgezet op arno.bot\n\nWie: ${await wieIs(rij.user_id)}\nBetaling: ${betaalId}\nBedrag: €${(rij.verschil_cent / 100).toFixed(2)}\nReden: ${reden}\nEr is niet gefactureerd. Stort het verschil terug of regel het met de hand.`)
 
 /** Het verschil is terug: niet (verder) omzetten, en nooit de klant zonder incasso achterlaten. */
 async function breekAf(rij: KlanttypeCorrectieRow, betaalId: string): Promise<void> {
@@ -217,7 +218,7 @@ async function breekAf(rij: KlanttypeCorrectieRow, betaalId: string): Promise<vo
     }
   }
   if (await vinkAf(rij.id, 'het verschil is terugbetaald of teruggeboekt')) {
-    await notifyTelegram(`Klanttype-correctie afgebroken op arno.bot\n\nUser: ${rij.user_id}\nBetaling: ${betaalId}\nHet verschil is terugbetaald of teruggeboekt. ${stand}`)
+    await notifyTelegram(`Klanttype-correctie afgebroken op arno.bot\n\nWie: ${await wieIs(rij.user_id)}\nBetaling: ${betaalId}\nHet verschil is terugbetaald of teruggeboekt. ${stand}`)
   }
 }
 
@@ -253,7 +254,7 @@ async function rondCorrectieAf(rijId: string, betaalId: string, teruggestort: bo
   const uitkomst = await zetAbonnementZakelijk(rij)
   if (uitkomst.stand === 'wacht') {
     if (await nieuwMelden(`klanttype:wacht:${rij.id}`, 'waarschuwing')) {
-      await notifyTelegram(`Klanttype-correctie betaald, nog niet omgezet op arno.bot\n\nUser: ${rij.user_id}\nReden: ${uitkomst.reden}\nDe billing-cron probeert het dagelijks opnieuw. Er is nog niet gefactureerd. Wil je afbreken, stort dan het verschil terug in Mollie: de app zet daarna niet meer om.`)
+      await notifyTelegram(`Klanttype-correctie betaald, nog niet omgezet op arno.bot\n\nWie: ${await wieIs(rij.user_id)}\nReden: ${uitkomst.reden}\nDe billing-cron probeert het dagelijks opnieuw. Er is nog niet gefactureerd. Wil je afbreken, stort dan het verschil terug in Mollie: de app zet daarna niet meer om.`)
     }
     return
   }
@@ -267,7 +268,7 @@ async function rondCorrectieAf(rijId: string, betaalId: string, teruggestort: bo
     await factureerCorrectie(rij, betaalId)
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'klanttype-correctie-facturatie' } })
-    await notifyTelegram(`Klanttype-correctie: facturatie niet afgerond op arno.bot\n\nUser: ${rij.user_id}\nReden: ${e instanceof Error ? e.message : e}\nHet abonnement is omgezet. Controleer creditnota en factuur in Moneybird en rond met de hand af.`)
+    await notifyTelegram(`Klanttype-correctie: facturatie niet afgerond op arno.bot\n\nWie: ${await wieIs(rij.user_id)}\nReden: ${e instanceof Error ? e.message : e}\nHet abonnement is omgezet. Controleer creditnota en factuur in Moneybird en rond met de hand af.`)
   }
   // Ook na een gemelde fout: gefactureerd_at leeg betekent alleen "afgebroken zonder melding" (zie de cron).
   const { error } = await billingDb.from('arnobot_klanttype_correcties').update({ gefactureerd_at: new Date().toISOString() }).eq('id', rij.id)
@@ -297,7 +298,7 @@ async function factureerCorrectie(rij: KlanttypeCorrectieRow, betaalId: string):
     .gt('created_at', rij.created_at)
     .limit(1)
   if (tussendoor?.length) {
-    await notifyTelegram(`Klanttype-correctie: tussendoor geïncasseerd op arno.bot\n\nUser: ${rij.user_id}\nTussen het starten en het omzetten is nog een betaling op het particuliere bedrag gedaan. Controleer de factuur en het verschil met de hand.`)
+    await notifyTelegram(`Klanttype-correctie: tussendoor geïncasseerd op arno.bot\n\nWie: ${await wieIs(rij.user_id)}\nTussen het starten en het omzetten is nog een betaling op het particuliere bedrag gedaan. Controleer de factuur en het verschil met de hand.`)
   }
 
   const { data: bestaandeKlant } = await billingDb
@@ -334,9 +335,9 @@ async function factureerCorrectie(rij: KlanttypeCorrectieRow, betaalId: string):
     },
     { onConflict: 'user_id' },
   )
-  if (klantFout) await notifyTelegram(`Klanttype-correctie: bedrijfsgegevens niet opgeslagen op arno.bot\n\nUser: ${rij.user_id}\nFout: ${klantFout.message}`)
+  if (klantFout) await notifyTelegram(`Klanttype-correctie: bedrijfsgegevens niet opgeslagen op arno.bot\n\nWie: ${await wieIs(rij.user_id)}\nFout: ${klantFout.message}`)
 
-  await notifyTelegram(`Klanttype-correctie betaald op arno.bot\n\nUser: ${rij.user_id}\nVerschil: €${(rij.verschil_cent / 100).toFixed(2)}`)
+  await notifyTelegram(`Klanttype-correctie betaald op arno.bot\n\nWie: ${await wieIs(rij.user_id)}\nBedrijf: ${rij.bedrijfsnaam}\nVerschil: €${(rij.verschil_cent / 100).toFixed(2)}`)
 
   if (!factureringToegestaan()) return
   if (!gebruiker?.email) throw new Error('geen e-mailadres bekend, er is niet gefactureerd')
@@ -355,7 +356,7 @@ async function factureerCorrectie(rij: KlanttypeCorrectieRow, betaalId: string):
     .limit(1)
     .maybeSingle<{ id: string; moneybird_factuur_id: string; mollie_payment_id: string; referral_refund_cent?: number | null; referral_bank_cent?: number | null }>()
   if (oudeFout) throw new Error(`eerdere betaling niet gelezen: ${oudeFout.message}`)
-  if (!oudeBetaling) await notifyTelegram(`Klanttype-correctie: geen eerdere factuur om te crediteren op arno.bot\n\nUser: ${rij.user_id}\nDe nieuwe zakelijke factuur wordt wel gemaakt. Controleer in Moneybird.`)
+  if (!oudeBetaling) await notifyTelegram(`Klanttype-correctie: geen eerdere factuur om te crediteren op arno.bot\n\nWie: ${await wieIs(rij.user_id)}\nDe nieuwe zakelijke factuur wordt wel gemaakt. Controleer in Moneybird.`)
 
   // Met verrekend referraltegoed zou een volledige creditnota te veel crediteren: dan stoppen en handwerk.
   if ((oudeBetaling?.referral_refund_cent ?? 0) > 0 || (oudeBetaling?.referral_bank_cent ?? 0) > 0) throw new Error(`referraltegoed verrekend op ${oudeBetaling?.mollie_payment_id}: creditnota met de hand`)
@@ -511,7 +512,7 @@ export async function rondOpenstaandeCorrectiesAf(nu: Date = new Date()): Promis
       uit.fouten++
       Sentry.captureException(e, { tags: { onderdeel: 'klanttype-correctie-inhalen' }, extra: { correctieId: rij.id } })
       if (rij.status === 'paid' && (await nieuwMelden(`klanttype:fout:${rij.id}`, 'waarschuwing'))) {
-        await notifyTelegram(`Klanttype-correctie afronden mislukt op arno.bot\n\nUser: ${rij.user_id}\nFout: ${e instanceof Error ? e.message : e}`)
+        await notifyTelegram(`Klanttype-correctie afronden mislukt op arno.bot\n\nWie: ${await wieIs(rij.user_id)}\nFout: ${e instanceof Error ? e.message : e}`)
       }
     }
   }
@@ -528,7 +529,7 @@ export async function rondOpenstaandeCorrectiesAf(nu: Date = new Date()): Promis
   if (stilFout) throw new Error(`correcties zonder facturatie ophalen mislukt: ${stilFout.message}`)
   for (const rij of stil ?? []) {
     if (await nieuwMelden(`klanttype:niet-gefactureerd:${rij.id}`, 'waarschuwing')) {
-      await notifyTelegram(`Klanttype-correctie omgezet, facturatie niet bevestigd op arno.bot\n\nUser: ${rij.user_id}\nControleer creditnota en factuur in Moneybird en zet daarna gefactureerd_at op de correctie (${rij.id}).`)
+      await notifyTelegram(`Klanttype-correctie omgezet, facturatie niet bevestigd op arno.bot\n\nWie: ${await wieIs(rij.user_id)}\nControleer creditnota en factuur in Moneybird en zet daarna gefactureerd_at op de correctie (${rij.id}).`)
     }
   }
   return uit

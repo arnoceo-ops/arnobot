@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { registreerCronRun } from '@/lib/cronRun'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
-import { wieRef } from '@/lib/billing/wie'
+import { wieIs } from '@/lib/billing/wie'
 import { MEELOOP, draaiGrootboek, nieuweMijlpalen, regelTekst } from '@/lib/billing/referralGrootboek'
 import { splitsBericht } from '@/lib/billing/berichtDelen'
 import { herstelGratisKenmerken } from '@/lib/billing/gratisHerstel'
@@ -23,8 +23,8 @@ async function cronHandler(req: NextRequest) {
     if (run.migratieOntbreekt) return NextResponse.json({ ok: true, overgeslagen: 'tabel ontbreekt' })
 
     if (run.nieuw.length || run.fouten.length) {
-      const regels = await Promise.all(run.nieuw.map(async r => regelTekst(r, wieRef(r.aanbrenger_user_id), wieRef(r.klant_user_id))))
-      for (const m of nieuweMijlpalen(run.regels, run.nieuw)) regels.push(`Mijlpaal: ${wieRef(m.aanbrengerId)} heeft ${m.aantal} toekenningen.`)
+      const regels = await Promise.all(run.nieuw.map(async r => regelTekst(r, await wieIs(r.aanbrenger_user_id), await wieIs(r.klant_user_id))))
+      for (const m of nieuweMijlpalen(run.regels, run.nieuw)) regels.push(`Mijlpaal: ${await wieIs(m.aanbrengerId)} heeft ${m.aantal} toekenningen.`)
       if (run.fouten.length) regels.push(`Niet te beoordelen (morgen opnieuw):\n${run.fouten.slice(0, 5).join('\n')}`)
       const delen = splitsBericht(MEELOOP ? 'Referraltegoed op arno.bot, meeloopstand: er verandert niets aan tegoed of geld' : 'Referraltegoed op arno.bot', regels, 'https://www.arno.bot/bot/admin/referrals')
       let mislukt = 0

@@ -826,9 +826,7 @@ export function saldoPerAanbrenger(regels: GrootboekRegel[]): Map<string, number
 }
 
 /** Eén leesbare zin per nieuwe regel, voor de Telegram-melding. */
-export function regelTekst(invoer: GrootboekRegel, aanbrenger: string, klant: string): string {
-  // De vrije toelichting bij een handmatig besluit kan persoonsgegevens bevatten en gaat niet naar Telegram.
-  const r = invoer.reden?.startsWith('handmatig besluit: ') ? { ...invoer, reden: 'handmatig besluit, toelichting in de admin' } : invoer
+export function regelTekst(r: GrootboekRegel, aanbrenger: string, klant: string): string {
   const bedrag = r.netto_cent === null ? null : `${formatEuro(Math.abs(r.netto_cent))} excl. btw`
   switch (r.soort) {
     case 'toekenning': return `${r.meeloop ? 'Zou toekennen' : 'Toegekend'} aan ${aanbrenger} voor ${klant}: ${bedrag ?? 'bedrag volgt'} (${r.reden})`

@@ -7,7 +7,6 @@ import { limietVeilig } from '@/lib/limietVeilig'
 import { verstuurMailZacht } from '@/lib/mail'
 import { emailHtml } from '@/lib/email-templates'
 import { berekenTeamPrijsPerMaand, teamPrijsWeergave, TEAM_MIN_GEBRUIKERS, TEAM_ELITE_SURPLUS_PER_MAAND, type Cyclus } from '@/lib/teamPricing'
-import { notifyTelegram } from '@/lib/cron-notify'
 import { gaatAutomatisch } from '@/lib/billing/referralAutomatisch'
 import { NIET_MET_DE_HAND, VEILIG_TERUGSTORTEN } from '@/lib/billing/referralSignalen'
 
@@ -97,8 +96,8 @@ export async function POST(req: Request) {
 
   const prijsTekst = teamPrijsWeergave(seats, cyclus as Cyclus)
 
-  // Via een referral binnengekomen? De referral fee voor het team wordt nog niet automatisch verrekend, dus die moet Arno
-  // meenemen (spelregels artikel 2). Alleen op te zoeken als de aanvrager ingelogd is; anders blijft de regel weg.
+  // Via een referral binnengekomen? Dan staat erbij of de teammaand (spelregels artikel 2) automatisch gaat of door Arno
+  // gedaan moet worden. Alleen op te zoeken als de aanvrager ingelogd is; anders blijft de regel weg.
   let referralRegel = ''
   if (userId) {
     const { data: verw } = await supabase
@@ -129,8 +128,18 @@ export async function POST(req: Request) {
     ),
   }).catch(() => {})
 
-  // Zonder contactgegevens en referralnaam: die staan in de mail hierboven.
-  await notifyTelegram(`Nieuwe Team-aanvraag op arno.bot\n\n${bedrijfsnaam}\nAantal gebruikers: ${seats}\nPrijs: ${prijsTekst}${referralRegel ? '\nVia een referral: lees de mail voordat je iets doet.' : ''}\nContactgegevens staan in de mail.`)
+  const tgToken = process.env.TELEGRAM_BOT_TOKEN
+  const tgChat = process.env.TELEGRAM_CHAT_ID
+  if (tgToken && tgChat) {
+    await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: tgChat,
+        text: `Nieuwe Team-aanvraag op arno.bot\n\n${bedrijfsnaam} (${aanvragerNaam})\nE-mail: ${email}\nTelefoon: ${telefoon || 'niet opgegeven'}\nAantal gebruikers: ${seats}\nPrijs: ${prijsTekst}${referralRegel ? `\n\n${referralRegel}` : ''}`,
+      }),
+    }).catch(() => {})
+  }
 
   return NextResponse.json({ ok: true })
 }

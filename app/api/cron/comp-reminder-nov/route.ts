@@ -47,7 +47,7 @@ async function cronHandler(req: NextRequest) {
       const dag = now.getUTCDate()
       if (dag === 25 || dag === 29) {
         await notifyTelegram(
-          `Reminder voor de comp-gebruiker (toegang tot 1 december) NIET verstuurd: Mollie staat nog op de testsleutel.${dag === 29 ? ' Laatste poging was vandaag, daarna verloopt zijn toegang zonder reminder.' : ' De cron probeert het elke dag tot en met 29 november opnieuw.'}`
+          `Reminder voor Robel (toegang tot 1 december) NIET verstuurd: Mollie staat nog op de testsleutel.${dag === 29 ? ' Laatste poging was vandaag, daarna verloopt zijn toegang zonder reminder.' : ' De cron probeert het elke dag tot en met 29 november opnieuw.'}`
         )
       }
       return NextResponse.json({ ok: true, skipped: 'mollie niet live' })

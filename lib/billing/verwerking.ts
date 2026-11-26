@@ -27,7 +27,7 @@ import {
 import { verstuurBillingMail } from './mails'
 import { creditnotaVoorBetaling, factureerBetaling } from './facturatie'
 import { slotVoorTerugbetaling } from './referralSlot'
-import { wieRef } from './wie'
+import { wieIs } from './wie'
 import { meldGratisVierdeMaand } from './referralSignalen'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { trialEinde } from '@/lib/toegang'
@@ -102,7 +102,7 @@ export async function verwerkMolliebetaling(mollieId: string): Promise<void> {
     const geplandeBetaling = isGeplandeBetaling(s, mp)
     if (geplandeBetaling && mollieNaarCenten(mp.amount.value) !== s.gepland_bedrag_cent) {
       Sentry.captureException(new Error('Betaling van geplande wijziging heeft een afwijkend bedrag'), { tags: { onderdeel: 'billing-gepland-bedrag' } })
-      await notifyTelegram(`Betaling van een geplande abonnementswijziging heeft een afwijkend bedrag op arno.bot\n\nUser: ${s.user_id}\nBetaling: ${mp.id}\nVerwacht: €${((s.gepland_bedrag_cent ?? 0) / 100).toFixed(2)}, ontvangen: €${(mollieNaarCenten(mp.amount.value) / 100).toFixed(2)}\nEr is niets verwerkt. Beoordeel handmatig.`)
+      await notifyTelegram(`Betaling van een geplande abonnementswijziging heeft een afwijkend bedrag op arno.bot\n\nWie: ${await wieIs(s.user_id)}\nBetaling: ${mp.id}\nVerwacht: €${((s.gepland_bedrag_cent ?? 0) / 100).toFixed(2)}, ontvangen: €${(mollieNaarCenten(mp.amount.value) / 100).toFixed(2)}\nEr is niets verwerkt. Beoordeel handmatig.`)
       return
     }
     await billingDb.from('arnobot_payments').upsert(
@@ -248,7 +248,7 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
       eerste: true,
       betaalId: mp.id,
     })
-    await notifyTelegram(`Nieuw betaald abonnement op arno.bot\n\n${naam} ${sub.cyclus}, ${sub.klant_type}\nBedrag: €${(rij.bedrag_cent / 100).toFixed(2)}\nUser: ${sub.user_id}`)
+    await notifyTelegram(`Nieuw betaald abonnement op arno.bot\n\n${naam} ${sub.cyclus}, ${sub.klant_type}\nBedrag: €${(rij.bedrag_cent / 100).toFixed(2)}\nWie: ${await wieIs(sub.user_id)}`)
     await factureerBetaling(rij.id)
     // Signalen aan Arno altijd als laatste: ze mogen toegang, mail en factuur nooit ophouden.
     if (sub.cyclus === 'maandelijks') await meldGratisVierdeMaand(sub.user_id, einde)
@@ -259,14 +259,14 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
   // betaalmoment, zodat een iets late betaling de cyclus niet laat verschuiven.
   if (sub.status === 'refunded' || sub.status === 'ended' || sub.status === 'abandoned') {
     console.warn('[billing] herhaalbetaling op beëindigd abonnement genegeerd', sub.id, mp.id)
-    await notifyTelegram(`Betaling op beëindigd abonnement (${sub.status}) ontvangen op arno.bot\nBetaling: ${mp.id}\nUser: ${sub.user_id}\nBeoordeel handmatig of terugbetalen nodig is.`)
+    await notifyTelegram(`Betaling op beëindigd abonnement (${sub.status}) ontvangen op arno.bot\nBetaling: ${mp.id}\nWie: ${await wieIs(sub.user_id)}\nBeoordeel handmatig of terugbetalen nodig is.`)
     return
   }
   // Een betaling van een gepland abonnement op een inmiddels OPGEZEGD abonnement (de stop kwam te
   // laat of mislukte): niet omzetten en niet verlengen, de klant heeft opgezegd. Melden, zodat
   // Arno beslist over terugbetalen.
   if (sub.status === 'cancelled' && isGeplandeBetaling(sub, mp)) {
-    await notifyTelegram(`Betaling van een geplande wijziging ontvangen na opzegging op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${mp.id}\nDe periode is NIET verlengd. Beoordeel of terugbetalen nodig is.`)
+    await notifyTelegram(`Betaling van een geplande wijziging ontvangen na opzegging op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nBetaling: ${mp.id}\nDe periode is NIET verlengd. Beoordeel of terugbetalen nodig is.`)
     return
   }
 
@@ -285,7 +285,7 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
     mollieNaarCenten(mp.amount.value) !== huidig.bedrag_cent
   ) {
     console.warn('[billing] betaling van vervangen abonnement met afwijkend bedrag niet verwerkt', huidig.id, mp.id)
-    await notifyTelegram(`Betaling van een vervangen abonnement met een afwijkend bedrag op arno.bot\n\nUser: ${huidig.user_id}\nBetaling: ${mp.id}\nBedrag: €${(mollieNaarCenten(mp.amount.value) / 100).toFixed(2)}, huidig abonnement: €${(huidig.bedrag_cent / 100).toFixed(2)}\nDe periode is NIET verlengd. Beoordeel handmatig.`)
+    await notifyTelegram(`Betaling van een vervangen abonnement met een afwijkend bedrag op arno.bot\n\nWie: ${await wieIs(huidig.user_id)}\nBetaling: ${mp.id}\nBedrag: €${(mollieNaarCenten(mp.amount.value) / 100).toFixed(2)}, huidig abonnement: €${(huidig.bedrag_cent / 100).toFixed(2)}\nDe periode is NIET verlengd. Beoordeel handmatig.`)
     return
   }
 
@@ -422,7 +422,7 @@ async function verwerkMislukteBetaling(sub: SubRow, rij: PayRow): Promise<void> 
     if (uitkomst === 'teruggezet') {
       await verstuurBillingMail(sub.user_id, 'upgrade_bijbetaling_mislukt', { datum: sub.gepland_ingangs_at ?? undefined })
     }
-    await notifyTelegram(`Upgradebetaling mislukt op arno.bot\n\nUser: ${sub.user_id}\nBetaling: ${rij.mollie_payment_id}\n${uitkomst === 'teruggezet' ? 'Het plan is teruggezet naar Basic; de klant heeft een mail gekregen.' : 'Het plan is niet teruggezet (de overstap naar Pro is al ingegaan); er is geen mail gestuurd.'}`)
+    await notifyTelegram(`Upgradebetaling mislukt op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nBetaling: ${rij.mollie_payment_id}\n${uitkomst === 'teruggezet' ? 'Het plan is teruggezet naar Basic; de klant heeft een mail gekregen.' : 'Het plan is niet teruggezet (de overstap naar Pro is al ingegaan); er is geen mail gestuurd.'}`)
     return
   }
   if (rij.soort === 'eerste') {
@@ -438,7 +438,7 @@ async function verwerkMislukteBetaling(sub: SubRow, rij: PayRow): Promise<void> 
   }
   const einde = sub.periode_einde ?? iso(new Date())
   await verstuurBillingMail(sub.user_id, 'betaling_mislukt', { planNaam: planNaam(sub.plan), datum: einde })
-  await notifyTelegram(`Herhaalbetaling mislukt op arno.bot\n\nUser: ${sub.user_id}\nPlan: ${planNaam(sub.plan)} ${sub.cyclus}\nToegang loopt tot ${einde.slice(0, 10)}`)
+  await notifyTelegram(`Herhaalbetaling mislukt op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nPlan: ${planNaam(sub.plan)} ${sub.cyclus}\nToegang loopt tot ${einde.slice(0, 10)}`)
 }
 
 async function verwerkVolledigeTerugbetaling(
@@ -464,12 +464,12 @@ async function verwerkVolledigeTerugbetaling(
   if (rij.soort === 'upgrade') {
     await zetUpgradeTerug(sub)
     if (isChargeback) {
-      await notifyTelegram(`CHARGEBACK op een upgradebetaling op arno.bot\n\nWie: ${wieRef(sub.user_id)}\nBetaling: ${rij.mollie_payment_id}\nHet plan is teruggezet naar Basic als de overstap nog niet was ingegaan.`)
+      await notifyTelegram(`CHARGEBACK op een upgradebetaling op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nBetaling: ${rij.mollie_payment_id}\nHet plan is teruggezet naar Basic als de overstap nog niet was ingegaan.`)
       return
     }
     if (!geenMail) await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: bedragVoorKlant, upgrade: true })
     await creditnotaVoorBetaling(rij.id)
-    await notifyTelegram(`Upgrade teruggedraaid op arno.bot\n\nWie: ${wieRef(sub.user_id)}\nWat: upgrade terugbetaald, het abonnement loopt door (plan terug naar Basic)\nBedrag: ${formatEuro(bedragVoorKlant)}\nBetaling: ${rij.mollie_payment_id}${geenMailMelding}`)
+    await notifyTelegram(`Upgrade teruggedraaid op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: upgrade terugbetaald, het abonnement loopt door (plan terug naar Basic)\nBedrag: ${formatEuro(bedragVoorKlant)}\nBetaling: ${rij.mollie_payment_id}${geenMailMelding}`)
     return
   }
   // Gaat de eerste betaling met referral fee terug, dan is het voordeel niet gebruikt: hij mag opnieuw.
@@ -477,7 +477,7 @@ async function verwerkVolledigeTerugbetaling(
     const { error: feeFout } = await billingDb.from('arnobot_referrals').update({ referred_discount: 0 }).eq('referred_user_id', sub.user_id)
     if (feeFout) {
       Sentry.captureException(new Error(feeFout.message), { tags: { onderdeel: 'billing-referral-fee' }, extra: { userId: sub.user_id } })
-      await notifyTelegram(`Referral fee niet teruggezet na een terugbetaling op arno.bot\n\nUser: ${sub.user_id}\nDe signalen denken nu dat het voordeel gebruikt is. Zet arnobot_referrals.referred_discount op 0.`)
+      await notifyTelegram(`Referral fee niet teruggezet na een terugbetaling op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nDe signalen denken nu dat het voordeel gebruikt is. Zet arnobot_referrals.referred_discount op 0.`)
     }
   }
   await stopMollieAbonnement(sub)
@@ -492,12 +492,12 @@ async function verwerkVolledigeTerugbetaling(
     .eq('user_id', sub.user_id)
 
   if (isChargeback) {
-    await notifyTelegram(`CHARGEBACK op arno.bot\n\nWie: ${wieRef(sub.user_id)}\nBetaling: ${rij.mollie_payment_id}\nToegang is beëindigd.`)
+    await notifyTelegram(`CHARGEBACK op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nBetaling: ${rij.mollie_payment_id}\nToegang is beëindigd.`)
     return
   }
   if (!geenMail) await verstuurBillingMail(sub.user_id, 'terugbetaling_bevestiging', { bedragCent: bedragVoorKlant })
   await creditnotaVoorBetaling(rij.id)
-  await notifyTelegram(`Terugbetaling verwerkt op arno.bot\n\nWie: ${wieRef(sub.user_id)}\nWat: eerste betaling terugbetaald, abonnement gestopt en toegang beëindigd\nBedrag: ${formatEuro(bedragVoorKlant)}\nBetaling: ${rij.mollie_payment_id}${geenMailMelding}`)
+  await notifyTelegram(`Terugbetaling verwerkt op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nWat: eerste betaling terugbetaald, abonnement gestopt en toegang beëindigd\nBedrag: ${formatEuro(bedragVoorKlant)}\nBetaling: ${rij.mollie_payment_id}${geenMailMelding}`)
 }
 
 /** Een nieuwe eerste betaling vervangt eventuele eerdere lopende abonnementen van dezelfde gebruiker. */
@@ -544,7 +544,7 @@ export async function maakMollieAbonnementVoor(sub: SubRow, startVan: Date): Pro
     // De eerste betaling is binnen en de gebruiker heeft toegang. Het abonnement kan de
     // dagelijkse billing-cron alsnog aanmaken. Wel melden, anders merkt niemand het.
     Sentry.captureException(e, { tags: { onderdeel: 'billing-abonnement-aanmaken' } })
-    await notifyTelegram(`Mollie-abonnement aanmaken mislukt op arno.bot\n\nUser: ${sub.user_id}\nDe billing-cron probeert het opnieuw.`)
+    await notifyTelegram(`Mollie-abonnement aanmaken mislukt op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nDe billing-cron probeert het opnieuw.`)
   }
 }
 
@@ -579,7 +579,7 @@ export async function stopEnBevestig(
     return true
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'billing-abonnement-stoppen' } })
-    await notifyTelegram(`${label} stoppen mislukt of niet bevestigd op arno.bot\n\nUser: ${sub.user_id}\nAbonnement: ${abonnementId}\nStop het handmatig in het Mollie-dashboard.`)
+    await notifyTelegram(`${label} stoppen mislukt of niet bevestigd op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nAbonnement: ${abonnementId}\nStop het handmatig in het Mollie-dashboard.`)
     return false
   }
 }
@@ -632,7 +632,7 @@ export async function stopCorrectieAbonnementen(sub: SubRow): Promise<boolean> {
     return alles
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'billing-correctie-abonnement-stoppen' } })
-    await notifyTelegram(`Abonnement van een omzetting naar zakelijk niet te controleren op arno.bot\n\nUser: ${sub.user_id}\nKijk in Mollie of er voor deze klant nog een extra abonnement loopt.`)
+    await notifyTelegram(`Abonnement van een omzetting naar zakelijk niet te controleren op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nKijk in Mollie of er voor deze klant nog een extra abonnement loopt.`)
     return false
   }
 }

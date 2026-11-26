@@ -7,6 +7,7 @@ import { periodeMaanden } from './perioden'
 import { heeftOpenstaandeBetaling } from './openstaandeBetaling'
 import { stopEnBevestig } from './verwerking'
 import { notifyTelegram } from '@/lib/cron-notify'
+import { wieIs } from './wie'
 
 // Het abonnement zelf omzetten van particulier naar zakelijk (docs/REFERRAL_CONTROLE_2026-11-26.md, N5). Het bedrag van
 // een Mollie-abonnement hoort bij het abonnement bij Mollie, dus alleen onze database aanpassen is niet genoeg: het
@@ -238,7 +239,7 @@ export async function zetAbonnementZakelijk(rij: OmzetRij, nu: Date = new Date()
   // Nooit twee lopende abonnementen: lukt het stoppen van het oude niet, dan gaat het nieuwe weer weg.
   if (oudId && !(await stopEnBevestig(sub, oudId, 'ongeregistreerd'))) {
     if (!(await stopEnBevestig(sub, id, 'ongeregistreerd'))) {
-      await notifyTelegram(`KLANTTYPE-OMZETTING HALF AFGEROND, GEEN DUBBELE INCASSO TOELATEN op arno.bot\n\nUser: ${sub.user_id}\nOud abonnement: ${oudId}\nNieuw abonnement: ${id}\nBeide staan mogelijk actief. Stop er een in het Mollie-dashboard en controleer arnobot_subscriptions (${sub.id}).`)
+      await notifyTelegram(`KLANTTYPE-OMZETTING HALF AFGEROND, GEEN DUBBELE INCASSO TOELATEN op arno.bot\n\nWie: ${await wieIs(sub.user_id)}\nOud abonnement: ${oudId}\nNieuw abonnement: ${id}\nBeide staan mogelijk actief. Stop er een in het Mollie-dashboard en controleer arnobot_subscriptions (${sub.id}).`)
     }
     throw new Error(`oud abonnement ${oudId} stoppen is niet gelukt`)
   }

@@ -12,6 +12,7 @@ import { stopEnBevestig } from './verwerking'
 import { NIET_MET_DE_HAND, VEILIG_TERUGSTORTEN, voordeelGebruikt } from './referralSignalen'
 import { gaatAutomatisch, heeftVoordeelActie } from './referralAutomatisch'
 import { notifyTelegram } from '@/lib/cron-notify'
+import { wieIs } from './wie'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 
 // Wijzigingen aan een lopend abonnement (docs/OVERSTAP_PLAN.md):
@@ -146,7 +147,7 @@ async function maakUpgradeBetaling(sub: SubRow, userId: string, upgrade: Bedrag,
       // De klant is wel belast. De webhook negeert een upgradebetaling zonder rij (en meldt het), dus
       // verwerken we hem niet verkeerd; wel dringend nakijken.
       Sentry.captureException(new Error(error.message), { tags: { onderdeel: 'billing-upgrade-rij' } })
-      await notifyTelegram(`UPGRADEBETALING AANGEMAAKT MAAR NIET VASTGELEGD op arno.bot\n\nUser: ${userId}\nBetaling: ${betaling.id}\nBedrag: €${(upgrade.brutoCent / 100).toFixed(2)}\nMaak de rij in arnobot_payments handmatig aan (soort upgrade, abonnement ${sub.id}).`)
+      await notifyTelegram(`UPGRADEBETALING AANGEMAAKT MAAR NIET VASTGELEGD op arno.bot\n\nWie: ${await wieIs(userId)}\nBetaling: ${betaling.id}\nBedrag: €${(upgrade.brutoCent / 100).toFixed(2)}\nMaak de rij in arnobot_payments handmatig aan (soort upgrade, abonnement ${sub.id}).`)
     }
     return true
   } catch (e) {
@@ -238,7 +239,7 @@ async function plaats(userId: string, wens: Wens | null, nu: Date, modus: 'overs
         return weiger(409, `Je volgende betaling is binnen ${MIN_DAGEN_VOORAF} dagen. Stap over nadat die betaling is gedaan.`)
       }
       if (Math.abs(ingang.getTime() - periodeEinde.getTime()) / DAG_MS > MAX_AFWIJKING_DAGEN) {
-        await notifyTelegram(`Overstap geweigerd: incassodatum wijkt af op arno.bot\n\nUser: ${userId}\nMollie: ${huidigMollie.nextPaymentDate}, onze periode_einde: ${sub.periode_einde.slice(0, 10)}\nBeoordeel handmatig.`)
+        await notifyTelegram(`Overstap geweigerd: incassodatum wijkt af op arno.bot\n\nWie: ${await wieIs(userId)}\nMollie: ${huidigMollie.nextPaymentDate}, onze periode_einde: ${sub.periode_einde.slice(0, 10)}\nBeoordeel handmatig.`)
         return weiger(409, 'Dit abonnement kan niet automatisch worden gewijzigd. Mail naar admin@arno.bot.')
       }
     }
@@ -286,7 +287,7 @@ async function plaats(userId: string, wens: Wens | null, nu: Date, modus: 'overs
       return weiger(502, 'Upgraden is niet gelukt, er is niets gewijzigd. Probeer het zo opnieuw of mail admin@arno.bot.')
     }
     await billingDb.from('approved_users').update({ plan: 'premium' }).eq('user_id', userId)
-    await notifyTelegram(`Upgrade naar Pro op arno.bot\n\nUser: ${userId}\nBasic ${sub.cyclus} naar Pro ${sub.cyclus}, ${sub.klant_type}\nBijbetaling: €${(upgrade.brutoCent / 100).toFixed(2)}\n${await infoVoorTelegram(userId)}`).catch(() => {})
+    await notifyTelegram(`Upgrade naar Pro op arno.bot\n\nWie: ${await wieIs(userId)}\nBasic ${sub.cyclus} naar Pro ${sub.cyclus}, ${sub.klant_type}\nBijbetaling: €${(upgrade.brutoCent / 100).toFixed(2)}\n${await infoVoorTelegram(userId)}`).catch(() => {})
     return { ok: true, ingaatOp: datumVandaag, plan: 'premium', cyclus: sub.cyclus, bedragCent: bedrag.brutoCent, upgrade: { direct: true, bijbetalingCent: upgrade.brutoCent } }
   }
 
@@ -349,7 +350,7 @@ async function plaats(userId: string, wens: Wens | null, nu: Date, modus: 'overs
     if (teruggedraaid) {
       await herstelClaim(sub.id, claimIso)
     } else {
-      await notifyTelegram(`OVERSTAP HALF AFGEROND, GEEN DUBBELE INCASSO TOELATEN op arno.bot\n\nUser: ${userId}\nHuidig abonnement: ${sub.mollie_subscription_id}\nNieuw abonnement: ${nieuwId}\nBeide staan mogelijk actief. Stop er één in het Mollie-dashboard en controleer arnobot_subscriptions (${sub.id}).`)
+      await notifyTelegram(`OVERSTAP HALF AFGEROND, GEEN DUBBELE INCASSO TOELATEN op arno.bot\n\nWie: ${await wieIs(userId)}\nHuidig abonnement: ${sub.mollie_subscription_id}\nNieuw abonnement: ${nieuwId}\nBeide staan mogelijk actief. Stop er één in het Mollie-dashboard en controleer arnobot_subscriptions (${sub.id}).`)
     }
     return weiger(502, 'Overstappen is niet gelukt. Er is niets gewijzigd aan je betalingen. Probeer het later opnieuw of mail admin@arno.bot.')
   }
@@ -367,8 +368,8 @@ async function plaats(userId: string, wens: Wens | null, nu: Date, modus: 'overs
 
   const datum = geplandIngang.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })
   const soortTekst = modus === 'upgrade'
-    ? `Upgrade naar Pro op arno.bot (${direct ? 'Pro direct' : 'Pro per einde periode, bijbetaling niet gelukt'})\n\nUser: ${userId}\n${sub.klant_type}, ${sub.cyclus}\nBijbetaling: €${((upgrade?.brutoCent ?? 0) / 100).toFixed(2)}\nPro-abonnement vanaf: ${datum}, €${(bedrag.brutoCent / 100).toFixed(2)}`
-    : `Overstap gepland op arno.bot\n\nUser: ${userId}\n${planNaam(sub.plan)} ${sub.cyclus} naar ${planNaam(doel.plan)} ${doel.cyclus}, ${sub.klant_type}\nIngaand: ${datum}\nNieuw bedrag: €${(bedrag.brutoCent / 100).toFixed(2)}`
+    ? `Upgrade naar Pro op arno.bot (${direct ? 'Pro direct' : 'Pro per einde periode, bijbetaling niet gelukt'})\n\nWie: ${await wieIs(userId)}\n${sub.klant_type}, ${sub.cyclus}\nBijbetaling: €${((upgrade?.brutoCent ?? 0) / 100).toFixed(2)}\nPro-abonnement vanaf: ${datum}, €${(bedrag.brutoCent / 100).toFixed(2)}`
+    : `Overstap gepland op arno.bot\n\nWie: ${await wieIs(userId)}\n${planNaam(sub.plan)} ${sub.cyclus} naar ${planNaam(doel.plan)} ${doel.cyclus}, ${sub.klant_type}\nIngaand: ${datum}\nNieuw bedrag: €${(bedrag.brutoCent / 100).toFixed(2)}`
   await notifyTelegram(`${soortTekst}\n${await infoVoorTelegram(userId)}`).catch(() => {})
 
   // Bevestiging aan de klant. Bij een upgrade volgt de betaalbevestiging pas als de incasso is geslaagd (bij SEPA na

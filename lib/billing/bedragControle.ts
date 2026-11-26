@@ -5,6 +5,7 @@ import { formatEuro, mollieNaarCenten } from './geld'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import { nieuwMelden } from '@/lib/capaciteit'
 import { notifyTelegram } from '@/lib/cron-notify'
+import { wieIs } from './wie'
 
 // Mollie incasseert wat in het Mollie-abonnement staat, niet wat in onze database staat. Dagelijks per klant de lijst bij
 // Mollie vergelijken: klopt het bedrag, loopt wat moet lopen, en loopt er niets wat wij niet kennen? Alleen lezen en
@@ -45,7 +46,7 @@ export async function controleerAbonnementsBedragen(): Promise<number> {
     } catch (e) {
       // Een klant die Mollie niet kent (bijvoorbeeld uit testmodus) is een bevinding, geen mislukte controle.
       if (e instanceof MollieError && (e.status === 404 || e.status === 410)) {
-        await meld(`klant:${klantId}`, `Klant niet gevonden bij Mollie op arno.bot\n\nUser: ${subs[0].user_id}\nMollie-klant: ${klantId}\nControleer of dit een oude testrij is of een klant die niet meer wordt geïncasseerd.`)
+        await meld(`klant:${klantId}`, `Klant niet gevonden bij Mollie op arno.bot\n\nWie: ${await wieIs(subs[0].user_id)}\nMollie-klant: ${klantId}\nControleer of dit een oude testrij is of een klant die niet meer wordt geïncasseerd.`)
         continue
       }
       nietTeLezen++
@@ -66,19 +67,19 @@ export async function controleerAbonnementsBedragen(): Promise<number> {
         if (!ms || !loopt(ms)) {
           // Een verlengd particulier abonnement (met contracteinde) is na zijn laatste incasso gewoon klaar.
           if (s.status === 'active' && !s.contract_einde) {
-            await meld(`weg:${id}`, `Lopend abonnement ontbreekt bij Mollie op arno.bot\n\nUser: ${s.user_id}\nMollie-abonnement: ${id}\nStand bij Mollie: ${ms?.status ?? 'niet gevonden'}\nDeze klant wordt mogelijk niet meer geïncasseerd.`)
+            await meld(`weg:${id}`, `Lopend abonnement ontbreekt bij Mollie op arno.bot\n\nWie: ${await wieIs(s.user_id)}\nMollie-abonnement: ${id}\nStand bij Mollie: ${ms?.status ?? 'niet gevonden'}\nDeze klant wordt mogelijk niet meer geïncasseerd.`)
           }
           continue
         }
         if (verwacht === null || verwacht === undefined || !ms.amount) continue
         const werkelijk = mollieNaarCenten(ms.amount.value)
         if (werkelijk !== verwacht) {
-          await meld(`bedrag:${id}`, `Abonnementsbedrag klopt niet op arno.bot\n\nUser: ${s.user_id}\nMollie-abonnement: ${id}\nBij Mollie: ${formatEuro(werkelijk)}\nIn de database: ${formatEuro(verwacht)}\nControleer dit voor de volgende incasso.`)
+          await meld(`bedrag:${id}`, `Abonnementsbedrag klopt niet op arno.bot\n\nWie: ${await wieIs(s.user_id)}\nMollie-abonnement: ${id}\nBij Mollie: ${formatEuro(werkelijk)}\nIn de database: ${formatEuro(verwacht)}\nControleer dit voor de volgende incasso.`)
         }
       }
     }
     for (const ms of lijst.filter(m => loopt(m) && !bekend.has(m.id))) {
-      await meld(`onbekend:${ms.id}`, `Onbekend lopend abonnement bij Mollie op arno.bot\n\nUser: ${wie}\nMollie-abonnement: ${ms.id}\nDit staat niet in onze database. Kijk of de klant dubbel wordt geïncasseerd.`)
+      await meld(`onbekend:${ms.id}`, `Onbekend lopend abonnement bij Mollie op arno.bot\n\nWie: ${await wieIs(wie)}\nMollie-abonnement: ${ms.id}\nDit staat niet in onze database. Kijk of de klant dubbel wordt geïncasseerd.`)
     }
   }
   if (nietTeLezen > 0) throw new Error(`${nietTeLezen} klant(en) niet bij Mollie te lezen, zie Sentry`)

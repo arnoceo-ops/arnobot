@@ -46,7 +46,7 @@ vi.mock('./db', () => ({
 vi.mock('./mails', () => ({ verstuurBillingMail: h.mail }))
 vi.mock('./facturatie', () => ({ creditnotaVoorBetaling: h.creditnota, factureerBetaling: vi.fn() }))
 vi.mock('./mollie', () => ({ stopAbonnement: vi.fn(), haalAbonnement: vi.fn(), haalBetaling: vi.fn(), maakAbonnement: vi.fn(), lijstKlantAbonnementen: vi.fn(async () => []), MollieError: class extends Error {} }))
-vi.mock('./wie', () => ({ wieRef: () => 'Test Klant' }))
+vi.mock('./wie', () => ({ wieIs: async () => 'Test Klant' }))
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: h.tg }))
 vi.mock('@/lib/referralKenmerken', () => ({ zetGratisKenmerk: vi.fn(), eersteProefStart: vi.fn() }))
 

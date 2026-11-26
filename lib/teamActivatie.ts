@@ -119,11 +119,11 @@ async function meldAangebrachtTeam(managerId: string, teamNaam: string): Promise
   if (await gaatAutomatisch('voordeel_maand').catch(() => false)) {
     await notifyTelegram(`Aangebracht team op arno.bot
 
-Team: ${teamNaam}
+Team: ${teamNaam} (referralcode ${data.code_used ?? 'onbekend'})
 ${NIET_MET_DE_HAND}`)
     return
   }
-  await notifyTelegram(`ACTIE: aangebracht team op arno.bot\n\nTeam: ${teamNaam}\nWelke referral: Admin, Referrals.\nHet team heeft eenmalig recht op een maand voor het hele team, hooguit de maandprijs bij de start, als het op tijd is: factuur aangemaakt binnen de eerste teamproef plus 10 dagen en betaald binnen de betaaltermijn. Dit is NIET op de factuur verrekend. ${VEILIG_TERUGSTORTEN}`)
+  await notifyTelegram(`ACTIE: aangebracht team op arno.bot\n\nTeam: ${teamNaam} (referralcode ${data.code_used ?? 'onbekend'})\nHet team heeft eenmalig recht op een maand voor het hele team, hooguit de maandprijs bij de start, als het op tijd is: factuur aangemaakt binnen de eerste teamproef plus 10 dagen en betaald binnen de betaaltermijn. Dit is NIET op de factuur verrekend. ${VEILIG_TERUGSTORTEN}`)
 }
 
 export type ActivatieUitkomst =
@@ -214,7 +214,7 @@ export async function activeerTeam(userId: string, invoer: ActivatieInvoer): Pro
     // Kort gehouden voor het logboek op Status: cyclus, aantal gebruikers en bedrijf (het bedrag staat in Telegram en op de factuur).
     details: { nieuw: { cyclus: invoer.cyclus, gebruikers: invoer.seats, bedrijf: z.bedrijfsnaam } },
   })
-  await notifyTelegram(`Team geactiveerd door de manager zelf op arno.bot\n\nTeam: ${team.name}\nSeats: ${seats} (${invoer.cyclus})\nBedrag incl. btw: €${(brutoCent / 100).toFixed(2)}\n${gemaakt.ok ? 'De factuur en betaallink zijn verstuurd.' : 'LET OP: de factuur is NIET goed aangemaakt of verstuurd. Zie de melding hierboven en rond hem met de hand af.'}`)
+  await notifyTelegram(`Team geactiveerd door de manager zelf op arno.bot\n\nTeam: ${team.name}\nBedrijf: ${z.bedrijfsnaam}\nSeats: ${seats} (${invoer.cyclus})\nBedrag incl. btw: €${(brutoCent / 100).toFixed(2)}\n${gemaakt.ok ? 'De factuur en betaallink zijn verstuurd.' : 'LET OP: de factuur is NIET goed aangemaakt of verstuurd. Zie de melding hierboven en rond hem met de hand af.'}`)
   // Het team is al geactiveerd; zonder factuur geen succesmelding aan de manager.
   if (!gemaakt.ok) return { ok: false, status: 500, fout: 'Je team is actief, maar de factuur is niet gelukt. We sturen hem je na.' }
 

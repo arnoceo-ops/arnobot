@@ -7,6 +7,7 @@ import { berekenReguliereBedrag, huidigSeats } from './teamFacturatie'
 import { verstuurBillingMail } from './mails'
 import { stopEnBevestig } from './verwerking'
 import { notifyTelegram } from '@/lib/cron-notify'
+import { wieIs } from './wie'
 
 // Een zakelijke solo-klant met een lopend maandabonnement wordt Team (docs/OVERSTAP_PLAN.md, "Solo-maand naar
 // Team"). Besluit Arno (2026-11-12): het solo-abonnement loopt uit tot het einde van de betaalde maand, de
@@ -255,7 +256,7 @@ export async function voerSoloNaarTeamUit(teamId: string, invoer: SoloNaarTeamIn
     try { onderweg = await heeftOpenstaandeBetaling({ ...sub, mollie_sub_geannuleerd_at: nu.toISOString() }) } catch { onderweg = true }
     if (onderweg) {
       await herstelTeam()
-      await notifyTelegram(`SOLO NAAR TEAM: BETALING ONDERWEG NA STOPPEN op arno.bot\n\nTeam: ${team.name}\nUser: ${v.managerId}\nHet Mollie-abonnement is gestopt maar er staat een betaling open of onderweg. Het Team is teruggezet. Probeer de actie opnieuw zodra die betaling is afgerond.`)
+      await notifyTelegram(`SOLO NAAR TEAM: BETALING ONDERWEG NA STOPPEN op arno.bot\n\nTeam: ${team.name}\nWie: ${await wieIs(v.managerId)}\nHet Mollie-abonnement is gestopt maar er staat een betaling open of onderweg. Het Team is teruggezet. Probeer de actie opnieuw zodra die betaling is afgerond.`)
       return weiger(409, 'Er kwam een betaling onderweg tijdens het stoppen. Het Team is teruggezet. Probeer het opnieuw zodra die betaling is afgerond.')
     }
   }
@@ -275,7 +276,7 @@ export async function voerSoloNaarTeamUit(teamId: string, invoer: SoloNaarTeamIn
     .returns<{ id: string }[]>()
   if (rijFout || bijgewerkt?.length !== 1) {
     if (rijFout) Sentry.captureException(new Error(rijFout.message), { tags: { onderdeel: 'billing-solo-naar-team' } })
-    await notifyTelegram(`SOLO NAAR TEAM HALF AFGEROND op arno.bot\n\nTeam: ${team.name}\nUser: ${v.managerId}\nMollie is gestopt en het Team staat klaar, maar de abonnementsrij (${sub.id}) kon niet op cancelled worden gezet. Voer de actie opnieuw uit: die hervat.`)
+    await notifyTelegram(`SOLO NAAR TEAM HALF AFGEROND op arno.bot\n\nTeam: ${team.name}\nWie: ${await wieIs(v.managerId)}\nMollie is gestopt en het Team staat klaar, maar de abonnementsrij (${sub.id}) kon niet op cancelled worden gezet. Voer de actie opnieuw uit: die hervat.`)
     return weiger(502, 'Bijna klaar: het Mollie-abonnement is gestopt en het Team staat klaar, maar de abonnementsrij is niet bijgewerkt. Voer de actie opnieuw uit, die hervat.')
   }
 
@@ -284,6 +285,6 @@ export async function voerSoloNaarTeamUit(teamId: string, invoer: SoloNaarTeamIn
     bedragCent: v.teamNettoCent,
     perPeriode: v.cyclus === 'jaarlijks' ? 'per jaar' : 'per maand',
   })
-  await notifyTelegram(`Solo naar Team op arno.bot\n\nTeam: ${team.name}\nUser: ${v.managerId}\nSolo: ${v.soloOmschrijving}, stopt op ${v.ingaatOp}\nTeam: ${v.seats} seats, ${v.cyclus}, eerste factuur op ${v.ingaatOp}, €${(v.teamNettoCent / 100).toFixed(2)} excl. BTW`).catch(() => {})
+  await notifyTelegram(`Solo naar Team op arno.bot\n\nTeam: ${team.name}\nWie: ${await wieIs(v.managerId)}\nSolo: ${v.soloOmschrijving}, stopt op ${v.ingaatOp}\nTeam: ${v.seats} seats, ${v.cyclus}, eerste factuur op ${v.ingaatOp}, €${(v.teamNettoCent / 100).toFixed(2)} excl. BTW`).catch(() => {})
   return { ...v, hervat: v.hervat }
 }

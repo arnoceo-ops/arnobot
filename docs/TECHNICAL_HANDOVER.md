@@ -40,7 +40,7 @@ ArnoBot is een AI-coachingplatform voor salesprofessionals. Gebruikers voeren ge
 | Rate limiting | Upstash Redis | ^1 / ^2 |
 | Foutmonitoring | Sentry (`@sentry/nextjs`) | ^10 |
 | Productanalyse (publiek + ingelogd) | PostHog (`posthog-js`) | ^1 |
-| Admin/ops-notificaties | Telegram Bot API | alleen via `notifyTelegram` (`lib/cron-notify.ts`, afgedwongen met een test). Zonder namen, e-mailadressen of gespreksteksten: een gebruiker staat er als id met adminlink (`wieRef`), e-mail- en IP-adressen worden centraal weggehaald. Overzichten met inhoud gaan per mail naar hq@ (`lib/detailMail.ts`). Besluit 2026-11-26: Telegram is geen sub-verwerker (verworpen: Telegram aan de privacyverklaring toevoegen). Teamnamen en bedrijfsnamen in teammeldingen blijven staan |
+| Admin/ops-notificaties | Telegram Bot API | directe fetch. Meldingen over nieuwe gebruikers, betalingen, referrals, teams en teamaanvragen bevatten naam en e-mailadres of contactgegevens (besluit Arno 2026-11-26; verworpen: alleen een id met adminlink). Productvragen, FAQ-zoektermen, feitencontrole, weekoverzichten en de tabelmeting sturen de inhoud per mail naar hq@ (`lib/detailMail.ts`) |
 | Boekingswebhook | Calendly | inkomend webhook, geen SDK |
 | PDF export | jsPDF + @react-pdf/renderer | ^4 |
 | Mobiele wrapper (Android live, iOS gepland) | Capacitor | ^8 |

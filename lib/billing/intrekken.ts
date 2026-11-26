@@ -8,6 +8,7 @@ import { verstuurBillingMail } from './mails'
 import { soloStoptVoorTeam } from './soloNaarTeam'
 import { stopEnBevestig } from './verwerking'
 import { notifyTelegram } from '@/lib/cron-notify'
+import { wieIs } from './wie'
 
 // Terug op een eerdere keuze (docs/OVERSTAP_PLAN.md): een geplande overstap intrekken, of een
 // opzegging intrekken zolang het abonnement nog loopt. Beide maken zo nodig het Mollie-abonnement
@@ -87,7 +88,7 @@ export async function trekOverstapIn(userId: string, nu: Date = new Date()): Pro
   // 2. Het geplande abonnement stoppen en bij Mollie bevestigen. Lukt dat niet: het zojuist aangemaakte weer stoppen.
   if (!(await stopEnBevestig(sub, geplandId, 'gepland'))) {
     if (!(await stopEnBevestig(sub, herstelId, 'ongeregistreerd'))) {
-      await notifyTelegram(`INTREKKEN HALF AFGEROND, GEEN DUBBELE INCASSO TOELATEN op arno.bot\n\nUser: ${userId}\nGepland abonnement: ${geplandId}\nNieuw aangemaakt: ${herstelId}\nBeide staan mogelijk actief. Stop er één in het Mollie-dashboard en controleer arnobot_subscriptions (${sub.id}).`)
+      await notifyTelegram(`INTREKKEN HALF AFGEROND, GEEN DUBBELE INCASSO TOELATEN op arno.bot\n\nWie: ${await wieIs(userId)}\nGepland abonnement: ${geplandId}\nNieuw aangemaakt: ${herstelId}\nBeide staan mogelijk actief. Stop er één in het Mollie-dashboard en controleer arnobot_subscriptions (${sub.id}).`)
     }
     return weiger(502, `Intrekken is niet gelukt. ${ONGEDAAN}`)
   }
@@ -106,7 +107,7 @@ export async function trekOverstapIn(userId: string, nu: Date = new Date()): Pro
   if (error) {
     // Het geplande abonnement is al gestopt en het herstelde loopt, maar staat niet in de rij: dringend nakijken.
     Sentry.captureException(new Error(error.message), { tags: { onderdeel: 'billing-intrekken-opslaan' } })
-    await notifyTelegram(`INTREKKEN: RIJ NIET BIJGEWERKT op arno.bot\n\nUser: ${userId}\nHersteld abonnement (actief): ${herstelId}\nGepland abonnement (gestopt): ${geplandId}\nZet mollie_subscription_id van ${sub.id} op ${herstelId} en wis de gepland_-kolommen.`)
+    await notifyTelegram(`INTREKKEN: RIJ NIET BIJGEWERKT op arno.bot\n\nWie: ${await wieIs(userId)}\nHersteld abonnement (actief): ${herstelId}\nGepland abonnement (gestopt): ${geplandId}\nZet mollie_subscription_id van ${sub.id} op ${herstelId} en wis de gepland_-kolommen.`)
     return weiger(502, 'Intrekken is niet helemaal gelukt. Wij zijn op de hoogte, mail zo nodig admin@arno.bot.')
   }
   if (data?.length !== 1) {
@@ -116,7 +117,7 @@ export async function trekOverstapIn(userId: string, nu: Date = new Date()): Pro
     return { ok: true }
   }
 
-  await notifyTelegram(`Overstap ingetrokken op arno.bot\n\nUser: ${userId}\nBlijft: ${planNaam(sub.plan)} ${sub.cyclus}, ${sub.klant_type}\nVolgende betaling: ${ingang.toISOString().slice(0, 10)}`).catch(() => {})
+  await notifyTelegram(`Overstap ingetrokken op arno.bot\n\nWie: ${await wieIs(userId)}\nBlijft: ${planNaam(sub.plan)} ${sub.cyclus}, ${sub.klant_type}\nVolgende betaling: ${ingang.toISOString().slice(0, 10)}`).catch(() => {})
   return { ok: true }
 }
 
@@ -237,6 +238,6 @@ export async function trekOpzeggingIn(userId: string, nu: Date = new Date()): Pr
     // Particulier jaar heeft geen automatische betaling: dan volgt aan het einde de verlengvraag.
     metBetaling: !!sub.mollie_subscription_id,
   })
-  await notifyTelegram(`Opzegging ingetrokken op arno.bot\n\nUser: ${userId}\nBlijft: ${planNaam(sub.plan)} ${sub.cyclus}, ${sub.klant_type}\n${nieuwId ? `Nieuw Mollie-abonnement vanaf ${periodeEinde.toISOString().slice(0, 10)}` : 'Het Mollie-abonnement liep nog door'}`).catch(() => {})
+  await notifyTelegram(`Opzegging ingetrokken op arno.bot\n\nWie: ${await wieIs(userId)}\nBlijft: ${planNaam(sub.plan)} ${sub.cyclus}, ${sub.klant_type}\n${nieuwId ? `Nieuw Mollie-abonnement vanaf ${periodeEinde.toISOString().slice(0, 10)}` : 'Het Mollie-abonnement liep nog door'}`).catch(() => {})
   return { ok: true }
 }

@@ -16,6 +16,7 @@ import {
 import { haalBetaling, MollieError } from './mollie'
 import { planNaam } from './prijzen'
 import { notifyTelegram } from '@/lib/cron-notify'
+import { wieIs } from './wie'
 
 // Koppelt een verwerkte Mollie-betaling aan een Moneybird-factuur. Een mislukte factuur mag
 // nooit een betaalverwerking breken: fouten worden gemeld en de dagelijkse billing-cron
@@ -150,7 +151,7 @@ export async function factureerBetaling(payRowId: string): Promise<void> {
     // Claim vrijgeven zodat de cron het opnieuw kan proberen.
     await billingDb.from('arnobot_payments').update({ moneybird_factuur_id: null }).eq('id', rij.id).eq('moneybird_factuur_id', BEZIG)
     Sentry.captureException(e, { tags: { onderdeel: 'moneybird-factuur' } })
-    await notifyTelegram(`Factuur maken in Moneybird mislukt op arno.bot\n\nBetaling: ${rij.mollie_payment_id}\nUser: ${rij.user_id}\nDe billing-cron probeert het opnieuw.`)
+    await notifyTelegram(`Factuur maken in Moneybird mislukt op arno.bot\n\nBetaling: ${rij.mollie_payment_id}\nWie: ${await wieIs(rij.user_id)}\nDe billing-cron probeert het opnieuw.`)
   }
 }
 

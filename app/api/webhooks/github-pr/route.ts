@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, timingSafeEqual } from 'crypto'
-import { notifyTelegram } from '@/lib/cron-notify'
 
 // GitHub-signatuurformaat: header "X-Hub-Signature-256: sha256=<hmac-sha256-hex-over-de-raw-body>",
 // geen timestamp zoals bij Calendly (app/api/webhooks/calendly/route.ts). Geen destructieve
@@ -26,7 +25,11 @@ async function sendTelegram(text: string) {
   const chatId = process.env.TELEGRAM_CHAT_ID
   if (!token || !chatId) return
 
-  await notifyTelegram(text)
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  }).catch(() => {})
 }
 
 export async function POST(req: NextRequest) {
