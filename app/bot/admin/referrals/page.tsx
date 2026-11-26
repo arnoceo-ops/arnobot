@@ -67,6 +67,8 @@ export default async function ReferralsAdminPage() {
           <p style={{ color: '#f59e0b', fontSize: 14, marginTop: 8 }}>De tabel ontbreekt nog: voer docs/sql/2026-11-25-referral-grootboek.sql uit. Tot dan wordt er niets opgeslagen.</p>
         )}
 
+        {run.fouten.map(f => <p key={f} style={{ color: '#f59e0b', fontSize: 14, marginTop: 8 }}>{f}</p>)}
+
         <p style={sectionLabel}>Stand van nu</p>
         {run.referrals.length === 0 ? <p style={muted}>Nog geen referrals.</p> : (
           <table style={tabel}>

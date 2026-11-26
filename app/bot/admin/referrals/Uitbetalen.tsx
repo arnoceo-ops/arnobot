@@ -2,7 +2,7 @@ import { billingDb } from '@/lib/billing/db'
 import { formatEuro } from '@/lib/billing/geld'
 import { planReferral, type PlanRonde, type Voornemen } from '@/lib/billing/referralPlanner'
 import { actieTabelOntbreekt } from '@/lib/billing/referralAutomatisch'
-import { schakelaarAan } from '@/lib/billing/referralSchakelaars'
+import { magTerugstorten, schakelaarAan } from '@/lib/billing/referralSchakelaars'
 import { TERUGSTORT_OMSCHRIJVING } from '@/lib/billing/referralTeksten'
 import type { ActieRij } from '@/lib/billing/referralTerugstorten'
 
@@ -43,12 +43,13 @@ async function haalOpenActies(): Promise<ActieRij[] | string> {
 export default async function Uitbetalen({ naam }: { naam: (id: string) => string }) {
   const [plan, open] = await Promise.all([haalPlan(), haalOpenActies()])
   const aan = schakelaarAan('REFERRAL_TERUGSTORTEN')
+  const tegoedAan = magTerugstorten('tegoed_terugstorten')
   const teksten = Object.keys(TERUGSTORT_OMSCHRIJVING).length > 0
   return (
     <>
       <p style={sectionLabel}>Uitbetalen: droogloop</p>
       <p style={muted}>
-        Dit scherm verandert niets. Terugstorten staat {aan ? 'AAN' : 'uit'}{teksten ? '' : ', en de tekst die de klant bij een terugstorting ziet is niet vastgesteld, dus er wordt niets gereserveerd'}.
+        Dit scherm verandert niets. Terugstorten van het voordeel staat {aan ? 'AAN' : 'uit'}, verrekenen van tegoed staat {tegoedAan ? 'AAN' : 'uit'}{teksten ? '' : ', en de tekst die de klant bij een terugstorting ziet is niet vastgesteld, dus er wordt niets gereserveerd'}.
         {' '}Wat al met de hand per bank is gegeven ziet de app niet: boek dat in voordat terugstorten aan gaat.
       </p>
       {typeof plan === 'string' ? <p style={let_op}>Droogloop niet te maken: {plan}</p> : (

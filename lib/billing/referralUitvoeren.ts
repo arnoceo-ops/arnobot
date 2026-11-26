@@ -6,7 +6,7 @@ import { draaiNacontrole } from './referralNacontrole'
 import { planReferral } from './referralPlanner'
 import { CREDIT_ACTIESTATUSSEN, creditAfboeken, creditnotaStap } from './referralCreditnota'
 import { verwerkOpenTerugstortingen, type ActieRij } from './referralTerugstorten'
-import { schakelaarAan } from './referralSchakelaars'
+import { magTerugstorten, schakelaarAan } from './referralSchakelaars'
 import { regelTekst } from './referralGrootboek'
 import { splitsBericht } from './berichtDelen'
 import { formatEuro } from './geld'
@@ -91,9 +91,9 @@ export async function draaiReferralUitvoeren(nu: Date): Promise<UitvoerSamenvatt
   await onderdeel('openstaand', async () => {
     const acties = await haalAlleRijen<ActieRij>((van, tot) => billingDb.from('arnobot_referral_acties').select('*')
       .in('status', ['gereserveerd', 'bezig', 'verzonden', ...CREDIT_ACTIESTATUSSEN]).order('id', { ascending: true }).range(van, tot))
-    const open = acties.filter(a => !CREDIT_ACTIESTATUSSEN.includes(a.status)).length
-    if (open && !schakelaarAan('REFERRAL_TERUGSTORTEN')) {
-      await eensPerWeek('open-terwijl-uit', `REFERRAL_TERUGSTORTEN staat uit terwijl er ${open} referralterugstorting(en) openstaan.`)
+    const stil = acties.filter(a => !CREDIT_ACTIESTATUSSEN.includes(a.status) && !magTerugstorten(a.soort)).length
+    if (stil) {
+      await eensPerWeek('open-terwijl-uit', `Een terugstortschakelaar staat uit terwijl er ${stil} referralterugstorting(en) openstaan (REFERRAL_TERUGSTORTEN, voor tegoed ook REFERRAL_TEGOED_VERREKENEN). Wat nog niet verstuurd is blijft staan, met het tegoed gereserveerd.`)
     }
     const zonderCreditnota: string[] = []
     for (const a of acties.filter(a => CREDIT_ACTIESTATUSSEN.includes(a.status) && (a.credit_status === 'nodig' || a.credit_status === 'bezig'))) {
@@ -108,7 +108,7 @@ export async function draaiReferralUitvoeren(nu: Date): Promise<UitvoerSamenvatt
     }
     if (zonderCreditnota.length) {
       // Wie er zelf een maakt moet haar afboeken, anders komt er bij het aanzetten van de schakelaar mogelijk een tweede.
-      await eensPerWeek('creditnotas', `${zonderCreditnota.length} referralterugstorting(en) hebben nog geen creditnota in Moneybird (de schakelaar REFERRAL_CREDITNOTA staat uit of de factuur ontbreekt). Maak je er zelf een, boek haar dan meteen af:\n${zonderCreditnota.slice(0, 5).map(creditAfboeken).join('\n')}`)
+      await eensPerWeek('creditnotas', `${zonderCreditnota.length} referralterugstorting(en) hebben nog geen creditnota in Moneybird (de schakelaar REFERRAL_CREDITNOTA staat uit of de factuur ontbreekt). Maak je er zelf een, boek haar dan meteen af:\n${zonderCreditnota.slice(0, 5).map(creditAfboeken).join('\n')}${zonderCreditnota.length > 5 ? `\nEn nog ${zonderCreditnota.length - 5}: dezelfde opdracht met het kenmerk uit arnobot_referral_acties.` : ''}`)
     }
   })
 

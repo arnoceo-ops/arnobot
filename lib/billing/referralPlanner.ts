@@ -466,7 +466,13 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
       }
       return
     }
-    const v = nieuw({ soort: 'verval_teamlid', userId, nettoCent: vervalCent, stand: 'vervalt', reden: 'past niet meer in zijn eigen betalingen', opMeeloop: ronde.opMeeloop })
+    // In een echte ronde zonder tegoedschakelaar wordt er niets geboekt: dan mag er ook niet 'vervallen' gemeld worden.
+    const geboektWordtNiet = uitvoeren && !tegoedUitvoeren
+    const v = nieuw({
+      soort: 'verval_teamlid', userId, nettoCent: vervalCent, stand: geboektWordtNiet ? 'wacht' : 'vervalt',
+      reden: geboektWordtNiet ? 'zou vervallen, maar REFERRAL_TEGOED_VERREKENEN staat uit: er is niets geboekt' : 'past niet meer in zijn eigen betalingen',
+      opMeeloop: ronde.opMeeloop,
+    })
     // Definitief: alleen als terugstorten ook echt ingericht is (schakelaar, SQL en vastgestelde klanttekst).
     if (!tegoedUitvoeren || !omschrijvingen.tegoed_terugstorten) return
     await stelVast()
