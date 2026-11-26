@@ -34,7 +34,6 @@ type Gebruiker = {
 type Antwoord = {
   periodeVolledigGemeten: boolean
   testers: { aantal: number; totaalUsd: number; berichten: number }
-  meetStart: string | null
   van: string
   tot: string
   vandaag: string
@@ -48,25 +47,23 @@ const fmtUsd3 = (n: number) => '$' + n.toLocaleString('nl-NL', { minimumFraction
 const fmtEur = (n: number) => '€' + n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const fmtDatum = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 
-type Snelkeuze = 'deze-maand' | 'vorige-maand' | '7-dagen' | '30-dagen' | 'sinds-meting' | 'eigen'
+type Snelkeuze = 'deze-maand' | 'vorige-maand' | '7-dagen' | '30-dagen' | 'eigen'
 const SNELKEUZES: { id: Snelkeuze; label: string }[] = [
   { id: 'deze-maand', label: 'Deze maand' },
   { id: 'vorige-maand', label: 'Vorige maand' },
   { id: '7-dagen', label: 'Laatste 7 dagen' },
   { id: '30-dagen', label: 'Laatste 30 dagen' },
-  { id: 'sinds-meting', label: 'Sinds begin meting' },
   { id: 'eigen', label: 'Eigen periode' },
 ]
 
-// Van en tot en met voor een snelkeuze, uit de datum van vandaag (Amsterdam, van de server) en het begin van de meting.
-function periodeVoorSnelkeuze(keuze: Snelkeuze, vandaag: string, meetStart: string | null): { van: string; tot: string } | null {
+// Van en tot en met voor een snelkeuze, uit de datum van vandaag (Amsterdam, van de server).
+function periodeVoorSnelkeuze(keuze: Snelkeuze, vandaag: string): { van: string; tot: string } | null {
   const eersteDezeMaand = `${vandaag.slice(0, 8)}01`
   switch (keuze) {
     case 'deze-maand': return { van: eersteDezeMaand, tot: vandaag }
     case 'vorige-maand': { const laatste = datumPlusDagen(eersteDezeMaand, -1); return { van: `${laatste.slice(0, 8)}01`, tot: laatste } }
     case '7-dagen': return { van: datumPlusDagen(vandaag, -6), tot: vandaag }
     case '30-dagen': return { van: datumPlusDagen(vandaag, -29), tot: vandaag }
-    case 'sinds-meting': return meetStart ? { van: new Date(meetStart).toLocaleDateString('en-CA', { timeZone: 'Europe/Amsterdam' }), tot: vandaag } : null
     default: return null
   }
 }
@@ -121,7 +118,7 @@ export default function GebruikersKostenClient() {
   function kiesSnelkeuze(keuze: Snelkeuze) {
     setSnelkeuze(keuze)
     if (keuze === 'eigen' || !data) return
-    const p = periodeVoorSnelkeuze(keuze, data.vandaag, data.meetStart)
+    const p = periodeVoorSnelkeuze(keuze, data.vandaag)
     if (p) { setLaden(true); setPeriode(p) }
   }
 
