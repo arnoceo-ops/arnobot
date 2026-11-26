@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Vanaf nu een gratis account: geen referral (lib/gratisAccount.ts).
-  await zetGratisKenmerk(supabase, userId, true)
+  const kenmerkGezet = await zetGratisKenmerk(supabase, userId, true)
 
   // paid_at gaat hier naar leeg: een betalende gebruiker die op GRATIS wordt gezet verliest BETAALD.
   // Daarom staan de oude waarden in het logboek.
@@ -66,5 +66,8 @@ export async function POST(req: NextRequest) {
       nieuw: { expires_at: exp.toISOString(), trial_start: null, paid_at: null },
     },
   })
+  if (!kenmerkGezet) {
+    return NextResponse.json({ error: 'De toegang is gegeven, maar het kenmerk gratis niet. Druk nogmaals op GRATIS.' }, { status: 500 })
+  }
   return NextResponse.json({ ok: true })
 }

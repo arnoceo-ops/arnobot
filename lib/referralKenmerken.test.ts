@@ -43,20 +43,47 @@ describe('eenmalig vastleggen', () => {
 })
 
 describe('kenmerk gratis account', () => {
+  function gratisDb(sinds: string | null, fouten: { lees?: string; log?: string; schrijf?: string } = {}) {
+    const stappen: unknown[] = []
+    const fout = (m?: string) => (m ? { message: m } : null)
+    const client = {
+      from: (tabel: string) => ({
+        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { gratis_sinds: sinds }, error: fout(fouten.lees) }) }) }),
+        insert: async (rij: unknown) => { stappen.push([tabel, 'insert', rij]); return { error: fout(fouten.log) } },
+        update: (w: unknown) => ({ eq: async () => { stappen.push([tabel, 'update', w]); return { error: fout(fouten.schrijf) } } }),
+      }),
+    } as any
+    return { client, stappen }
+  }
+
   it('aan bewaart de eerste datum', async () => {
     const { client, vragen } = db(null)
-    await zetGratisKenmerk(client, 'u', true)
+    expect(await zetGratisKenmerk(client, 'u', true)).toBe(true)
     expect(vragen.slice(1)).toEqual([['eq', 'user_id', 'u'], ['is', 'gratis_sinds', null]])
   })
-  it('uit maakt het veld leeg', async () => {
-    const vragen: unknown[] = []
-    const client = { from: () => ({ update: (w: unknown) => ({ eq: async (...a: unknown[]) => { vragen.push(w, a); return { error: null } } }) }) } as any
-    await zetGratisKenmerk(client, 'u', false)
-    expect(vragen).toEqual([{ gratis_sinds: null }, ['user_id', 'u']])
+  it('uit legt eerst vast dat het account gratis was en maakt dan het veld leeg', async () => {
+    const { client, stappen } = gratisDb('2027-01-01T00:00:00Z')
+    expect(await zetGratisKenmerk(client, 'u', false)).toBe(true)
+    expect(stappen).toEqual([
+      ['arnobot_admin_log', 'insert', expect.objectContaining({ actie: 'gratis_beeindigd', doel_user_id: 'u' })],
+      ['approved_users', 'update', { gratis_sinds: null }],
+    ])
   })
-  it('een databasefout gooit nooit maar gaat naar Sentry', async () => {
-    await zetGratisKenmerk(db({ message: 'time-out' }).client, 'u', true)
+  it('zonder kenmerk wordt er niets geschreven', async () => {
+    const { client, stappen } = gratisDb(null)
+    expect(await zetGratisKenmerk(client, 'u', false)).toBe(true)
+    expect(stappen).toEqual([])
+  })
+  it('lukt de logregel niet, dan blijft het kenmerk staan', async () => {
+    const { client, stappen } = gratisDb('2027-01-01T00:00:00Z', { log: 'time-out' })
+    expect(await zetGratisKenmerk(client, 'u', false)).toBe(false)
+    expect(stappen).toHaveLength(1)
     expect(h.gemeld).toHaveLength(1)
+  })
+  it('een databasefout gooit nooit maar geeft false', async () => {
+    expect(await zetGratisKenmerk(db({ message: 'time-out' }).client, 'u', true)).toBe(false)
+    expect(await zetGratisKenmerk(gratisDb(null, { lees: 'time-out' }).client, 'u', false)).toBe(false)
+    expect(h.gemeld).toHaveLength(2)
   })
 })
 

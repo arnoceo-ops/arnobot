@@ -4,6 +4,7 @@ import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { wieIs } from '@/lib/billing/wie'
 import { draaiGrootboek, nieuweMijlpalen, regelTekst } from '@/lib/billing/referralGrootboek'
 import { splitsBericht } from '@/lib/billing/berichtDelen'
+import { herstelGratisKenmerken } from '@/lib/billing/gratisHerstel'
 import * as Sentry from '@sentry/nextjs'
 
 // Dagelijks grootboek van het referraltegoed, MEELOPEND (docs/REFERRAL_AUTOMATISERING.md). Draait na de billing- en
@@ -15,7 +16,10 @@ async function cronHandler(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   try {
+    // Eerst het vangnet voor het gratis kenmerk: het grootboek leest dat kenmerk.
+    const gratis = await herstelGratisKenmerken()
     const run = await draaiGrootboek(new Date(), { schrijf: true })
+    run.fouten.push(...gratis.fouten)
     if (run.migratieOntbreekt) return NextResponse.json({ ok: true, overgeslagen: 'tabel ontbreekt' })
 
     if (run.nieuw.length || run.fouten.length) {

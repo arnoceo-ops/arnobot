@@ -123,7 +123,7 @@ async function laadDossier(userId: string): Promise<Dossier | null> {
     billingDb.from('arnobot_payments').select('*').eq('user_id', userId).returns<Betaling[]>(),
     billingDb.from('arnobot_team_members').select('team_id').eq('user_id', userId).limit(1),
     billingDb.from('arnobot_teams').select('id, name, manager_id, min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at, stopt_op').eq('manager_id', userId).returns<Team[]>(),
-    billingDb.from('arnobot_admin_log').select('actie').eq('doel_user_id', userId).in('actie', ['betaald_gezet', 'gratis_toegang']).limit(1000),
+    billingDb.from('arnobot_admin_log').select('actie').eq('doel_user_id', userId).in('actie', ['betaald_gezet', 'gratis_toegang', 'gratis_beeindigd']).limit(1000),
   ])
   const g = verplicht('gebruiker', gebruiker)
   // Anonimiseren bij een verwijderverzoek: de rij blijft staan, zonder naam en e-mailadres.
@@ -141,7 +141,7 @@ async function laadDossier(userId: string): Promise<Dossier | null> {
     facturen,
     ooitMetDeHandBetaald: (verplicht('adminlog', handLog) ?? []).some(r => r.actie === 'betaald_gezet'),
     // Een lege trial_start is het spoor van gratis toegang van voor het adminlog.
-    ooitGratisToegang: !g.trial_start || !!g.gratis_sinds || (verplicht('adminlog', handLog) ?? []).some(r => r.actie === 'gratis_toegang'),
+    ooitGratisToegang: !g.trial_start || !!g.gratis_sinds || (verplicht('adminlog', handLog) ?? []).some(r => r.actie !== 'betaald_gezet'),
   }
 }
 
@@ -220,6 +220,11 @@ const betaaldeTeamsVan = (d: Dossier) => d.teams.filter(t => d.facturen.some(f =
 const heeftTeruggedraaideFactuur = (d: Dossier, t: Team) =>
   d.facturen.some(f => f.team_id === t.id && (f.status === 'refunded' || !!f.reversed_at || (f.teruggeboekt_cent ?? 0) > 0))
 
+/** Wanneer een abonnement echt ophield. Bij een terugbetaling eerder dan het einde van de betaalde periode. */
+const subEindeAt = (s: Sub): string | null =>
+  s.status === 'refunded' && s.updated_at && (!s.periode_einde || Date.parse(s.updated_at) < Date.parse(s.periode_einde)) ? s.updated_at
+    : s.periode_einde
+
 /**
  * Na de blokkade is weer een eigen abonnement afgesloten, of een eerder abonnement liep door tot voorbij het moment
  * waarop het teamtegoed zou vervallen: de blokkade bepaalt de stand dan niet meer.
@@ -227,7 +232,8 @@ const heeftTeruggedraaideFactuur = (d: Dossier, t: Team) =>
 const blokkadeAchterhaald = (d: Dossier, t: Team) => !!t.geblokkeerd_at && d.subs.some(s => {
   if (s.status === 'pending' || s.status === 'abandoned') return false
   if (s.created_at && Date.parse(s.created_at) > Date.parse(t.geblokkeerd_at!)) return true
-  return s.status === 'active' || (!!s.periode_einde && Date.parse(s.periode_einde) > Date.parse(eindeNaBlokkade(t.geblokkeerd_at!)))
+  const einde = subEindeAt(s)
+  return s.status === 'active' || (!!einde && Date.parse(einde) > Date.parse(eindeNaBlokkade(t.geblokkeerd_at!)))
 })
 
 /**
@@ -324,9 +330,7 @@ function dekkingVan(d: Dossier, nu: Date, alleenBetaaldeFacturen = false): Dekki
   for (const s of d.subs.filter(s => s.status !== 'pending' && s.status !== 'abandoned')) {
     const start = s.created_at ?? s.periode_start
     if (!start) continue
-    const einde = s.status === 'active' ? null
-      : s.status === 'refunded' && s.updated_at && (!s.periode_einde || Date.parse(s.updated_at) < Date.parse(s.periode_einde)) ? s.updated_at
-        : s.periode_einde ?? s.updated_at ?? start
+    const einde = s.status === 'active' ? null : subEindeAt(s) ?? s.updated_at ?? start
     uit.push({ start, einde, team: false })
   }
   // Teams zonder staande betaling tellen niet in de strenge variant.
@@ -367,14 +371,18 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
   // Beëindigde abonnementen en teams, het laatste einde eerst.
   const eindes: { at: string; prijs: () => Promise<number> }[] = []
   for (const s of d.subs.filter(s => (s.status === 'ended' || s.status === 'refunded') && s.periode_einde)) {
-    const terug = s.status === 'refunded' && s.updated_at && Date.parse(s.updated_at) < Date.parse(s.periode_einde!)
-    eindes.push({ at: terug ? s.updated_at! : s.periode_einde!, prijs: async () => subMaandCent(d, s) })
+    eindes.push({ at: subEindeAt(s)!, prijs: async () => subMaandCent(d, s) })
   }
-  // Ook een gestopt team zonder staande betaling is een einde: anders rekent de stand met de allang verlopen eerste termijn.
-  for (const t of [...betaaldeTeams, ...teamsZonderBetaling(d, nu)].filter(gestopt)) {
-    eindes.push({ at: teamEindeAt(d, t, nu)!, prijs: () => teamPrijs(t) })
-  }
-  const laatste = eindes.sort((a, b) => Date.parse(b.at) - Date.parse(a.at))[0]
+  for (const t of betaaldeTeams.filter(gestopt)) eindes.push({ at: teamEindeAt(d, t, nu)!, prijs: () => teamPrijs(t) })
+  const laatsteEerst = (a: { at: string }, b: { at: string }) => Date.parse(b.at) - Date.parse(a.at)
+  /** Het laatste einde van iets waarvoor echt betaald is: telt voor "zelf betaald" en voor zijn maandprijs. */
+  const laatste = eindes.sort(laatsteEerst)[0]
+  // Ook een gestopt team zonder staande betaling is een einde voor de vervaltermijn: anders rekent de stand met de
+  // allang verlopen eerste termijn.
+  const laatsteEindeStand = [
+    ...(laatste ? [laatste] : []),
+    ...teamsZonderBetaling(d, nu).filter(gestopt).map(t => ({ at: teamEindeAt(d, t, nu)! })),
+  ].sort(laatsteEerst)[0]
 
   const loopt = !d.isGewoonTeamlid && (!!lopendTeam || !!lopendeSub)
   // Een manager betaalt zijn team: dat is dan zijn plafond, ook als er nog een oud solo-abonnement uitloopt.
@@ -392,7 +400,8 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
   const teamEinde = verlengd ?? proefEinde
   const na = (basis: number | null, dagen: number) => (basis === null ? null : new Date(basis + dagen * DAG_MS).toISOString())
   const eersteUiterlijk = { solo: na(proefEinde, TERMIJN_NA_PROEF_DAGEN), team: na(teamEinde, TERMIJN_NA_TEAMPROEF_DAGEN) }
-  const ooit = !!lopendeSub || !!lopendTeam || !!geblokkeerdTeam || !!laatste
+  const ooitBetaald = !!lopendeSub || !!lopendTeam || !!geblokkeerdTeam || !!laatste
+  const ooit = ooitBetaald || !!laatsteEindeStand
   const uiterlijkZonderAbonnement = d.teams.length ? eersteUiterlijk.team : eersteUiterlijk.solo
 
   const historie = {
@@ -405,8 +414,8 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
       loopt,
       laatsteEindeAt: d.isGewoonTeamlid
         // Bij een teamlid is alleen van belang of er ooit zelf betaald is.
-        ? (ooit ? laatste?.at ?? lopendeSub?.periode_einde ?? nu.toISOString() : null)
-        : laatste?.at ?? null,
+        ? (ooitBetaald ? laatste?.at ?? lopendeSub?.periode_einde ?? nu.toISOString() : null)
+        : laatsteEindeStand?.at ?? null,
       geblokkeerdSindsAt: !lopendTeam && !lopendeSub ? (geblokkeerdTeam ?? geblokkeerdOnbetaald)?.geblokkeerd_at ?? null : null,
       isGewoonTeamlid: d.isGewoonTeamlid,
       eersteBetalingUiterlijkAt: ooit ? null : uiterlijkZonderAbonnement,

@@ -48,7 +48,7 @@ export async function POST() {
   // Vóór het overschrijven: de eerste proef bewaren (eerste herstart, en alleen als de intake af was).
   if ('onboarding_done' in user && user.onboarding_done && !user.trial_reactivated_at) await bewaarEersteProefStart(supabase, userId, user.trial_start)
 
-  await supabase.from('approved_users').update({
+  const { error: herstartFout } = await supabase.from('approved_users').update({
     is_active: true,
     trial_start: now.toISOString(),
     trial_reactivated_at: now.toISOString(),
@@ -57,6 +57,10 @@ export async function POST() {
     paid_at: null,
     expires_at: null,
   }).eq('user_id', userId)
+  if (herstartFout) {
+    console.error('[herstart]', herstartFout.message)
+    return NextResponse.json({ error: 'Herstarten is niet gelukt. Probeer het opnieuw.' }, { status: 500 })
+  }
 
   await zetGratisKenmerk(supabase, userId, false)
 

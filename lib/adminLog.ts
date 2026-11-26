@@ -13,6 +13,7 @@ export type AdminActie =
   | 'teamrol_gewijzigd'
   | 'sd_agent_gewijzigd'
   | 'gratis_toegang'
+  | 'gratis_beeindigd'
   | 'toegang_aan'
   | 'toegang_uit'
   | 'team_instellingen'
@@ -35,6 +36,7 @@ export const ACTIE_LABEL: Record<AdminActie, string> = {
   teamrol_gewijzigd: 'TEAMROL GEWIJZIGD',
   sd_agent_gewijzigd: 'SD-AGENT GEWIJZIGD',
   gratis_toegang: 'GRATIS TOEGANG',
+  gratis_beeindigd: 'GRATIS ACCOUNT BEËINDIGD',
   toegang_aan: 'TOEGANG AAN',
   toegang_uit: 'TOEGANG UIT',
   team_instellingen: 'TEAM-INSTELLINGEN',

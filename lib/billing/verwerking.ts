@@ -200,6 +200,7 @@ async function rondBetalingAf(sub: SubRow, rij: PayRow, mp: MolliePayment): Prom
       betaalId: mp.id,
     })
     await factureerBetaling(rij.id)
+    await zetGratisKenmerk(billingDb, sub.user_id, false)
     return
   }
 

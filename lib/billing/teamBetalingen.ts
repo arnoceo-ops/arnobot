@@ -103,6 +103,8 @@ export async function verwerkTeamNaBetaling(rij: TeamFactuurRow, betalingen: Mol
   if (vervangen) ({ data, error } = await schrijf({}))
   if (error) throw new Error(`Terugbetaling teamfactuur niet vastgelegd: ${error.message}`)
   if ((data?.length ?? 0) !== 1) return false
+  // De factuur staat weer op betaald: de manager heeft dus toch betaald.
+  if (herstel && !vervangen) await beeindigGratisVanManager(rij.team_id)
 
   let wat: string
   let actie: string

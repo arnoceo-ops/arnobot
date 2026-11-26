@@ -974,6 +974,34 @@ describe('gestopt team zonder staande betaling', () => {
   })
 })
 
+describe('terugbetaald abonnement van voor de blokkade', () => {
+  it('maakt de blokkade niet achterhaald: de 30 dagen blijven gelden', async () => {
+    await draai()
+    Object.assign(h.tabellen, {
+      arnobot_subscriptions: [sub('aanbrenger', { status: 'refunded', cyclus: 'jaarlijks', periode_einde: '2028-01-05T00:00:00.000Z', updated_at: '2027-01-10T00:00:00.000Z' }), klantSub()],
+      arnobot_teams: [team({ geblokkeerd_at: '2027-06-01T06:00:00.000Z' })], arnobot_team_facturen: [factuur({ created_at: '2027-01-08T06:00:00.000Z', betaald_at: '2027-01-09T10:00:00.000Z', periode_start: '2027-01-08' })],
+    })
+    await draai(new Date('2027-06-02T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+  })
+})
+
+describe('een gestopt team zonder betaling telt niet als zelf betaald', () => {
+  const nooitBetaald = () => ({
+    arnobot_teams: [team({ stopt_op: '2027-02-25' })], arnobot_team_facturen: [factuur({ status: 'open', betaald_at: null })],
+  })
+  it('teamlid dat nooit zelf betaalde: niets terug te storten', async () => {
+    zet({ approved_users: [gebruiker('aanbrenger'), gebruiker('klant')], arnobot_subscriptions: [klantSub()], arnobot_team_members: [{ user_id: 'aanbrenger', team_id: 'ander' }], ...nooitBetaald() })
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['afwijzing'])
+  })
+  it('Lifetime: het bedrag volgt, niet de prijs van het nooit betaalde team', async () => {
+    zet({ approved_users: [gebruiker('aanbrenger', { lifetime_sinds: '2027-01-02T00:00:00.000Z' }), gebruiker('klant')], arnobot_subscriptions: [klantSub()], ...nooitBetaald() })
+    await draai()
+    expect(boek()[0]).toMatchObject({ soort: 'toekenning', netto_cent: null })
+  })
+})
+
 describe('abonnement van voor de blokkade dat doorliep', () => {
   it('na het einde gelden de 14 dagen, niet de oude blokkade', async () => {
     await draai()

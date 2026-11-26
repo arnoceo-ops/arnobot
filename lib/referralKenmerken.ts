@@ -28,17 +28,34 @@ export async function bewaarOoitTeamlid(db: SupabaseClient, userId: string): Pro
 
 /**
  * Het kenmerk gratis account (lib/gratisAccount.ts). Een eigen schrijfactie die nooit gooit: een betaling, herstart of
- * adminknop mag er niet op mislukken. Aan bewaart de eerste datum.
+ * adminknop mag er niet op mislukken. Geeft false als het niet is gelukt (vangnet: lib/billing/gratisHerstel.ts). Aan
+ * bewaart de eerste datum. Bij uitzetten komt eerst een regel in het adminlog, zodat zichtbaar blijft dat het account
+ * gratis is geweest.
  */
-export async function zetGratisKenmerk(db: SupabaseClient, userId: string, aan: boolean): Promise<void> {
+export async function zetGratisKenmerk(db: SupabaseClient, userId: string, aan: boolean): Promise<boolean> {
   try {
-    const kolom = db.from('approved_users')
-    const { error } = aan
-      ? await kolom.update({ gratis_sinds: new Date().toISOString() }).eq('user_id', userId).is('gratis_sinds', null)
-      : await kolom.update({ gratis_sinds: null }).eq('user_id', userId)
-    if (error && !kolomOntbreekt(error)) throw new Error(error.message)
+    if (aan) {
+      const { error } = await db.from('approved_users').update({ gratis_sinds: new Date().toISOString() }).eq('user_id', userId).is('gratis_sinds', null)
+      if (error && !kolomOntbreekt(error)) throw new Error(error.message)
+      return true
+    }
+    const { data, error: leesFout } = await db.from('approved_users').select('gratis_sinds').eq('user_id', userId).maybeSingle()
+    if (leesFout) {
+      if (kolomOntbreekt(leesFout)) return true
+      throw new Error(leesFout.message)
+    }
+    const sinds = (data as { gratis_sinds?: string | null } | null)?.gratis_sinds
+    if (!sinds) return true
+    const { error: logFout } = await db.from('arnobot_admin_log').insert({
+      actie: 'gratis_beeindigd', doel_user_id: userId, doel_team_id: null, details: { oud: { gratis_sinds: sinds } },
+    })
+    if (logFout) throw new Error(logFout.message)
+    const { error } = await db.from('approved_users').update({ gratis_sinds: null }).eq('user_id', userId)
+    if (error) throw new Error(error.message)
+    return true
   } catch (e) {
     Sentry.captureException(e, { level: 'error', tags: { onderdeel: 'referral-kenmerk' }, extra: { userId, kolom: 'gratis_sinds', aan } })
+    return false
   }
 }
 
