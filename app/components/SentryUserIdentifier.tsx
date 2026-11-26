@@ -9,11 +9,8 @@ export default function SentryUserIdentifier() {
 
   useEffect(() => {
     if (user) {
-      Sentry.setUser({
-        id: user.id,
-        email: user.primaryEmailAddress?.emailAddress,
-        username: user.fullName ?? undefined,
-      })
+      // Alleen het account-id: geen naam of e-mailadres naar Sentry.
+      Sentry.setUser({ id: user.id })
     } else {
       Sentry.setUser(null)
     }

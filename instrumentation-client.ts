@@ -23,19 +23,10 @@ Sentry.init({
   // i.p.v. in proxy.ts blokkeren, dat brak eerder @clerk/nextjs's eigen signOut()-actie.
   ignoreErrors: [/Failed to find Server Action/],
 
-  // Add optional integrations for additional features
-  integrations: [Sentry.replayIntegration()],
+  // Geen Sentry-schermopnames (besluit 26-11-2026): ze liepen zonder paginafilter, ook op pagina's met gesprekken.
 
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 0.1,
-
-  // Define how likely Replay events are sampled.
-  // This sets the sample rate to be 10%. You may want this to be 100% while
-  // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 0.1,
-
-  // Define how likely Replay events are sampled when an error occurs.
-  replaysOnErrorSampleRate: 1.0,
 
   dataCollection: {
     // Bewust de restrictieve v10-basis: v11 verzamelt zonder deze regels standaard gebruikersinfo,
