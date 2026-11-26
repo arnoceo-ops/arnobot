@@ -161,6 +161,8 @@ export interface AanbrengerHistorie {
   dekking: Dekking[]
   /** Uiterste dag voor het allereerste abonnement, voor een solo- en voor een teamstart. */
   eersteUiterlijk: { solo: string | null; team: string | null }
+  /** De termijn die geldt zolang er nog niets is afgesloten. */
+  uiterlijkZonderAbonnement?: string | null
   teamInAfwachting?: boolean
   isGewoonTeamlid?: boolean
   lifetimeSinds?: string | null
@@ -181,8 +183,11 @@ export function vervallenNaAanmelding(h: AanbrengerHistorie, aangemeldAt: string
     && !(h.lifetimeSinds && Date.parse(h.lifetimeSinds) <= vervalMoment)
   const blokken = [...h.dekking].sort((a, b) => Date.parse(a.start) - Date.parse(b.start))
   const eerste = blokken[0]
-  // Nooit iets afgesloten: dat beoordeelt tegoedStatus.
-  if (!eerste) return false
+  // Nooit iets afgesloten: dat beoordeelt tegoedStatus. Alleen Lifetime ná de verlopen termijn redt niets meer.
+  if (!eerste) {
+    const termijn = h.uiterlijkZonderAbonnement
+    return !!h.lifetimeSinds && !!termijn && naDag(Date.parse(h.lifetimeSinds), termijn) && raakt(Date.parse(termijn))
+  }
   const uiterlijk = eerste.team ? h.eersteUiterlijk.team : h.eersteUiterlijk.solo
   if (uiterlijk && naDag(Date.parse(eerste.start), uiterlijk) && raakt(Date.parse(uiterlijk))) return true
 
@@ -202,6 +207,14 @@ export function vervallenNaAanmelding(h: AanbrengerHistorie, aangemeldAt: string
  * 'vervallen': definitief weg.
  */
 export type TegoedStatus = 'actief' | 'terugstorten' | 'wacht' | 'vervallen'
+
+/** Wanneer de huidige stand tot verval leidt of leidde. null: daar is geen moment voor te geven. */
+export function vervalMoment(s: AanbrengerStand): number | null {
+  if (s.isGewoonTeamlid) return null
+  if (s.geblokkeerdSindsAt) return Date.parse(s.geblokkeerdSindsAt) + VERVAL_NA_BLOKKADE_DAGEN * DAG_MS
+  if (s.laatsteEindeAt) return Date.parse(s.laatsteEindeAt) + VERVAL_NA_EINDE_DAGEN * DAG_MS
+  return s.eersteBetalingUiterlijkAt ? Date.parse(s.eersteBetalingUiterlijkAt) : null
+}
 
 export function tegoedStatus(s: AanbrengerStand, nu: Date): TegoedStatus {
   const voorbij = (vanaf: string, dagen: number) => nu.getTime() > Date.parse(vanaf) + dagen * DAG_MS

@@ -2,6 +2,7 @@ import { billingDb, type PayRow } from './db'
 import { eersteBetalingOpTijd } from './referralRegels'
 import { berekenBedrag, type Cyclus, type KlantType, type Plan } from './prijzen'
 import { TRIAL_DAGEN } from '@/lib/toegang'
+import { eersteProefStart } from '@/lib/referralKenmerken'
 
 /**
  * Mag een particulier zijn abonnement zelf omzetten naar zakelijk? De correctie rekent met de volle abonnementsprijs en
@@ -47,10 +48,17 @@ export async function heeftRechtOpJaarkorting(userId: string, nu: Date = new Dat
   if (betaalFout) throw new Error(`betalingen opzoeken mislukt: ${betaalFout.message}`)
   if ((betaald ?? []).some(b => !b.terugbetaling_verwerkt_at && !(b.teruggeboekt_cent > 0))) return false
 
-  // De eerste proefperiode telt (besluit Arno 26-11-2026): rekenen vanaf de aanmelding via de referral. trial_start
-  // wordt bij een tweede proefperiode opnieuw gezet. Zonder aanmelddatum is het recht niet vast te stellen.
-  if (!referral.created_at) return false
+  // De eerste echte proef telt (besluit Arno 26-11-2026), nooit een tweede. Alle kolommen: eerste_proef_start bestaat
+  // pas na de SQL.
+  const { data: gebruiker, error: userFout } = await billingDb
+    .from('approved_users')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle<{ trial_start: string | null; trial_reactivated_at?: string | null; eerste_proef_start?: string | null }>()
+  if (userFout) throw new Error(`gebruiker opzoeken mislukt: ${userFout.message}`)
+  const start = eersteProefStart(gebruiker, referral.created_at)
+  if (!start) return false
 
-  const proefEinde = new Date(Date.parse(referral.created_at) + TRIAL_DAGEN * 24 * 60 * 60 * 1000)
+  const proefEinde = new Date(Date.parse(start) + TRIAL_DAGEN * 24 * 60 * 60 * 1000)
   return eersteBetalingOpTijd(nu.toISOString(), proefEinde.toISOString())
 }

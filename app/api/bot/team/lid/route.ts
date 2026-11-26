@@ -2,6 +2,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { herstelPlanNaVerwijderen } from '@/lib/teamLid'
+import { bewaarOoitTeamlid } from '@/lib/referralKenmerken'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,7 +40,11 @@ export async function DELETE(req: NextRequest) {
 
   // Zijn plan was dat van het team (Pro): gelijk zetten aan een eigen abonnement dat nog loopt. Alleen als hij echt uit dit team is
   // verwijderd, anders kan een manager het plan van iemand van een ander team aanraken. Mislukt dit, dan blijft verwijderen gelukt.
-  if (verwijderd && verwijderd.length > 0) await herstelPlanNaVerwijderen(targetUserId).catch(() => {})
+  if (verwijderd && verwijderd.length > 0) {
+    // Ook voor wie al lid was voordat dit werd vastgelegd.
+    await bewaarOoitTeamlid(supabase, targetUserId)
+    await herstelPlanNaVerwijderen(targetUserId).catch(() => {})
+  }
   return NextResponse.json({ ok: true })
 }
 

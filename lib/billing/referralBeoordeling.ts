@@ -29,7 +29,7 @@ export interface AanbrengerFeiten {
   stand: AanbrengerStand
   historie: AanbrengerHistorie
   handmatigBetaald: boolean
-  /** Ooit met de hand op betaald gezet: een gat in de voorgeschiedenis is dan niet zeker. */
+  /** Ooit met de hand op betaald gezet of teamlid geweest: een gat in de voorgeschiedenis is dan niet zeker. */
   historieOnvolledig: boolean
   /** Maandprijs exclusief btw van wat de aanbrenger nu betaalt, of het laatst betaalde. null: nooit betaald. */
   maandNettoCent: number | null
@@ -71,12 +71,15 @@ export function beoordeelReferral(klant: KlantFeiten, aanbrenger: AanbrengerFeit
 
   if (aanbrenger.handmatigBetaald) return handwerk('aanbrenger staat met de hand op betaald')
   if (vervallenNaAanmelding(aanbrenger.historie, klant.aangemeldAt, nu)) {
-    if (aanbrenger.historieOnvolledig) return handwerk('aanbrenger lijkt zonder abonnement te zijn geweest, maar stond ook met de hand op betaald')
+    if (aanbrenger.historieOnvolledig) return handwerk('aanbrenger lijkt zonder abonnement te zijn geweest, maar stond ook met de hand op betaald of was teamlid')
     return { uitkomst: 'afwijzen', reden: 'aanbrenger zat na deze aanmelding zonder abonnement, tegoed vervallen' }
   }
 
   const status = tegoedStatus(aanbrenger.stand, nu)
-  if (status === 'vervallen') return { uitkomst: 'afwijzen', reden: 'aanbrenger had geen abonnement meer toen de drempel werd gehaald' }
+  if (status === 'vervallen') {
+    if (aanbrenger.historieOnvolledig) return handwerk('aanbrenger lijkt geen abonnement meer te hebben, maar stond ook met de hand op betaald of was teamlid')
+    return { uitkomst: 'afwijzen', reden: 'aanbrenger had geen abonnement meer toen de drempel werd gehaald' }
+  }
 
   const lifetime = !!aanbrenger.stand.lifetime
   if (status === 'wacht' && !lifetime) {

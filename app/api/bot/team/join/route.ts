@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { clearIndividueelGebruik } from '@/lib/teamAccess'
 import { nieuwMelden } from '@/lib/capaciteit'
 import { stopSoloBijJoin } from '@/lib/billing/teamlidSolo'
+import { bewaarOoitTeamlid } from '@/lib/referralKenmerken'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { TEST_TEAM_IDS } from '@/lib/internalTestAccounts'
 
@@ -77,6 +78,9 @@ export async function POST(req: Request) {
     .insert({ team_id: team.id, user_id: userId, role: 'member' })
 
   if (error) return NextResponse.json({ error: 'Joinen mislukt' }, { status: 500 })
+
+  // Voor de referralregels: wie teamlid is geweest is niet "gestopt". Mislukt dit, dan blijft joinen gelukt.
+  await bewaarOoitTeamlid(supabase, userId)
 
   if ((memberCount ?? 0) + 1 >= MELD_VANAF_LEDEN) await meldTeamGrens(team, 'bijna', (memberCount ?? 0) + 1)
 

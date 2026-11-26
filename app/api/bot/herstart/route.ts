@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { herstartStatus, type HerstartStatus } from '@/lib/herstart'
+import { bewaarEersteProefStart } from '@/lib/referralKenmerken'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,6 +44,9 @@ export async function POST() {
   }
 
   const now = new Date()
+
+  // Vóór het overschrijven: de eerste proef bewaren (alleen als dit de eerste herstart is).
+  if (!user.trial_reactivated_at) await bewaarEersteProefStart(supabase, userId, user.trial_start)
 
   await supabase.from('approved_users').update({
     is_active: true,

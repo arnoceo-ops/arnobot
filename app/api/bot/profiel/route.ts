@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { notifyTeamLead } from '@/lib/teamLeadNotify'
+import { bewaarEersteProefStart } from '@/lib/referralKenmerken'
 
 const serviceDb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
 
   const { data: huidig } = await serviceDb
     .from('approved_users')
-    .select('onboarding_done, paid_at, command_manager')
+    .select('onboarding_done, paid_at, command_manager, trial_reactivated_at')
     .eq('user_id', userId)
     .maybeSingle()
 
@@ -62,6 +63,11 @@ export async function POST(req: Request) {
   if (onboardingError) {
     console.error('onboarding_done update:', onboardingError)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+
+  // Hier begint de eerste echte proef: bewaren voor de referraltermijn.
+  if (typeof onboardingUpdate.trial_start === 'string' && !huidig?.trial_reactivated_at) {
+    await bewaarEersteProefStart(serviceDb, userId, onboardingUpdate.trial_start)
   }
 
   return NextResponse.json({ ok: true })

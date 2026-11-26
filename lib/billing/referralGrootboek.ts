@@ -4,13 +4,15 @@ import { lijstBetalingTerugbetalingen, mollieIngeschakeld } from './mollie'
 import { huidigSeats, type TeamFactuurRow, type TeamRow } from './teamFacturatie'
 import { formatEuro, mollieNaarCenten } from './geld'
 import {
-  TERMIJN_NA_PROEF_DAGEN, TERMIJN_NA_TEAMPROEF_DAGEN, tegoedStatus, tijdigMomentTeam, vervallenNaAanmelding,
+  TERMIJN_NA_PROEF_DAGEN, TERMIJN_NA_TEAMPROEF_DAGEN, maandNettoCent, metJaarKorting, tegoedStatus, tijdigMomentTeam, vervalMoment,
+  vervallenNaAanmelding,
   type BetaaldePeriode, type Dekking,
 } from './referralRegels'
 import { beoordeelReferral, type AanbrengerFeiten, type Beoordeling, type KlantFeiten } from './referralBeoordeling'
 import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
 import { TRIAL_DAGEN } from '@/lib/toegang'
-import { proefEinde as teamProefEinde } from '@/lib/teamProef'
+import { eersteProefStart } from '@/lib/referralKenmerken'
+import { berekenBedrag } from './prijzen'
 import { nlVandaag } from '@/lib/nlTijd'
 import { isInternalTestUser, TEST_TEAM_IDS } from '@/lib/internalTestAccounts'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
@@ -75,13 +77,17 @@ function verplicht<T>(wat: string, r: Antwoord<T>): T | null {
 
 interface Gebruiker {
   email: string | null
-  is_active: boolean | null
+  voornaam?: string | null
+  trial_reactivated_at?: string | null
+  /** Vanaf docs/sql/2026-11-26-referral-ronde2.sql, zie lib/referralKenmerken.ts. */
+  eerste_proef_start?: string | null
+  ooit_teamlid_at?: string | null
   trial_start: string | null
   expires_at: string | null
   paid_at: string | null
   command_manager: boolean | null
   sd_attribution_method: string | null
-  /** Vanaf docs/sql/2026-11-26-referral-lifetime.sql. Door Arno met de hand gezet. */
+  /** Vanaf docs/sql/2026-11-26-referral-ronde2.sql. Door Arno met de hand gezet. */
   lifetime_sinds?: string | null
 }
 
@@ -115,8 +121,8 @@ async function laadDossier(userId: string): Promise<Dossier | null> {
     billingDb.from('arnobot_admin_log').select('actie').eq('doel_user_id', userId).eq('actie', 'betaald_gezet').limit(1),
   ])
   const g = verplicht('gebruiker', gebruiker)
-  // Anonimiseren bij een verwijderverzoek: de rij blijft staan, zonder e-mailadres en niet actief.
-  if (!g || (!g.email && g.is_active === false)) return null
+  // Anonimiseren bij een verwijderverzoek: de rij blijft staan, zonder naam en e-mailadres.
+  if (!g || (!g.email && !g.voornaam)) return null
   const eigenTeams = (verplicht('teams', teams) ?? []).filter(t => !(TEST_TEAM_IDS as readonly string[]).includes(t.id))
   const facturen = eigenTeams.length
     ? verplicht('teamfacturen', await billingDb.from('arnobot_team_facturen').select('*').in('team_id', eigenTeams.map(t => t.id)).returns<TeamFactuurRow[]>()) ?? []
@@ -152,12 +158,47 @@ function nettoPerMaand(r: { bedrag_cent: number; btw_cent: number }, cyclus: Cyc
   return cent
 }
 
-const subMaandCent = (s: Sub) => nettoPerMaand(s, s.cyclus)
-
 const lopend = (s: Sub) => s.status === 'active' || s.status === 'cancelled'
 
-const upgradeBetaaldVoor = (d: Dossier, subId: string) =>
-  d.betalingen.some(b => b.soort === 'upgrade' && b.subscription_id === subId && eigenBetalingTelt(b))
+/**
+ * Een upgrade waarvan de bijbetaling niet is binnengekomen. Zonder betaalrij (bijbetaling van nul) telt Pro gewoon,
+ * en een deelterugbetaling maakt een bijbetaling niet ongedaan. Is er al een Pro-periode betaald, dan is het ook Pro.
+ */
+function upgradeNietBetaald(d: Dossier, subId: string): boolean {
+  const upgrades = d.betalingen.filter(b => b.soort === 'upgrade' && b.subscription_id === subId)
+  return upgrades.length > 0 && !upgrades.some(eigenBetalingStaat)
+    && !d.betalingen.some(b => b.subscription_id === subId && b.plan === 'premium' && eigenBetalingStaat(b))
+}
+
+const effectiefPlan = (d: Dossier, s: Sub): 'basis' | 'premium' =>
+  s.plan === 'premium' && upgradeNietBetaald(d, s.id) ? 'basis' : s.plan
+
+/**
+ * Maandprijs van een abonnementsrij. Na een directe upgrade staat de rij op Pro terwijl bedrag en btw nog van Basic
+ * zijn, tot de eerste Pro-incasso (overstap.ts, zetPlanOpPro). De Pro-prijs staat dan in gepland_*, en na opzeggen is
+ * die gewist: dan geldt de prijslijst.
+ */
+function subMaandCent(d: Dossier, s: Sub): number {
+  const plan = effectiefPlan(d, s)
+  const basis = berekenBedrag('basis', s.cyclus, s.klant_type).brutoCent
+  if (plan === 'premium' && s.bedrag_cent <= basis) {
+    return s.gepland_plan === 'premium' && s.gepland_cyclus === s.cyclus && s.gepland_bedrag_cent != null && s.gepland_btw_cent != null
+      ? nettoPerMaand({ bedrag_cent: s.gepland_bedrag_cent, btw_cent: s.gepland_btw_cent }, s.cyclus)
+      : maandNettoCent('premium', s.cyclus, s.klant_type)
+  }
+  // Teruggevallen op Basic terwijl de rij al de Pro-prijs draagt.
+  if (plan !== s.plan && s.bedrag_cent > basis) return maandNettoCent('basis', s.cyclus, s.klant_type)
+  return nettoPerMaand(s, s.cyclus)
+}
+
+/** Per jaar telt de volle prijs: de eerste betaling kan de referral fee al bevatten. */
+function betaaldMaandCent(b: Betaling): number {
+  if (b.cyclus === 'jaarlijks' && b.soort === 'eerste' && (b.plan === 'basis' || b.plan === 'premium') && b.klant_type
+    && b.bedrag_cent === metJaarKorting(berekenBedrag(b.plan, 'jaarlijks', b.klant_type)).bedrag.brutoCent) {
+    return maandNettoCent(b.plan, 'jaarlijks', b.klant_type)
+  }
+  return nettoPerMaand(b, b.cyclus!)
+}
 
 /** Het plan staat al op Pro terwijl de bijbetaling nog niet definitief is. */
 const bijbetalingLoopt = (d: Dossier) => d.betalingen.some(b => b.soort === 'upgrade'
@@ -191,15 +232,14 @@ async function klantFeiten(d: Dossier, aangemeldAt: string | null, nu: Date): Pr
     const nuSub = b.cyclus === 'jaarlijks'
       ? d.subs.find(s => s.id === b.subscription_id && lopend(s) && s.cyclus === b.cyclus)
       : undefined
-    const onbetaaldeUpgrade = !!nuSub && nuSub.plan === 'premium' && b.plan === 'basis' && !upgradeBetaaldVoor(d, nuSub.id)
-    const plan = (nuSub && !onbetaaldeUpgrade ? nuSub.plan : b.plan) as 'basis' | 'premium'
+    const plan = (nuSub ? effectiefPlan(d, nuSub) : b.plan) as 'basis' | 'premium'
     // Per jaar telt de volle prijs van het abonnement: de betaling zelf kan de referral fee al bevatten.
     const rij = b.cyclus === 'jaarlijks'
-      ? d.subs.find(s => s.id === b.subscription_id && s.cyclus === b.cyclus && s.plan === plan)
+      ? d.subs.find(s => s.id === b.subscription_id && s.cyclus === b.cyclus && effectiefPlan(d, s) === plan)
       : undefined
     periodes.push({
       plan, cyclus: b.cyclus, klantType: b.klant_type, periodeStart: b.periode_start, periodeEinde: b.periode_einde,
-      betaaldAt: b.betaald_at, geldig: eigenBetalingTelt(b), maandNettoCent: rij ? subMaandCent(rij) : nettoPerMaand(b, b.cyclus),
+      betaaldAt: b.betaald_at, geldig: eigenBetalingTelt(b), maandNettoCent: rij ? subMaandCent(d, rij) : betaaldMaandCent(b),
     })
   }
 
@@ -217,13 +257,16 @@ async function klantFeiten(d: Dossier, aangemeldAt: string | null, nu: Date): Pr
     })
   }
 
+  const proefStart = eersteProefStart(d.gebruiker, aangemeldAt)
+
   return {
     aangemeldAt,
-    // De eerste proefperiode: gerekend vanaf de aanmelding, niet vanaf een tweede trial_start.
-    proefEindeAt: aangemeldAt ? new Date(Date.parse(aangemeldAt) + TRIAL_DAGEN * DAG_MS).toISOString() : null,
+    // De eerste echte proef (die start na de intake), nooit een tweede.
+    proefEindeAt: proefStart ? new Date(Date.parse(proefStart) + TRIAL_DAGEN * DAG_MS).toISOString() : null,
     betaalMomenten,
     periodes,
-    handmatigBetaald: handmatigOpBetaald(d, nu),
+    // Ook eerder met de hand: dan kan er op tijd per bank betaald zijn.
+    handmatigBetaald: handmatigOpBetaald(d, nu) || d.ooitMetDeHandBetaald,
     proefMogelijkVerlengd: d.gebruiker.sd_attribution_method === 'link' && betaalMomenten.some(m => m.team),
     bijbetalingLoopt: bijbetalingLoopt(d),
   }
@@ -257,9 +300,12 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
   const lopendTeam = betaaldeTeams.find(t => !gestopt(t) && !t.geblokkeerd_at)
   const geblokkeerdTeam = betaaldeTeams.find(t => !gestopt(t) && !!t.geblokkeerd_at)
   // Facturatie staat aan en er is nog niets betaald: de eerste factuur komt nog of staat open (ook solo naar Team).
-  const teamInAfwachting = !lopendTeam && d.teams.some(t => !gestopt(t) && !t.geblokkeerd_at && !betaaldeTeams.includes(t)
-    && (d.facturen.some(f => f.team_id === t.id && (f.status === 'open' || f.status === 'overdue'))
-      || (t.min_seats !== null && !!t.volgende_factuurdatum)))
+  const heeftOpenFactuur = (t: Team) => d.facturen.some(f => f.team_id === t.id && (f.status === 'open' || f.status === 'overdue'))
+  const onbetaald = d.teams.filter(t => !gestopt(t) && !betaaldeTeams.includes(t))
+  const teamInAfwachting = !lopendTeam
+    && onbetaald.some(t => !t.geblokkeerd_at && (heeftOpenFactuur(t) || (t.min_seats !== null && !!t.volgende_factuurdatum)))
+  // Geblokkeerd om een onbetaalde eerste factuur: telt niet als betalend, het tegoed staat wel stil.
+  const geblokkeerdOnbetaald = onbetaald.find(t => !!t.geblokkeerd_at && heeftOpenFactuur(t))
 
   const lopendeSub = d.subs
     .filter(lopend)
@@ -271,7 +317,7 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
   const eindes: { at: string; prijs: () => Promise<number> }[] = []
   for (const s of d.subs.filter(s => (s.status === 'ended' || s.status === 'refunded') && s.periode_einde)) {
     const terug = s.status === 'refunded' && s.updated_at && Date.parse(s.updated_at) < Date.parse(s.periode_einde!)
-    eindes.push({ at: terug ? s.updated_at! : s.periode_einde!, prijs: async () => subMaandCent(s) })
+    eindes.push({ at: terug ? s.updated_at! : s.periode_einde!, prijs: async () => subMaandCent(d, s) })
   }
   for (const t of betaaldeTeams.filter(gestopt)) eindes.push({ at: `${t.stopt_op}T00:00:00.000Z`, prijs: () => teamPrijs(t) })
   const laatste = eindes.sort((a, b) => Date.parse(b.at) - Date.parse(a.at))[0]
@@ -279,17 +325,21 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
   const loopt = !d.isGewoonTeamlid && (!!lopendTeam || !!lopendeSub)
   // Een manager betaalt zijn team: dat is dan zijn plafond, ook als er nog een oud solo-abonnement uitloopt.
   const maand = lopendTeam ? await teamPrijs(lopendTeam)
-    : lopendeSub ? subMaandCent(lopendeSub)
+    : lopendeSub ? subMaandCent(d, lopendeSub)
       : geblokkeerdTeam ? await teamPrijs(geblokkeerdTeam)
         : laatste ? await laatste.prijs() : null
 
   // De uiterste dag voor een eerste abonnement. Een verlengde teamproef schuift de teamtermijn mee.
   const g = d.gebruiker
-  const proefEinde = g.trial_start ? Date.parse(g.trial_start) + TRIAL_DAGEN * DAG_MS : null
-  const teamEinde = g.paid_at ? proefEinde : teamProefEinde(g)?.getTime() ?? null
+  const proefStart = eersteProefStart(g, g.trial_start)
+  const proefEinde = proefStart ? Date.parse(proefStart) + TRIAL_DAGEN * DAG_MS : null
+  // expires_at is een verlengde teamproef zolang er niet betaald en niet herstart is.
+  const verlengd = !g.paid_at && !g.trial_reactivated_at && g.expires_at ? Date.parse(g.expires_at) : null
+  const teamEinde = verlengd ?? proefEinde
   const na = (basis: number | null, dagen: number) => (basis === null ? null : new Date(basis + dagen * DAG_MS).toISOString())
   const eersteUiterlijk = { solo: na(proefEinde, TERMIJN_NA_PROEF_DAGEN), team: na(teamEinde, TERMIJN_NA_TEAMPROEF_DAGEN) }
   const ooit = !!lopendeSub || !!lopendTeam || !!geblokkeerdTeam || !!laatste
+  const uiterlijkZonderAbonnement = d.teams.length ? eersteUiterlijk.team : eersteUiterlijk.solo
 
   return {
     stand: {
@@ -298,18 +348,20 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
         // Bij een teamlid is alleen van belang of er ooit zelf betaald is.
         ? (ooit ? laatste?.at ?? lopendeSub?.periode_einde ?? nu.toISOString() : null)
         : laatste?.at ?? null,
-      geblokkeerdSindsAt: !lopendTeam && !lopendeSub ? geblokkeerdTeam?.geblokkeerd_at ?? null : null,
+      geblokkeerdSindsAt: !lopendTeam && !lopendeSub ? (geblokkeerdTeam ?? geblokkeerdOnbetaald)?.geblokkeerd_at ?? null : null,
       isGewoonTeamlid: d.isGewoonTeamlid,
-      eersteBetalingUiterlijkAt: ooit ? null : d.teams.length ? eersteUiterlijk.team : eersteUiterlijk.solo,
+      eersteBetalingUiterlijkAt: ooit ? null : uiterlijkZonderAbonnement,
       teamInAfwachting,
       lifetime: !!g.lifetime_sinds,
     },
     historie: {
-      dekking: dekkingVan(d, nu), eersteUiterlijk, teamInAfwachting,
+      dekking: dekkingVan(d, nu), eersteUiterlijk, uiterlijkZonderAbonnement, teamInAfwachting: teamInAfwachting || !!geblokkeerdOnbetaald,
       isGewoonTeamlid: d.isGewoonTeamlid, lifetimeSinds: g.lifetime_sinds ?? null,
     },
-    handmatigBetaald: handmatigOpBetaald(d, nu),
-    historieOnvolledig: d.ooitMetDeHandBetaald,
+    // Bij Lifetime vervalt niets: een BETAALD-vlag hoeft dan niets tegen te houden.
+    handmatigBetaald: !g.lifetime_sinds && handmatigOpBetaald(d, nu),
+    // Als gewoon teamlid is de stand wel zeker; daarna niet meer te zien wanneer dat was.
+    historieOnvolledig: d.ooitMetDeHandBetaald || (!d.isGewoonTeamlid && !!g.ooit_teamlid_at),
     maandNettoCent: maand,
     bijbetalingLoopt: bijbetalingLoopt(d),
   }
@@ -441,17 +493,27 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
       const feiten = eigen ? await aanbrengerFeiten(eigen, nu) : null
       if (feiten?.handmatigBetaald) continue
       const aangemeld = referrals.find(r => String(r.id) === t.referral_id)?.created_at
-      // Bij een handmatige toekenning tellen alleen gaten van na dat besluit: Arno heeft het verleden al beoordeeld.
-      const vanaf = aangemeld && t.reden.startsWith(HANDMATIG) && t.created_at && Date.parse(t.created_at) > Date.parse(aangemeld)
-        ? t.created_at
-        : aangemeld
-      const vervallen = !feiten || tegoedStatus(feiten.stand, nu) === 'vervallen'
-        || (!!vanaf && !feiten.historieOnvolledig && vervallenNaAanmelding(feiten.historie, vanaf, nu))
-      if (!vervallen) continue
+      // Bij een handmatige toekenning telt alleen wat na dat besluit gebeurt: Arno heeft het verleden al beoordeeld.
+      const besluitAt = t.reden.startsWith(HANDMATIG) ? t.created_at ?? null : null
+      const vanaf = besluitAt && aangemeld && Date.parse(besluitAt) > Date.parse(aangemeld) ? besluitAt : aangemeld
+      const basis = {
+        referral_id: t.referral_id, aanbrenger_user_id: t.aanbrenger_user_id, klant_user_id: t.klant_user_id,
+        klant_maand_netto_cent: t.klant_maand_netto_cent,
+      }
+      if (feiten) {
+        const moment = vervalMoment(feiten.stand)
+        const nuVervallen = tegoedStatus(feiten.stand, nu) === 'vervallen'
+          && (!besluitAt || (moment !== null && moment > Date.parse(besluitAt)))
+        if (!nuVervallen && !(vanaf && vervallenNaAanmelding(feiten.historie, vanaf, nu))) continue
+        if (feiten.historieOnvolledig) {
+          // Niet zeker: niets laten vervallen, een keer aan Arno melden.
+          await voegToe({ ...basis, event_key: `verval-handwerk:${t.referral_id}`, soort: 'handwerk', netto_cent: 0, reden: 'tegoed lijkt te vervallen, maar de aanbrenger stond met de hand op betaald of was teamlid' })
+          continue
+        }
+      }
       const staat = t.netto_cent ?? run.regels.find(r => r.event_key === `vaststelling:${t.referral_id}`)?.netto_cent ?? 0
       await voegToe({
-        referral_id: t.referral_id, aanbrenger_user_id: t.aanbrenger_user_id, klant_user_id: t.klant_user_id,
-        klant_maand_netto_cent: t.klant_maand_netto_cent, event_key: `verval:${t.referral_id}`, soort: 'verval',
+        ...basis, event_key: `verval:${t.referral_id}`, soort: 'verval',
         netto_cent: -staat || 0, reden: eigen ? 'abonnement van de aanbrenger is afgelopen of niet op tijd afgesloten' : 'account van de aanbrenger bestaat niet meer',
       })
     } catch (e) {

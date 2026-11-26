@@ -143,6 +143,17 @@ Klein (agent): laatste dag van de termijn ongelijk berekend voor klant en aanbre
 
 Ook nog niet gebouwd: terugdraaien, verrekenen, terugstorten aan een teamlid, saldo uit het grootboek, mails aan de aanbrenger. Grootboek en arnobot_referrals ontbreken in de verwijderchecklists (delete-account, data-cleanup); het grootboek ontbreekt in de export. De privacyverklaring beschrijft niet dat de aanbrenger de naam van de nieuwe gebruiker krijgt en dat de voornaam bij een code openbaar opvraagbaar is.
 
+### Ronde 2 hersteld (26-11)
+
+B1 t/m B4, E1 t/m E8, de vier kleine punten en de vier besluiten zijn verwerkt, met tests. Alle bevindingen bleken bij nakijken nog te kloppen. Grootboek en arnobot_referrals staan in de export en de verwijderchecklists. Het grootboek verrekent en stort niets terug.
+
+- **amountRefunded:** het grootboek leunde erop. Vlak vóór elke toekenning vraagt het nu de lijst terugbetalingen bij Mollie op; loopt er een die de database niet kent, dan wacht de beoordeling. Niet tegen Mollie beproefd. Verrekenen (ronde 3) moet dezelfde lijst gebruiken.
+- **Handwerk:** de cron beslist er nooit meer zelf over. Arno beslist op /bot/admin/referrals (route /api/admin/referrals/besluit).
+- **Bedrag zonder abonnement:** wordt niet meer vastgesteld bij het eerste abonnement, maar pas bij de eerste verrekening (niet gebouwd).
+- **Lifetime:** nieuwe kolom lifetime_sinds, door Arno met de hand te zetten. Regelt alleen het tegoed.
+
+**Eerste onafhankelijke controle (commit b21effef): niet klaar.** 15 bevindingen, onder meer blokkerend een te laag bedrag na een directe upgrade (de rij houdt de Basic-prijs tot de eerste Pro-incasso), en onterecht laten vervallen of afwijzen bij een geblokkeerde eerste teamfactuur, handmatige toekenningen, eerder per bank betalen, een tweede proef en oud-teamleden. Hersteld in dezelfde ronde, met testrijen zoals de app ze wegschrijft. Waar de voorgeschiedenis niet zeker is (ooit BETAALD in het adminlog, of ooit teamlid) laat de cron niets vervallen en wijst hij niet af: dat wordt handwerk. Beperkingen: het adminlog bestaat pas sinds 14-11; wie vóór de SQL uit een team is gehaald is niet als oud-teamlid te herkennen; bij een handwerkmelding over verval is er nog geen knop om het verval vast te leggen (ronde 3).
+
 ## Voorgesteld herstel
 
 1. **Ronde 1:** R2 t/m R8 repareren met tests; een adminactie die tegoed veilig terugstort (R1); duidelijke Telegram-acties voor R8, R9; R10 t/m R13 en R16; teksten (R15) eerst als platte tekst aan Arno.

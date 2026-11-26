@@ -116,8 +116,12 @@ describe('gegevensexport', () => {
     h.antwoord = { data: [rij], error: null }
     const uit = await exporteerGrootboek(maakDb() as any, 'ik')
     expect(h.vragen.map(v => v.filters[0])).toEqual([['aanbrenger_user_id', 'ik'], ['klant_user_id', 'ik']])
-    for (const v of h.vragen) expect(v.kolommen).toBe('created_at, soort, netto_cent, meeloop')
-    expect(uit.als_nieuwe_gebruiker).toEqual([{ created_at: '2027-01-01', soort: 'toekenning', meeloop: true }])
+    expect(h.vragen.map(v => v.kolommen)).toEqual(['created_at, soort, netto_cent, meeloop', 'created_at, soort, meeloop, klant_maand_netto_cent'])
+    expect(uit.als_nieuwe_gebruiker).toEqual([{ created_at: '2027-01-01', meeloop: true, jouw_maandprijs_netto_cent: undefined }])
+  })
+  it('de nieuwe gebruiker ziet niet dat er iets is afgewezen of vervallen bij de ander', async () => {
+    h.antwoord = { data: ['afwijzing', 'verval', 'handwerk', 'vaststelling'].map(soort => ({ ...rij, soort })), error: null }
+    expect((await exporteerGrootboek(maakDb() as any, 'ik')).als_nieuwe_gebruiker).toEqual([])
   })
   it('zonder de tabel een lege lijst, bij een andere fout geen stille lege export', async () => {
     h.antwoord = { data: null as any, error: { message: 'relation "arnobot_referral_grootboek" does not exist' } }

@@ -49,7 +49,7 @@ export async function meldGratisVierdeMaand(userId: string, vierdeIncassoRond: D
     const { reeks, eerderGehaald } = maandReeks(data ?? [])
     if (reeks !== BENODIGDE_MAANDEN || eerderGehaald) return
     const datum = vierdeIncassoRond.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })
-    await notifyTelegram(`ACTIE: gratis vierde maand op arno.bot\n\nWie: ${await wieIs(userId)}\nDeze aangebrachte klant heeft ${BENODIGDE_MAANDEN} maanden betaald. De incasso rond ${datum} hoort gratis te zijn en dat gebeurt NIET automatisch. Controleer eerst of de eerste betaling op tijd was (proef plus 15 dagen).\n${VEILIG_TERUGSTORTEN}`)
+    await notifyTelegram(`ACTIE: gratis vierde maand op arno.bot\n\nWie: ${await wieIs(userId)}\nDeze aangebrachte klant heeft ${BENODIGDE_MAANDEN} maanden betaald. De incasso rond ${datum} hoort gratis te zijn en dat gebeurt NIET automatisch. Controleer eerst of de eerste betaling op tijd was (eerste proef plus 15 dagen).\n${VEILIG_TERUGSTORTEN}`)
   } catch (e) {
     console.error('[billing] signaal gratis vierde maand mislukt', userId, e instanceof Error ? e.message : e)
     await notifyTelegram(`Controle op de gratis vierde maand mislukt op arno.bot\n\nUser: ${userId}\nKijk zelf of dit een aangebrachte klant is met drie betaalde maanden.`)

@@ -74,7 +74,7 @@ describe('zelf omzetten naar zakelijk', () => {
 describe('wie krijgt de korting', () => {
   const nu = new Date('2026-12-20T12:00:00Z')
   beforeEach(() => {
-    h.referral = { id: 'r1', created_at: '2026-11-24T19:46:00Z' }; h.betalingen = []; h.fout = null
+    h.referral = { id: 'r1', created_at: '2026-11-24T19:46:00Z' }; h.betalingen = []; h.gebruiker = { trial_start: '2026-11-24T19:46:00Z' }; h.fout = null
   })
   it('aangebracht, nog niet betaald, binnen de termijn', async () => {
     expect(await heeftRechtOpJaarkorting('u', nu)).toBe(true)
@@ -94,13 +94,19 @@ describe('wie krijgt de korting', () => {
   it('na de proef plus 15 dagen niet meer', async () => {
     expect(await heeftRechtOpJaarkorting('u', new Date('2027-01-12T12:00:00Z'))).toBe(false)
   })
-  it('tweede proefperiode: de eerste termijn telt, trial_start doet er niet toe', async () => {
-    h.gebruiker = { trial_start: '2027-02-01T00:00:00Z' }
+  it('tweede proefperiode: de eerste termijn telt', async () => {
+    h.gebruiker = { trial_start: '2027-02-01T00:00:00Z', trial_reactivated_at: '2027-02-01T00:00:00Z', eerste_proef_start: '2026-11-24T19:46:00Z' }
     expect(await heeftRechtOpJaarkorting('u', new Date('2027-02-05T12:00:00Z'))).toBe(false)
   })
-  it('zonder aanmelddatum geen korting', async () => {
-    h.referral = { id: 'r1', created_at: null }
-    expect(await heeftRechtOpJaarkorting('u', nu)).toBe(false)
+  it('herstart zonder bewaarde eerste proef: de aanmelding telt', async () => {
+    h.gebruiker = { trial_start: '2027-02-01T00:00:00Z', trial_reactivated_at: '2027-02-01T00:00:00Z' }
+    expect(await heeftRechtOpJaarkorting('u', new Date('2027-02-05T12:00:00Z'))).toBe(false)
+    expect(await heeftRechtOpJaarkorting('u', nu)).toBe(true)
+  })
+  it('intake later afgerond dan de aanmelding: de proef telt vanaf de intake', async () => {
+    h.gebruiker = { trial_start: '2026-12-05T10:00:00Z' }
+    // Aanmelding plus 45 dagen is 8 januari, de proef plus 15 loopt tot 19 januari.
+    expect(await heeftRechtOpJaarkorting('u', new Date('2027-01-18T12:00:00Z'))).toBe(true)
   })
   it('een databasefout wordt niet stil de volle prijs', async () => {
     h.fout = { message: 'stuk' }

@@ -394,7 +394,10 @@ describe('E6 en besluit 2: terugkomen helpt niet', () => {
     expect(boek().map(r => r.soort)).toEqual(['toekenning'])
   })
   it('aanmelding van na het gat telt gewoon', async () => {
-    zet({ arnobot_subscriptions: terug('2027-02-25T00:00:00.000Z'), arnobot_referrals: [{ ...referral, created_at: '2027-02-18T10:00:00.000Z' }], arnobot_payments: [jaar('klant', { betaald_at: '2027-02-20T10:00:00.000Z' })] })
+    zet({
+      approved_users: [gebruiker('aanbrenger'), gebruiker('klant', { trial_start: '2027-02-18T10:00:00.000Z' })],
+      arnobot_subscriptions: terug('2027-02-25T00:00:00.000Z'), arnobot_referrals: [{ ...referral, created_at: '2027-02-18T10:00:00.000Z' }], arnobot_payments: [jaar('klant', { betaald_at: '2027-02-20T10:00:00.000Z' })],
+    })
     await draai()
     expect(boek().map(r => r.soort)).toEqual(['toekenning'])
   })
@@ -423,12 +426,14 @@ describe('eerder met de hand op betaald: een gat is niet zeker', () => {
     await draai()
     expect(boek().map(r => r.soort)).toEqual(['handwerk'])
   })
-  it('een toekenning vervalt niet om zo een gat', async () => {
+  it('een toekenning vervalt niet om zo een gat, Arno krijgt het een keer als handwerk', async () => {
     zet({ arnobot_admin_log: log })
     await draai()
     h.tabellen.arnobot_subscriptions = metGat
     await draai()
-    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+    await draai()
+    expect(boek().map(r => r.event_key)).toEqual(['uitkomst:r1', 'verval-handwerk:r1'])
+    expect(saldoPerAanbrenger(boek() as any).get('aanbrenger')).toBe(1900)
   })
 })
 
@@ -533,7 +538,7 @@ describe('besluit 1: teamfactuur binnen de termijn aangemaakt', () => {
 describe('besluit 3: de eerste proefperiode telt', () => {
   it('een tweede proef opent de termijn niet opnieuw', async () => {
     zet({
-      approved_users: [gebruiker('aanbrenger'), gebruiker('klant', { trial_start: '2027-02-20T10:00:00.000Z' })],
+      approved_users: [gebruiker('aanbrenger'), gebruiker('klant', { trial_start: '2027-02-20T10:00:00.000Z', trial_reactivated_at: '2027-02-20T10:00:00.000Z', eerste_proef_start: '2027-01-01T10:00:00.000Z' })],
       arnobot_payments: [jaar('klant', { betaald_at: '2027-02-25T10:00:00.000Z' })],
     })
     await draai()
@@ -596,5 +601,178 @@ describe('bedragen uit wat er echt is afgesproken', () => {
     const run = await draai()
     expect(run.fouten).toHaveLength(1)
     expect(boek()).toHaveLength(0)
+  })
+})
+
+// ── Hercontrole ronde 2: met rijen zoals de app ze echt wegschrijft ──
+
+const netto = (plan: Plan, cyclus: Cyclus, klant: KlantType) => {
+  const p = prijs(plan, cyclus, klant)
+  return Math.round((p.bedrag_cent - p.btw_cent) / (cyclus === 'jaarlijks' ? 12 : 1))
+}
+const bijbetaling = (wie: string, extra: Rij = {}): Rij => ({
+  id: `up_${wie}`, user_id: wie, mollie_payment_id: `tr_up_${wie}`, subscription_id: `sub_${wie}`, soort: 'upgrade', status: 'paid',
+  bedrag_cent: 10000, btw_cent: 1736, terugbetaald_cent: 0, teruggeboekt_cent: 0, terugbetaling_verwerkt_at: null, betaald_at: '2027-02-01T10:00:00.000Z', ...extra,
+})
+/** Zo laat overstap.ts de rij achter: plan al Pro, bedrag en btw nog Basic, de Pro-prijs in gepland_*. */
+const directeUpgrade = (wie: string, cyclus: Cyclus, klant: KlantType, extra: Rij = {}) => sub(wie, {
+  plan: 'premium', cyclus, klant_type: klant, ...prijs('basis', cyclus, klant),
+  gepland_plan: 'premium', gepland_cyclus: cyclus,
+  gepland_bedrag_cent: prijs('premium', cyclus, klant).bedrag_cent, gepland_btw_cent: prijs('premium', cyclus, klant).btw_cent, ...extra,
+})
+/** Na opzeggen wist opzeggen.ts de gepland-kolommen. */
+const zonderGepland = { gepland_plan: null, gepland_cyclus: null, gepland_bedrag_cent: null, gepland_btw_cent: null, status: 'cancelled' }
+
+describe('1 bedrag na een directe upgrade', () => {
+  const proAanbrenger = () => sub('aanbrenger', { plan: 'premium', cyclus: 'jaarlijks', klant_type: 'zakelijk' })
+  it.each([['met geplande Pro-prijs', {}], ['na opzeggen', zonderGepland]])('klant per jaar, %s: Pro-prijs', async (_naam, extra) => {
+    zet({ arnobot_subscriptions: [proAanbrenger(), directeUpgrade('klant', 'jaarlijks', 'zakelijk', extra)], arnobot_payments: [jaar('klant'), bijbetaling('klant')] })
+    await draai()
+    expect(boek()[0]).toMatchObject({ netto_cent: netto('premium', 'jaarlijks', 'zakelijk'), klant_maand_netto_cent: netto('premium', 'jaarlijks', 'zakelijk') })
+  })
+  it.each([['met geplande Pro-prijs', {}], ['na opzeggen', zonderGepland]])('aanbrenger per maand, %s: plafond is Pro', async (_naam, extra) => {
+    zet({
+      arnobot_subscriptions: [directeUpgrade('aanbrenger', 'maandelijks', 'particulier', extra), sub('klant', { plan: 'premium', cyclus: 'jaarlijks', klant_type: 'zakelijk' })],
+      arnobot_payments: [jaar('klant', { plan: 'premium', ...prijs('premium', 'jaarlijks', 'zakelijk') }), bijbetaling('aanbrenger')],
+    })
+    await draai()
+    expect(boek()[0].netto_cent).toBe(Math.min(netto('premium', 'maandelijks', 'particulier'), netto('premium', 'jaarlijks', 'zakelijk')))
+    expect(boek()[0].netto_cent).toBeGreaterThan(netto('basis', 'maandelijks', 'particulier'))
+  })
+  it('upgrade zonder bijbetaling (geen betaalrij) telt als Pro', async () => {
+    zet({ arnobot_subscriptions: [proAanbrenger(), directeUpgrade('klant', 'jaarlijks', 'zakelijk')] })
+    await draai()
+    expect(boek()[0].klant_maand_netto_cent).toBe(netto('premium', 'jaarlijks', 'zakelijk'))
+  })
+  it('deelterugbetaling op de bijbetaling: nog steeds Pro', async () => {
+    zet({ arnobot_subscriptions: [proAanbrenger(), directeUpgrade('klant', 'jaarlijks', 'zakelijk')], arnobot_payments: [jaar('klant'), bijbetaling('klant', { terugbetaald_cent: 100 })] })
+    await draai()
+    expect(boek()[0].klant_maand_netto_cent).toBe(netto('premium', 'jaarlijks', 'zakelijk'))
+  })
+  it('Basic per jaar met referral fee zonder passende rij: toch de volle maandprijs', async () => {
+    const fee = { bedrag_cent: 25289, btw_cent: 4389 }
+    zet({ arnobot_subscriptions: [sub('aanbrenger'), sub('klant', { plan: 'premium', cyclus: 'maandelijks' })], arnobot_payments: [jaar('klant', fee)] })
+    await draai()
+    expect(boek()[0].klant_maand_netto_cent).toBe(netto('basis', 'jaarlijks', 'zakelijk'))
+  })
+})
+
+describe('2 eerste teamfactuur leidt tot een blokkade', () => {
+  const open = () => factuur({ status: 'open', betaald_at: null })
+  const naBlokkade = () => ({
+    arnobot_subscriptions: [soloGestopt('2027-02-01T00:00:00.000Z'), klantSub()],
+    arnobot_teams: [team({ geblokkeerd_at: '2027-03-18T06:00:00.000Z' })], arnobot_team_facturen: [open()],
+  })
+  it('wachtende referral: 30 dagen stil, daarna afgewezen', async () => {
+    zet(naBlokkade())
+    await draai(new Date('2027-03-19T06:00:00.000Z'))
+    await draai(new Date('2027-04-16T06:00:00.000Z'))
+    expect(boek()).toHaveLength(0)
+    await draai(new Date('2027-04-19T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['afwijzing'])
+  })
+  it('bestaande toekenning: niet vervallen op de dag van de blokkade', async () => {
+    await draai()
+    Object.assign(h.tabellen, naBlokkade())
+    await draai(new Date('2027-03-19T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+  })
+})
+
+describe('3 handmatige toekenning blijft staan', () => {
+  it('niet vervallen om een einde van voor het besluit, ook niet als de BETAALD-vlag gewist is', async () => {
+    zet({
+      arnobot_subscriptions: [soloGestopt('2027-01-31T00:00:00.000Z'), klantSub()],
+      arnobot_admin_log: [{ doel_user_id: 'aanbrenger', actie: 'betaald_gezet' }],
+      arnobot_referral_grootboek: [{ event_key: 'uitkomst:r1', meeloop: true, soort: 'toekenning', referral_id: 'r1', aanbrenger_user_id: 'aanbrenger', klant_user_id: 'klant', netto_cent: 1900, reden: 'handmatig besluit: bank gezien', klant_maand_netto_cent: 1900, created_at: '2027-02-28T10:00:00.000Z' }],
+    })
+    await draai()
+    await draai(new Date('2027-06-01T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+  })
+  it('ook zonder dat adminlog: een oud einde telt niet', async () => {
+    zet({
+      arnobot_subscriptions: [soloGestopt('2027-01-31T00:00:00.000Z'), klantSub()],
+      arnobot_referral_grootboek: [{ event_key: 'uitkomst:r1', meeloop: true, soort: 'toekenning', referral_id: 'r1', aanbrenger_user_id: 'aanbrenger', klant_user_id: 'klant', netto_cent: 1900, reden: 'handmatig besluit: akkoord', klant_maand_netto_cent: 1900, created_at: '2027-02-28T10:00:00.000Z' }],
+    })
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+  })
+})
+
+describe('4 en 5 eerder per bank betaald', () => {
+  const logVan = (wie: string) => [{ doel_user_id: wie, actie: 'betaald_gezet' }]
+  it('aanbrenger: einde van voor de aanmelding, daarna per bank en toen gratis: niet afwijzen', async () => {
+    zet({ arnobot_subscriptions: [soloGestopt('2026-12-15T00:00:00.000Z', { created_at: '2026-11-15T00:00:00.000Z' }), klantSub()], arnobot_admin_log: logVan('aanbrenger') })
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['handwerk'])
+  })
+  it('klant: op tijd per bank, later online: niet afwijzen als te laat', async () => {
+    zet({ arnobot_payments: [jaar('klant', { betaald_at: '2027-04-10T10:00:00.000Z', periode_start: '2027-04-10T10:00:00.000Z' })], arnobot_admin_log: logVan('klant') })
+    await draai(new Date('2027-04-11T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['handwerk'])
+  })
+})
+
+describe('6 en 7 de eerste echte proef', () => {
+  it('aanbrenger: een tweede proef maakt een gemiste termijn niet ongedaan', async () => {
+    zet({
+      approved_users: [gebruiker('aanbrenger', { trial_start: '2027-09-01T00:00:00.000Z', trial_reactivated_at: '2027-09-01T00:00:00.000Z', eerste_proef_start: '2027-01-01T10:00:00.000Z' }), gebruiker('klant')],
+      arnobot_subscriptions: [sub('aanbrenger', { created_at: '2027-09-10T00:00:00.000Z', periode_start: '2027-09-10T00:00:00.000Z', periode_einde: '2027-12-01T00:00:00.000Z' }), klantSub()],
+    })
+    await draai(new Date('2027-09-15T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['afwijzing'])
+  })
+  it('klant: de proef die na de intake start telt, niet de aanmelddag', async () => {
+    zet({
+      approved_users: [gebruiker('aanbrenger'), gebruiker('klant', { trial_start: '2027-01-12T10:00:00.000Z' })],
+      arnobot_payments: [jaar('klant', { betaald_at: '2027-02-22T10:00:00.000Z' })],
+    })
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+  })
+})
+
+describe('8 oud-teamlid is niet per se gestopt', () => {
+  const metGat = () => [soloGestopt('2027-02-01T00:00:00.000Z'), sub('aanbrenger', { id: 'nieuw', created_at: '2027-05-01T00:00:00.000Z', periode_start: '2027-05-01T00:00:00.000Z', periode_einde: '2027-07-01T00:00:00.000Z' }), klantSub()]
+  const oudLid = () => [gebruiker('aanbrenger', { ooit_teamlid_at: '2027-02-01T00:00:00.000Z' }), gebruiker('klant')]
+  it('wachtende referral: zelf beoordelen', async () => {
+    zet({ approved_users: oudLid(), arnobot_subscriptions: metGat() })
+    await draai(new Date('2027-05-02T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['handwerk'])
+  })
+  it('bestaande toekenning: niet vervallen', async () => {
+    await draai()
+    h.tabellen.approved_users = oudLid()
+    h.tabellen.arnobot_subscriptions = metGat()
+    await draai(new Date('2027-05-02T06:00:00.000Z'))
+    expect(boek().map(r => r.event_key)).toEqual(['uitkomst:r1', 'verval-handwerk:r1'])
+  })
+})
+
+describe('11 anonimiseren', () => {
+  it('naam en e-mailadres leeg, nog actief: toch niet meer bestaand', async () => {
+    await draai()
+    h.tabellen.approved_users = [gebruiker('aanbrenger', { email: null, voornaam: null }), gebruiker('klant')]
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['toekenning', 'verval'])
+  })
+  it('alleen geen e-mailadres is niet geanonimiseerd', async () => {
+    zet({ approved_users: [gebruiker('aanbrenger', { email: null, voornaam: 'Sam', is_active: false }), gebruiker('klant')] })
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+  })
+})
+
+describe('14 Lifetime randgevallen', () => {
+  it('termijn al verlopen voor Lifetime: geen tegoed', async () => {
+    zet({ approved_users: [gebruiker('aanbrenger', { lifetime_sinds: '2027-02-20T00:00:00.000Z' }), gebruiker('klant')], arnobot_subscriptions: [klantSub()] })
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['afwijzing'])
+  })
+  it('Lifetime met de BETAALD-vlag: geen handwerk', async () => {
+    zet({ approved_users: [gebruiker('aanbrenger', { lifetime_sinds: '2027-01-02T00:00:00.000Z', paid_at: '2027-01-02T00:00:00.000Z' }), gebruiker('klant')], arnobot_subscriptions: [klantSub()] })
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
   })
 })

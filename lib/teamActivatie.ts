@@ -114,7 +114,7 @@ async function meldAangebrachtTeam(managerId: string, teamNaam: string): Promise
   }
   // Het voordeel is eenmalig: wie al een referral fee op een eigen jaarabonnement kreeg, krijgt geen teammaand.
   if (!data || voordeelGebruikt(data)) return
-  await notifyTelegram(`ACTIE: aangebracht team op arno.bot\n\nTeam: ${teamNaam} (referralcode ${data.code_used ?? 'onbekend'})\nHet team heeft eenmalig recht op een maand voor het hele team, hooguit de maandprijs bij de start, als het op tijd betaalt (teamproef plus 10 dagen). Dit is NIET op de factuur verrekend. ${VEILIG_TERUGSTORTEN}`)
+  await notifyTelegram(`ACTIE: aangebracht team op arno.bot\n\nTeam: ${teamNaam} (referralcode ${data.code_used ?? 'onbekend'})\nHet team heeft eenmalig recht op een maand voor het hele team, hooguit de maandprijs bij de start, als het op tijd is: factuur aangemaakt binnen de eerste teamproef plus 10 dagen en betaald binnen de betaaltermijn. Dit is NIET op de factuur verrekend. ${VEILIG_TERUGSTORTEN}`)
 }
 
 export type ActivatieUitkomst =

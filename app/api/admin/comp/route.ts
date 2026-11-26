@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { adminKeyMatches } from '@/lib/adminAuth'
 import { logAdminActie } from '@/lib/adminLog'
+import { bewaarEersteProefStart } from '@/lib/referralKenmerken'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,7 +35,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Ongeldige datum' }, { status: 400 })
   }
 
-  const { data: oud } = await supabase.from('approved_users').select('expires_at, trial_start, paid_at').eq('user_id', userId).maybeSingle()
+  const { data: oud } = await supabase.from('approved_users').select('expires_at, trial_start, paid_at, trial_reactivated_at').eq('user_id', userId).maybeSingle()
+
+  // Gratis toegang wist trial_start: de eerste proef eerst bewaren.
+  if (!oud?.trial_reactivated_at) await bewaarEersteProefStart(supabase, userId, oud?.trial_start)
 
   const { error } = await supabase
     .from('approved_users')

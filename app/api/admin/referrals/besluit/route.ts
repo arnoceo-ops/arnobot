@@ -4,6 +4,8 @@ import * as Sentry from '@sentry/nextjs'
 import { adminKeyMatches } from '@/lib/adminAuth'
 import { logAdminActie } from '@/lib/adminLog'
 import { legBesluitVast } from '@/lib/billing/referralGrootboek'
+import { notifyTelegram } from '@/lib/cron-notify'
+import { wieIs } from '@/lib/billing/wie'
 
 // Arno's besluit over een referral die als handwerk in het grootboek staat. Legt alleen vast: er verandert niets aan
 // tegoed, betalingen of toegang.
@@ -31,6 +33,8 @@ export async function POST(req: NextRequest) {
       actie: 'referral_besluit', doelUserId: uitkomst.regel.aanbrenger_user_id,
       details: { nieuw: { soort: uitkomst.regel.soort, netto_cent: uitkomst.regel.netto_cent }, extra: { referralId, reden: uitkomst.regel.reden } },
     })
+    // De cron meldt alleen zijn eigen regels, dus een mijlpaal door dit besluit gaat hier naar Telegram.
+    for (const m of uitkomst.mijlpalen) await notifyTelegram(`Mijlpaal referrals op arno.bot: ${await wieIs(m.aanbrengerId)} heeft ${m.aantal} toekenningen.`)
     return NextResponse.json({ ok: true, mijlpalen: uitkomst.mijlpalen.map(m => m.aantal) })
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'referral-besluit' }, extra: { referralId } })
