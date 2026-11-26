@@ -650,7 +650,16 @@ describe.skipIf(process.env.RUN_LIVE_KETEN_NACHECK !== 'true')('ketenproef: naco
         terugbetaaldInDatabase: rij.terugbetaald_cent, alsVolledigVerwerkt: rij.terugbetaling_verwerkt_at,
       })
       expect(status.status).toBe(200)
-      expect(sub.status).toBe('active')
+      // Twee scenario's uit referralKetenEcht horen hier anders te zijn: bij een herroeping is de betaling samen met de
+      // uitkering helemaal terug, en de aanbrenger die teamlid werd had zijn eigen abonnement al beeindigd (door de test).
+      const herroepen = String(actie.user_id).startsWith('user_keten_echt_h_')
+      const { data: lid } = await billingDb.from('arnobot_team_members').select('team_id').eq('user_id', actie.user_id).limit(1)
+      expect(sub.status).toBe(herroepen ? 'refunded' : lid?.length ? 'ended' : 'active')
+      if (herroepen) {
+        const somCent = terug.filter((r: any) => r.status !== 'failed' && r.status !== 'canceled').reduce((t: number, r: any) => t + Math.round(Number(r.amount.value) * 100), 0)
+        expect(somCent).toBe(rij.bedrag_cent)
+        continue
+      }
       expect(rij.terugbetaling_verwerkt_at).toBeNull()
       expect(terug).toHaveLength(1)
       if (terug[0].status === 'refunded') {
