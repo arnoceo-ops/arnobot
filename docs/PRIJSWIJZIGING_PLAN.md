@@ -3,8 +3,8 @@
 ## Status
 
 - **Laatst bijgewerkt:** 2026-11-26
-- **Waar we staan:** Arno heeft besloten de nieuwe tarieven in te voeren. De inventaris hieronder is klaar. Er is nog niets aan code, Abacus of website gewijzigd.
-- **Eerstvolgende stap:** Arno keurt de inventaris goed en beslist de punten onder "Nog te beslissen". Daarna fase 1.
+- **Waar we staan:** alle besluiten zijn genomen (zie "Besluiten"). De inventaris is klaar. Er is nog niets aan code, Abacus of website gewijzigd. Live gaan kan zodra de bouw klaar en gecontroleerd is.
+- **Eerstvolgende stap:** fase 1 (rekenlogica Team), pas live samen met fase 2 tot en met 5. Vooraf nagaan dat geen andere sessie in de billingcode werkt.
 
 ### Afvinklijst
 
@@ -40,7 +40,7 @@ Mollie, Moneybird en Vercel zijn niet bekeken.
 
 ## Fase 0: besluiten en voorbereiding
 
-- [ ] Besluiten onder "Nog te beslissen".
+- [x] Besluiten (2026-11-26).
 - [ ] **NIET draaien voordat N5 uit docs/REFERRAL_CONTROLE_2026-11-26.md is hersteld (26-11): met de tabel gaat zelf omzetten werken, terwijl het Mollie-abonnement en een geplande overstap dan het particuliere bedrag houden.** SQL `docs/sql/2026-10-13-klanttype-correctie.sql` draaien in Supabase. De tabel `arnobot_klanttype_correcties` ontbreekt in productie. Gevolg nu: particulier zelf omzetten naar zakelijk kan niet slagen. Overstappen werkt wel, omdat daar de fout wordt genegeerd. Dit staat los van de prijswijziging.
 - [ ] ElevenLabs controleren (zie onderaan).
 
@@ -94,7 +94,7 @@ Alleen bedragen aanpassen is fout: de manager betaalt dan €97 plus €49, en e
 | `lib/teamActivatie.ts`, `app/api/team-aanvraag/route.ts:53, 123, 137` | Foutmeldingen, mail en Telegram |
 | `lib/email-templates.ts:384` | "gebruiker" wordt "teamlid" |
 | `lib/appHelp.ts:44` | Uitleg in de systeemprompt; daarna de testsnapshot bijwerken. Geen bedragen toevoegen |
-| `app/voorwaarden/page.tsx` artikel 4 | Teamalinea: "teamleden", manager inbegrepen, minimum. Prijswijzigingsalinea: zie besluit |
+| `app/voorwaarden/page.tsx` artikel 4 | Teamalinea: "teamleden", manager inbegrepen, minimum. Prijswijzigingsalinea: de tekst onder "Besluiten" |
 
 Ongewijzigd: "vanaf €19" (`app/prijzen/page.tsx`), referralpagina, privacy, `systemPrompt.ts`, `llms.txt`, Android-map.
 
@@ -145,9 +145,15 @@ Deze code rekent met de huidige prijslijst waar een opgeslagen bedrag had moeten
 - Abacus rekent met 1,0 credit per teken. Bij 0,5 ligt de sprong naar $990 bij ongeveer 241 gebruikers met Pro-niveau in plaats van 120. De winst bij 250 solo users en 40% Pro is dan €7.680 in plaats van €7.049.
 - De API-sleutel van de app mag het abonnement niet uitlezen. **Controle door Arno:** in het ElevenLabs-account het huidige pakket bekijken, en bij het verbruik hoeveel credits tegenover hoeveel tekens staan. Pas daarna `creditPerTeken` in Abacus aanpassen.
 
-## Nog te beslissen
+## Besluiten
 
-1. **Artikel 4 van de voorwaarden:** prijswijzigingen worden minimaal drie maanden vooraf per e-mail aangekondigd, hooguit één keer per jaar. De tekst zondert verlagingen niet uit. Geen enkel lopend abonnement verandert van bedrag. Advies: de alinea laten gelden voor het bedrag van een lopend abonnement. Artikel 11 vraagt dat een wijziging van de voorwaarden 14 dagen vooraf per e-mail aan actieve gebruikers wordt aangekondigd.
-2. **Besloten door Arno (2026-11-26): de Elite-toeslag binnen Team blijft €338.** Verworpen: €348.
-3. **Besloten door Arno (2026-11-26): een klein team betaalt de gewone formule** (uitzondering op het minimum, niet op de prijs). Verworpen: een aparte prijs.
-4. **Spraakkostengrenzen** (`lib/maandKosten.ts`, `lib/voiceLimiet.ts`) zijn afgestemd op Pro €39. Advies: nu niet wijzigen en na de ElevenLabs-controle bekijken.
+1. **Artikel 4, prijswijzigingsalinea (Arno akkoord, 2026-11-26):**
+
+   > ArnoBot kan haar prijzen wijzigen. Gaat de prijs van je lopende abonnement omhoog, dan kondigen we dat minimaal drie maanden vooraf per e-mail aan, en hooguit één keer per jaar. Ga je niet akkoord, dan kun je binnen 30 dagen na de aankondiging opzeggen met ingang van de datum waarop de nieuwe prijs ingaat. Een prijsverlaging kunnen we op elk moment doorvoeren. Die geldt voor je lopende abonnement vanaf je eerstvolgende betaling.
+
+   Verworpen: de oude tekst, die ook bij een verlaging drie maanden aankondiging en opzeggen noemt.
+2. **Beleid bij prijsverlaging:** maandabonnement: lagere prijs vanaf de volgende betaling, niets terug. Jaarabonnement dat maximaal 30 dagen geleden is betaald: het verschil terug (coulance, bewust niet in de voorwaarden). Langer geleden: lagere prijs bij verlenging. Verworpen: oude prijs houden; nooit iets terugbetalen. Niet gebouwd: een lopend abonnement houdt in de code het opgeslagen bedrag (ook de knop verlengen en Mollie), dus voorlopig handwerk. Bij deze wijziging is er geen lopend Pro-abonnement.
+3. **Elite-toeslag binnen Team blijft €338.** Verworpen: €348.
+4. **Een klein team betaalt de gewone formule** (uitzondering op het minimum, niet op de prijs). Verworpen: een aparte prijs.
+5. **Niet 14 dagen wachten voor livegang (besluit Arno):** de aankondigingstermijn uit artikel 11 is volgens Arno niet van toepassing.
+6. **Spraakkostengrenzen** (`lib/maandKosten.ts`, `lib/voiceLimiet.ts`) nu niet wijzigen, bekijken na de ElevenLabs-controle.
