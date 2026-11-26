@@ -1,5 +1,5 @@
 -- Zelf omzetten van particulier naar zakelijk (docs/REFERRAL_CONTROLE_2026-11-26.md, N5). Uitvoeren in de Supabase SQL Editor.
--- LET OP: zodra dit is uitgevoerd werkt zelf omzetten voor klanten. Pas draaien als de controle van de code klaar is.
+-- Zelf omzetten werkt daarna alleen voor de eigenaar en de testaccounts, tot in Vercel KLANTTYPE_OPEN=true staat.
 -- Vervangt docs/sql/2026-10-13-klanttype-correctie.sql (dat niet los draaien). Geen bestaande gegevens worden
 -- gewijzigd of verwijderd. Veilig om nog een keer te draaien.
 
