@@ -4,13 +4,22 @@ import { createClient } from '@supabase/supabase-js'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
-import { meldMetDetailMail } from '@/lib/detailMail'
-import { notifyTelegram } from '@/lib/cron-notify'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+
+async function sendTelegram(text: string) {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  const chatId = process.env.TELEGRAM_CHAT_ID
+  if (!token || !chatId) return
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  })
+}
 
 async function cronHandler(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -50,7 +59,7 @@ async function cronHandler(req: NextRequest) {
   })
 
   if (userIds.length === 0) {
-    await notifyTelegram(`📊 ARNOBOT WEEKACTIVITEIT · ${weekOf}\n\nGeen gesprekken in de afgelopen 7 dagen.`)
+    await sendTelegram(`📊 ARNOBOT WEEKACTIVITEIT · ${weekOf}\n\nGeen gesprekken in de afgelopen 7 dagen.`)
     return NextResponse.json({ ok: true, activeUsers: 0 })
   }
 
@@ -87,7 +96,7 @@ async function cronHandler(req: NextRequest) {
 
   const text = `📊 ARNOBOT WEEKACTIVITEIT · ${weekOf}\n\n${userIds.length} gebruiker${userIds.length !== 1 ? 's' : ''} actief in de afgelopen 7 dagen:\n\n${lines.join('\n')}`
 
-  await meldMetDetailMail(`ARNOBOT WEEKACTIVITEIT · ${weekOf}`, `${userIds.length} gebruiker${userIds.length !== 1 ? 's' : ''} actief in de afgelopen 7 dagen`, text)
+  await sendTelegram(text)
 
   return NextResponse.json({ ok: true, activeUsers: userIds.length })
   } catch (err) {

@@ -2,8 +2,7 @@ import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
-import { notifyCronFailure } from '@/lib/cron-notify'
-import { meldMetDetailMail } from '@/lib/detailMail'
+import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 
 export const maxDuration = 120
@@ -16,13 +15,15 @@ const supabase = createClient(
 const client = maakAnthropic()
 
 // Vragen van de afgelopen 24 uur over het gebruik van ArnoBot zelf (knoppen, functies, abonnement,
-// account), niet over sales of business. Eén mail met de vragen per dag plus een Telegram-seintje, en alleen als er iets is.
+// account), niet over sales of business. Eén Telegram-bericht per dag, en alleen als er iets is.
 const VENSTER_MS = 24 * 60 * 60 * 1000
 const MAX_VRAGEN = 1000
 const CHUNK = 150
 const MAX_TEKENS_PER_VRAAG = 400
 const MAX_IN_BERICHT = 30
 const MAX_TEKENS_IN_BERICHT = 300
+// Telegram weigert berichten boven 4096 tekens; daaronder blijven en anders over meerdere berichten verdelen.
+const MAX_TEKENS_PER_TELEGRAM = 3800
 // De client zet bij de eerste vraag van een sessie deze context voor de vraag (SparClient.tsx).
 const ACTIE_PREFIX = /^\[Actieopvolging vorige sessie:[\s\S]*?\]\s*/
 
@@ -91,7 +92,7 @@ async function meldZoektermen() {
     if (regels.length === 0) return
 
     const datum = new Date().toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam', day: 'numeric', month: 'long' })
-    await meldMetDetailMail(`ARNOBOT FAQ-ZOEKTERMEN ZONDER TREFFER · ${datum}`, `${regels.length} zoekterm${regels.length === 1 ? '' : 'en'}`, regels.join('\n'))
+    await notifyTelegram(`ARNOBOT FAQ-ZOEKTERMEN ZONDER TREFFER · ${datum}\n${regels.join('\n')}`)
   } catch (err) {
     await notifyCronFailure('productvragen (faq-zoektermen)', err)
   }
@@ -134,7 +135,7 @@ async function cronHandler(req: NextRequest) {
 
     if (gevonden.length === 0) return NextResponse.json({ ok: true, productvragen: 0 })
 
-    // Naam per gebruiker, alleen voor de gevonden vragen (maximaal MAX_IN_BERICHT in de mail).
+    // Naam per gebruiker, alleen voor de gevonden vragen (maximaal MAX_IN_BERICHT in het bericht).
     const getoond = gevonden.slice(0, MAX_IN_BERICHT)
     const ids = [...new Set(getoond.map(g => g.userId).filter(Boolean))]
     const naamPerId = new Map<string, string>()
@@ -156,7 +157,18 @@ async function cronHandler(req: NextRequest) {
     const regels = getoond.map(g => `${naamPerId.get(g.userId) ?? 'Onbekend'}: ${kort(g.vraag)}`)
     const rest = gevonden.length > MAX_IN_BERICHT ? `\nEn nog ${gevonden.length - MAX_IN_BERICHT}.` : ''
     if (rest) regels.push(rest.trim())
-    await meldMetDetailMail(`ARNOBOT PRODUCTVRAGEN · ${datum}`, `${gevonden.length} vra${gevonden.length === 1 ? 'ag' : 'gen'} over de app`, regels.join('\n'))
+    const berichten: string[] = []
+    let huidig = `ARNOBOT PRODUCTVRAGEN · ${datum}`
+    for (const regel of regels) {
+      if (huidig.length + regel.length + 1 > MAX_TEKENS_PER_TELEGRAM) {
+        berichten.push(huidig)
+        huidig = regel
+      } else {
+        huidig += `\n${regel}`
+      }
+    }
+    berichten.push(huidig)
+    for (const b of berichten) await notifyTelegram(b)
 
     return NextResponse.json({ ok: true, productvragen: gevonden.length })
   } catch (err) {
