@@ -146,7 +146,7 @@ export default function ReferralSpelregelsPage() {
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
             <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 8 }}>ARTIKEL 7</p>
             <h2 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: 2, color: '#f1f5f9', marginBottom: 20 }}>Uitsluitingen</h2>
-            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Een gebruiker kan zijn of haar eigen referral code niet gebruiken. Codes zijn persoonsgebonden en niet overdraagbaar. Elkaar over en weer aanbrengen telt niet mee. Teamleden hebben geen eigen referral link, de manager van een team heeft die wel.</p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Een gebruiker kan zijn of haar eigen referral code niet gebruiken. Codes zijn persoonsgebonden en niet overdraagbaar. Elkaar over en weer aanbrengen telt niet mee. Teamleden hebben geen eigen referral link, de manager van een team heeft die wel. Bij een gratis account is er geen referral link.</p>
           </div>
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: 32, marginBottom: 48 }}>
