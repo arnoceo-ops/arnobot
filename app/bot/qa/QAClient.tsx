@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import BotNav from '@/app/bot/BotNav'
+import AppVensterLink from '@/app/components/AppVensterLink'
 import { useTeamStatus } from '@/hooks/useTeamStatus'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import { SUPPORT_WHATSAPP_VRAAG } from '@/lib/support'
@@ -150,7 +151,7 @@ const FAQ_GROUPS = [
         a: (
           <>
             Jouw gesprekken en profiel zijn strikt vertrouwelijk. We slaan je gegevens op bij gecertificeerde sub-verwerkers (Supabase, Clerk, Vercel, Anthropic). Je kunt je data altijd downloaden of je account verwijderen. Lees onze{' '}
-            <a href="/privacy" style={{ color: '#f59e0b', textDecoration: 'none' }}>privacyverklaring</a>.
+            <AppVensterLink href="/privacy" style={{ color: '#f59e0b', textDecoration: 'none' }}>privacyverklaring</AppVensterLink>.
           </>
         ),
       },

@@ -15,6 +15,7 @@ Momentopname 2026-11-15, samengesteld uit het oude `docs/OPENSTAANDE_PUNTEN.md` 
 - **OSS (btw):** zodra de omzet aan particulieren buiten Nederland samen boven €10.000 per kalenderjaar komt, btw van het land van de klant rekenen en aangeven via OSS. Er wordt nog niet bijgehouden hoeveel dat is; Mollie toont het land per betaling. Controleer de actuele regels op belastingdienst.nl.
 
 ## Technische schuld
+- **Android: terugknop (volgende app-versie, besluit 2026-11-26):** de schil handelt de terugknop niet af (niets gevonden in de Android-code van `@capacitor/android`, `@capacitor/app` zit er niet in), niet op een toestel nagemeten. Gewenst: terug gaat een pagina terug, pas op het beginscherm verlaat je de app. Vraagt `@capacitor/app` en een nieuwe Android-build. Juridische links openen los daarvan al in een browservenster (`AppVensterLink`). Verworpen als oplossing daarvoor: een eigen terugknop op die pagina's (helpt niet bij de beveiligings-PDF) en openen in losse Chrome (je verlaat de app).
 - **Hoofdchat draait op `claude-sonnet-4-6`** omdat Sonnet 5 bij lange vragen geen tekstblok gaf. Periodiek hercontroleren (zie `docs/MODELINVENTARIS.md`).
 - **`proxy.ts` gebruikt `createRouteMatcher()`**, in Clerk gedeprecieerd ten gunste van `auth.protect()` per route. Geen verwijderdatum.
 - **Multi-tenant RLS:** RLS staat aan zonder policies; isolatie hangt af van `.eq('user_id', ...)` plus de CI-check `check-missing-user-filter.mjs`. Een echte JWT-policy-implementatie is een groot apart traject, bewust niet opgepakt.

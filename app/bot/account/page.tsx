@@ -5,6 +5,7 @@ import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import BotNav from '../BotNav'
+import AppVensterLink from '@/app/components/AppVensterLink'
 import ReferralSection from '../profiel/ReferralSection'
 import OverstapSectie, { OpzeggingIntrekken } from './OverstapSectie'
 import HerroepSectie from './HerroepSectie'
@@ -317,15 +318,15 @@ export default function AccountPage() {
 
         {/* Voorwaarden en privacy — direct onder privacy statement */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 48 }}>
-          <Link href="/voorwaarden" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
+          <AppVensterLink href="/voorwaarden" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
             VOORWAARDEN
-          </Link>
-          <Link href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
+          </AppVensterLink>
+          <AppVensterLink href="/privacy" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
             PRIVACY
-          </Link>
-          <a href="/arnobot-beveiliging.pdf" target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
+          </AppVensterLink>
+          <AppVensterLink href="/arnobot-beveiliging.pdf" style={{ fontFamily: "'Space Mono', monospace", fontSize: 13, letterSpacing: 4, color: '#6b7280', textDecoration: 'none' }}>
             BEVEILIGING
-          </a>
+          </AppVensterLink>
         </div>
 
         {/* Profiel */}
