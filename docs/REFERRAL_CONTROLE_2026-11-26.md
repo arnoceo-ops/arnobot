@@ -102,6 +102,12 @@ Bekende rest: is het oude gestopt en blijft de database dagen onbereikbaar, dan 
 
 **Extra voor de proef in testmodus:** geeft Mollie metadata terug in de lijst van abonnementen; geeft een nieuw abonnement dezelfde nextPaymentDate als de gevraagde startdatum (ook bij status pending); wat doet stoppen met een al aangemaakte incasso; weigert Mollie een gelijke omschrijving.
 
+**Hercontrole (26-11, commit 4e0e6032):** B1, B2, B3 en E2 opgelost. Nieuw: N1 blokkerend (het slot gebruikte een or-filter op de gewijzigde kolom, dat geeft op oudere PostgREST-versies een fout: https://github.com/PostgREST/postgrest/issues/3707; **zelfde patroon stond live in zelf een team activeren, sinds c8b86b22**), N2 ernstig (facturatie kon nog stil wegvallen), N3 t/m N8 klein.
+
+**Hersteld op 26-11, 1510 tests groen:** slot met twee losse updates (zoals de bestaande claim in verwerking.ts); activeren met een gewone eq; leesfouten en een ontbrekend e-mailadres gooien; een teruggestort verschil breekt de omzetting af; zelfde dagrekening bij starten en omzetten; smalle herkenning van een ontbrekende tabel (lib/billing/tabel.ts); bedragcontrole neemt afgesloten rijen met een mogelijk open abonnement mee en meldt een onbekende Mollie-klant als bevinding; **schakelaar KLANTTYPE_OPEN**: zonder die Vercel-variabele op true zien en gebruiken alleen de eigenaar en de testaccounts het zelf omzetten (de link op de accountpagina verdwijnt dus voor anderen; de pagina zelf verwijst naar admin@arno.bot). Gekozen: schakelaar zoals bij overstappen, omdat de hele keten pas na de SQL te proeven is. Niet gedaan: de melding bij een mislukte stop door een tijdelijke fout (N8, eerste punt) blijft.
+
+**Volgorde nu:** Mollie-proef (alleen API, testsleutel), SQL, proef van de hele keten door de eigenaar, dan KLANTTYPE_OPEN=true. Het slot is niet tegen de echte database beproefd; bij de ketenproef nakijken.
+
 Niet vast te stellen uit de Mollie-documentatie (proef in testmodus): of amountRefunded lopende terugbetalingen meetelt en of amountChargedBack weer 0 wordt bij een teruggedraaide chargeback. R5 leunt daarop.
 
 ## Ronde 2: grootboek, **niet klaar om echt te tellen**

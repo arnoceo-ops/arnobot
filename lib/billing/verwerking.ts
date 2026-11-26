@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow, type SubRow } from './db'
 import { isVolledigTerugbetaald } from './terugbetaling'
+import { tabelOntbreekt } from './tabel'
 import {
   haalAbonnement,
   haalBetaling,
@@ -588,9 +589,6 @@ export async function stopMollieAbonnement(sub: SubRow): Promise<boolean> {
   }
   return (await stopCorrectieAbonnementen(sub)) && alles
 }
-
-/** Ontbreekt de tabel (SQL nog niet uitgevoerd), dan kan er ook geen omzetting zijn gestart. */
-export const tabelOntbreekt = (fout: { message: string }) => /does not exist|schema cache/i.test(fout.message)
 
 /**
  * Stopt abonnementen die bij een nog niet afgeronde omzetting naar zakelijk zijn aangemaakt (lib/billing/klanttypeOmzetten.ts)

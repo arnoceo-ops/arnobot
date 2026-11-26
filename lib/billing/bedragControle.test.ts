@@ -7,7 +7,7 @@ vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn() }))
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: h.tg }))
 vi.mock('@/lib/capaciteit', () => ({ nieuwMelden: async () => true }))
 vi.mock('@/lib/internalTestAccounts', () => ({ isInternalTestUser: (u: string) => u === 'test' }))
-vi.mock('./mollie', () => ({ lijstKlantAbonnementen: async () => { if (h.plat) throw new Error('mollie plat'); return Object.entries(h.ms).map(([id, m]) => ({ id, ...(m as object) })) } }))
+vi.mock('./mollie', () => ({ MollieError: class extends Error { constructor(public status: number) { super('x') } }, lijstKlantAbonnementen: async () => { if (h.plat) throw new Error('mollie plat'); return Object.entries(h.ms).map(([id, m]) => ({ id, ...(m as object) })) } }))
 vi.mock('./db', () => ({
   billingDb: {
     from() {
@@ -56,6 +56,11 @@ describe('bedragcontrole', () => {
   })
   it('onbekend lopend abonnement: melding', async () => {
     h.ms.extra = actief('71.39')
+    expect(await controleerAbonnementsBedragen()).toBe(1)
+    expect(h.tg.mock.calls[0][0]).toContain('Onbekend lopend abonnement')
+  })
+  it('afgesloten rij met een nog lopend abonnement: melding', async () => {
+    h.subs = [sub({ status: 'ended' })]
     expect(await controleerAbonnementsBedragen()).toBe(1)
     expect(h.tg.mock.calls[0][0]).toContain('Onbekend lopend abonnement')
   })

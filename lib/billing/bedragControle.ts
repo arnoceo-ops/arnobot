@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/nextjs'
 import { billingDb, type SubRow } from './db'
-import { lijstKlantAbonnementen, type MollieSubscription } from './mollie'
+import { lijstKlantAbonnementen, MollieError, type MollieSubscription } from './mollie'
 import { formatEuro, mollieNaarCenten } from './geld'
 import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import { nieuwMelden } from '@/lib/capaciteit'
@@ -17,13 +17,16 @@ export async function controleerAbonnementsBedragen(): Promise<number> {
   const { data, error } = await billingDb
     .from('arnobot_subscriptions')
     .select('*')
-    .in('status', ['active', 'cancelled'])
+    // Ook afgesloten en terugbetaalde rijen: daar kan het stoppen mislukt zijn.
+    .in('status', ['active', 'cancelled', 'ended', 'refunded'])
     .limit(1000)
     .returns<SubRow[]>()
   if (error) throw new Error(`abonnementen ophalen mislukt: ${error.message}`)
 
+  const hoortTeLopen = (s: SubRow) => s.status === 'active' || s.status === 'cancelled'
+  const mogelijkNogOpen = (s: SubRow) => !!s.mollie_subscription_id && !s.mollie_sub_geannuleerd_at
   const perKlant = new Map<string, SubRow[]>()
-  for (const s of (data ?? []).filter(s => !isInternalTestUser(s.user_id) && s.mollie_customer_id)) {
+  for (const s of (data ?? []).filter(s => !isInternalTestUser(s.user_id) && s.mollie_customer_id && (hoortTeLopen(s) || mogelijkNogOpen(s)))) {
     perKlant.set(s.mollie_customer_id, [...(perKlant.get(s.mollie_customer_id) ?? []), s])
   }
 
@@ -39,13 +42,18 @@ export async function controleerAbonnementsBedragen(): Promise<number> {
     try {
       lijst = await lijstKlantAbonnementen(klantId)
     } catch (e) {
+      // Een klant die Mollie niet kent (bijvoorbeeld uit testmodus) is een bevinding, geen mislukte controle.
+      if (e instanceof MollieError && (e.status === 404 || e.status === 410)) {
+        await meld(`klant:${klantId}`, `Klant niet gevonden bij Mollie op arno.bot\n\nUser: ${subs[0].user_id}\nMollie-klant: ${klantId}\nControleer of dit een oude testrij is of een klant die niet meer wordt geïncasseerd.`)
+        continue
+      }
       nietTeLezen++
       Sentry.captureException(e, { tags: { onderdeel: 'billing-bedragcontrole' }, extra: { klant: klantId } })
       continue
     }
     const wie = subs[0].user_id
     const bekend = new Set<string>()
-    for (const s of subs) {
+    for (const s of subs.filter(hoortTeLopen)) {
       const paren = [
         { id: s.mollie_sub_geannuleerd_at ? null : s.mollie_subscription_id, verwacht: s.bedrag_cent },
         { id: s.gepland_mollie_sub_geannuleerd_at ? null : s.gepland_mollie_subscription_id, verwacht: s.gepland_bedrag_cent },

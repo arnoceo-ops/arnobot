@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow, type SubRow } from './db'
 import { restantCent } from './terugbetaling'
+import { tabelOntbreekt } from './tabel'
 import {
   btwTariefId,
   omzetGrootboekId,
@@ -167,11 +168,15 @@ export async function creditnotaVoorBetaling(payRowId: string): Promise<void> {
     await notifyTelegram(`Creditnota met de hand maken in Moneybird (arno.bot)\n\nBetaling: ${rij.mollie_payment_id}\nOp deze betaling is al referraltegoed verrekend. Crediteer alleen het restant: ${(restantCent(rij) / 100).toFixed(2)} euro.`)
     return
   }
-  // Bij het omzetten naar zakelijk is deze factuur al gecrediteerd. Een fout bij het opzoeken (bijvoorbeeld zonder de
-  // tabel) betekent: geen correctie bekend.
-  const { data: gecrediteerd } = await billingDb.from('arnobot_klanttype_correcties').select('id').eq('gecrediteerde_betaling_id', payRowId).limit(1)
+  // Bij het omzetten naar zakelijk is deze factuur al gecrediteerd. Zonder de tabel bestaan er geen correcties; lukt het
+  // opzoeken om een andere reden niet, dan niet gokken.
+  const { data: gecrediteerd, error: correctieFout } = await billingDb.from('arnobot_klanttype_correcties').select('id').eq('gecrediteerde_betaling_id', payRowId).limit(1)
+  if (correctieFout && !tabelOntbreekt(correctieFout)) {
+    await notifyTelegram(`Creditnota niet gemaakt op arno.bot\n\nBetaling: ${rij.mollie_payment_id}\nNiet te controleren of deze factuur al gecrediteerd is. Maak de creditnota met de hand als dat niet zo is.`)
+    return
+  }
   if (gecrediteerd?.length) {
-    await notifyTelegram(`Creditnota met de hand beoordelen in Moneybird (arno.bot)\n\nBetaling: ${rij.mollie_payment_id}\nDeze factuur is al gecrediteerd bij het omzetten naar zakelijk. Er is nu geen creditnota gemaakt.`)
+    await notifyTelegram(`Creditnota met de hand beoordelen in Moneybird (arno.bot)\n\nBetaling: ${rij.mollie_payment_id}\nDeze factuur is al gecrediteerd bij het omzetten naar zakelijk. Er is nu geen creditnota gemaakt. Let op: de nieuwe zakelijke factuur van de omzetting is niet gecrediteerd en het betaalde verschil niet teruggestort.`)
     return
   }
   try {

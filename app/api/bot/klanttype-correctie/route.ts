@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { vindTeCorrigerenAbonnement, startKlanttypeCorrectie } from '@/lib/billing/klanttypeCorrectie'
+import { klanttypeCorrectieBeschikbaarVoor, vindTeCorrigerenAbonnement, startKlanttypeCorrectie } from '@/lib/billing/klanttypeCorrectie'
 import { planNaam } from '@/lib/billing/prijzen'
 import { zakelijkBedragVan } from '@/lib/billing/klanttypeOmzetten'
 import { redenGeenZelfCorrectie } from '@/lib/billing/referralKorting'
@@ -13,7 +13,7 @@ export async function GET() {
   const { userId } = await auth()
   if (!userId) return fout(401, 'Niet ingelogd')
 
-  const gevonden = await vindTeCorrigerenAbonnement(userId)
+  const gevonden = klanttypeCorrectieBeschikbaarVoor(userId) ? await vindTeCorrigerenAbonnement(userId) : null
   if (!gevonden) return NextResponse.json({ abonnement: null })
 
   const { sub } = gevonden
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
   if (!postcodeNorm) return fout(400, 'Vul een geldige postcode in (bijvoorbeeld 1234 AB)')
   if (plaatsNaam.length < 2 || plaatsNaam.length > 80) return fout(400, 'Vul de plaats in')
 
-  const gevonden = await vindTeCorrigerenAbonnement(userId)
+  const gevonden = klanttypeCorrectieBeschikbaarVoor(userId) ? await vindTeCorrigerenAbonnement(userId) : null
   if (!gevonden) return fout(404, 'Geen particulier abonnement gevonden om te corrigeren')
 
   // De correctie rekent met de volle abonnementsprijs en crediteert alleen de laatste betaling.

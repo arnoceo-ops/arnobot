@@ -6,6 +6,7 @@ import { berekenBedrag, planNaam, type Bedrag, type Cyclus, type Plan } from './
 import { berekenUpgradeBedrag } from './upgradeBedrag'
 import { heeftOpenstaandeBetaling } from './openstaandeBetaling'
 import { CORRECTIE_OPEN_UREN } from './klanttypeOmzetten'
+import { tabelOntbreekt } from './tabel'
 import { verstuurBillingMail } from './mails'
 import { stopEnBevestig } from './verwerking'
 import { VEILIG_TERUGSTORTEN, voordeelGebruikt } from './referralSignalen'
@@ -208,7 +209,7 @@ async function plaats(userId: string, wens: Wens | null, nu: Date, modus: 'overs
     .eq('subscription_id', sub.id)
     .limit(20)
   // Zonder de tabel bestaan er geen correcties. Elke andere fout: niet wijzigen.
-  if (correctieFout && !/does not exist|schema cache/i.test(correctieFout.message)) {
+  if (correctieFout && !tabelOntbreekt(correctieFout)) {
     return weiger(502, 'Controleren is niet gelukt. Probeer het zo opnieuw.')
   }
   const openVanaf = nu.getTime() - CORRECTIE_OPEN_UREN * 60 * 60 * 1000

@@ -39,7 +39,6 @@ function bouwer(tabel: string) {
   const b: Record<string, unknown> = {}
   b.select = (_k?: string, o?: { head?: boolean }) => { head = !!o?.head; return b }
   b.eq = (k: string, v: unknown) => { filters.push(r => r[k] === v); return b }
-  b.or = () => { filters.push(r => (r.geblokkeerd_at ?? null) === null || !r.geblokkeerd_handmatig); return b }
   b.is = (k: string, v: null) => { filters.push(r => (r[k] ?? null) === v); return b }
   b.in = (k: string, v: unknown[]) => { filters.push(r => v.includes(r[k])); return b }
   b.order = (k: string) => { volgorde = k; return b }
@@ -76,7 +75,7 @@ const formulier = { seats: 5, cyclus: 'jaarlijks', bedrijfsnaam: 'Voorbeeld BV',
 
 function zet(o: { manager?: Rij; team?: Rij } = {}) {
   db.approved_users = [{ user_id: 'm1', email: 'm1@x.nl', trial_start: dagenGeleden(10), expires_at: null, paid_at: null, sd_attribution_method: 'link', ...o.manager }]
-  db.arnobot_teams = [{ id: 't1', name: 'Team Een', manager_id: 'm1', min_seats: null, cyclus: null, volgende_factuurdatum: null, geblokkeerd_at: null, ...o.team }]
+  db.arnobot_teams = [{ id: 't1', name: 'Team Een', manager_id: 'm1', min_seats: null, cyclus: null, volgende_factuurdatum: null, geblokkeerd_at: null, geblokkeerd_handmatig: false, ...o.team }]
   db.arnobot_team_members = [{ team_id: 't1', user_id: 'm1', role: 'manager' }, { team_id: 't1', user_id: 'l1', role: 'member' }]
   db.arnobot_team_facturen = []
   db.arnobot_referrals = []

@@ -14,7 +14,9 @@ import {
 import { verstuurBillingMail } from './mails'
 import { controleerStart, zakelijkBedragVan, zetAbonnementZakelijk } from './klanttypeOmzetten'
 import { nieuwMelden } from '@/lib/capaciteit'
-import { tabelOntbreekt } from './verwerking'
+import { isInternalTestUser } from '@/lib/internalTestAccounts'
+import { stopCorrectieAbonnementen } from './verwerking'
+import { tabelOntbreekt } from './tabel'
 import { redenGeenZelfCorrectie } from './referralKorting'
 import { notifyTelegram } from '@/lib/cron-notify'
 
@@ -55,6 +57,16 @@ export interface KlanttypeCorrectieRow {
   handwerk_reden: string | null
   gefactureerd_at: string | null
   created_at: string
+}
+
+/**
+ * Wie zelf mag omzetten. Tot Arno de functie openzet (KLANTTYPE_OPEN=true) alleen de eigenaar en de interne
+ * testaccounts. Het afronden van een betaalde correctie hangt hier niet van af.
+ */
+export function klanttypeCorrectieBeschikbaarVoor(userId: string): boolean {
+  if (process.env.KLANTTYPE_OPEN === 'true') return true
+  const eigenaar = process.env.ARNOBOT_OWNER_USER_ID
+  return isInternalTestUser(userId) || (!!eigenaar && eigenaar === userId)
 }
 
 /** De meest recente betaalde particuliere factuur van de gebruiker, met het te crediteren Moneybird-id. */
@@ -136,8 +148,9 @@ export async function verwerkKlanttypeCorrectie(webhookId: string, hintRijId: st
   // Een slot per abonnement: webhook en cron, of twee correcties, nooit tegelijk. Bezet: de houder maakt het af, en
   // breekt die af, dan pakt de cron het op.
   if (!(await neemSlot(rij.subscription_id))) return
+  const teruggestort = [mp.amountRefunded, mp.amountChargedBack].some(b => !!b && mollieNaarCenten(b.value) > 0)
   try {
-    await rondCorrectieAf(rij.id, mp.id)
+    await rondCorrectieAf(rij.id, mp.id, teruggestort)
   } finally {
     await geefSlotVrij(rij.subscription_id)
   }
@@ -148,14 +161,18 @@ const SLOT_MINUTEN = 10
 
 async function neemSlot(abonnementId: string): Promise<boolean> {
   const nu = new Date()
-  const { data, error } = await billingDb
+  const zet = () => billingDb
     .from('arnobot_subscriptions')
     .update({ klanttype_bezig_tot: new Date(nu.getTime() + SLOT_MINUTEN * 60_000).toISOString() })
     .eq('id', abonnementId)
-    .or(`klanttype_bezig_tot.is.null,klanttype_bezig_tot.lt.${nu.toISOString()}`)
-    .select('id')
-  if (error) throw new Error(`slot op het abonnement nemen mislukt: ${error.message}`)
-  return (data?.length ?? 0) === 1
+  // Twee losse updates en bewust geen or-filter: dat gaat in oudere versies van PostgREST mis op een kolom die de
+  // update zelf wijzigt. Eerst een vrij slot, anders een verlopen slot.
+  for (const poging of [() => zet().is('klanttype_bezig_tot', null).select('id'), () => zet().lt('klanttype_bezig_tot', nu.toISOString()).select('id')]) {
+    const { data, error } = await poging()
+    if (error) throw new Error(`slot op het abonnement nemen mislukt: ${error.message}`)
+    if ((data?.length ?? 0) === 1) return true
+  }
+  return false
 }
 
 async function geefSlotVrij(abonnementId: string): Promise<void> {
@@ -179,7 +196,7 @@ const meldHandwerk = (rij: KlanttypeCorrectieRow, betaalId: string, reden: strin
   notifyTelegram(`Klanttype-correctie betaald, NIET omgezet op arno.bot\n\nUser: ${rij.user_id}\nBetaling: ${betaalId}\nBedrag: €${(rij.verschil_cent / 100).toFixed(2)}\nReden: ${reden}\nEr is niet gefactureerd. Stort het verschil terug of regel het met de hand.`)
 
 /** Het vervolg op een betaalde correctie: abonnement omzetten, daarna een keer factureren en mailen. */
-async function rondCorrectieAf(rijId: string, betaalId: string): Promise<void> {
+async function rondCorrectieAf(rijId: string, betaalId: string, teruggestort: boolean): Promise<void> {
   // Opnieuw lezen onder het slot: een eerdere houder kan al klaar zijn.
   const { data: rij, error: rijFout } = await billingDb
     .from('arnobot_klanttype_correcties')
@@ -188,6 +205,17 @@ async function rondCorrectieAf(rijId: string, betaalId: string): Promise<void> {
     .maybeSingle<KlanttypeCorrectieRow>()
   if (rijFout) throw new Error(`correctie opzoeken mislukt: ${rijFout.message}`)
   if (!rij || rij.afgehandeld_at) return
+
+  if (teruggestort) {
+    // Een abonnement van een eerdere poging mag niet blijven lopen.
+    const { data: sub, error } = await billingDb.from('arnobot_subscriptions').select('*').eq('id', rij.subscription_id).maybeSingle<SubRow>()
+    if (error) throw new Error(`abonnement opzoeken mislukt: ${error.message}`)
+    if (sub && !(await stopCorrectieAbonnementen(sub))) throw new Error('abonnement van een eerdere poging niet te stoppen')
+    if (await vinkAf(rij.id, 'het verschil is terugbetaald of teruggeboekt')) {
+      await notifyTelegram(`Klanttype-correctie afgebroken op arno.bot\n\nUser: ${rij.user_id}\nBetaling: ${betaalId}\nHet verschil is terugbetaald of teruggeboekt. Er is niet omgezet en niet gefactureerd.`)
+    }
+    return
+  }
 
   const { data: eerder, error: eerderFout } = await billingDb
     .from('arnobot_klanttype_correcties')
@@ -205,7 +233,7 @@ async function rondCorrectieAf(rijId: string, betaalId: string): Promise<void> {
   const uitkomst = await zetAbonnementZakelijk(rij)
   if (uitkomst.stand === 'wacht') {
     if (await nieuwMelden(`klanttype:wacht:${rij.id}`, 'waarschuwing')) {
-      await notifyTelegram(`Klanttype-correctie betaald, nog niet omgezet op arno.bot\n\nUser: ${rij.user_id}\nReden: ${uitkomst.reden}\nDe billing-cron probeert het dagelijks opnieuw. Er is nog niet gefactureerd.`)
+      await notifyTelegram(`Klanttype-correctie betaald, nog niet omgezet op arno.bot\n\nUser: ${rij.user_id}\nReden: ${uitkomst.reden}\nDe billing-cron probeert het dagelijks opnieuw. Er is nog niet gefactureerd. Wil je afbreken, stort dan het verschil terug in Mollie: de app zet daarna niet meer om.`)
     }
     return
   }
@@ -257,11 +285,12 @@ async function factureerCorrectie(rij: KlanttypeCorrectieRow, betaalId: string):
     .select('mollie_customer_id')
     .eq('user_id', rij.user_id)
     .maybeSingle<{ mollie_customer_id: string }>()
-  const { data: gebruiker } = await billingDb
+  const { data: gebruiker, error: gebruikerFout } = await billingDb
     .from('approved_users')
     .select('voornaam, email')
     .eq('user_id', rij.user_id)
     .maybeSingle<{ voornaam: string | null; email: string | null }>()
+  if (gebruikerFout) throw new Error(`gebruiker niet gelezen: ${gebruikerFout.message}`)
 
   // Een bewaarde klant kan bij Mollie ontbreken (test en live door elkaar): dan een nieuwe aanmaken, zoals bij afrekenen.
   const bewaardeKlant = bestaandeKlant?.mollie_customer_id
@@ -289,13 +318,14 @@ async function factureerCorrectie(rij: KlanttypeCorrectieRow, betaalId: string):
 
   await notifyTelegram(`Klanttype-correctie betaald op arno.bot\n\nUser: ${rij.user_id}\nBedrijf: ${rij.bedrijfsnaam}\nVerschil: €${(rij.verschil_cent / 100).toFixed(2)}`)
 
-  if (!factureringToegestaan() || !gebruiker?.email) return
+  if (!factureringToegestaan()) return
+  if (!gebruiker?.email) throw new Error('geen e-mailadres bekend, er is niet gefactureerd')
 
   // Is er tussen het starten en betalen van de correctie geüpgraded, dan kloppen de bedragen niet: handwerk.
   const reden = await redenGeenZelfCorrectie(sub.id)
   if (reden) throw new Error(`${reden === 'upgrade' ? 'upgrade' : 'referral fee'} op dit abonnement: controleer bedrag, creditnota en factuur met de hand`)
 
-  const { data: oudeBetaling } = await billingDb
+  const { data: oudeBetaling, error: oudeFout } = await billingDb
     .from('arnobot_payments')
     .select('*')
     .eq('subscription_id', sub.id)
@@ -304,6 +334,8 @@ async function factureerCorrectie(rij: KlanttypeCorrectieRow, betaalId: string):
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle<{ id: string; moneybird_factuur_id: string; mollie_payment_id: string; referral_refund_cent?: number | null }>()
+  if (oudeFout) throw new Error(`eerdere betaling niet gelezen: ${oudeFout.message}`)
+  if (!oudeBetaling) await notifyTelegram(`Klanttype-correctie: geen eerdere factuur om te crediteren op arno.bot\n\nUser: ${rij.user_id}\nDe nieuwe zakelijke factuur wordt wel gemaakt. Controleer in Moneybird.`)
 
   // Met verrekend referraltegoed zou een volledige creditnota te veel crediteren: dan stoppen en handwerk.
   if ((oudeBetaling?.referral_refund_cent ?? 0) > 0) throw new Error(`referraltegoed verrekend op ${oudeBetaling?.mollie_payment_id}: creditnota met de hand`)

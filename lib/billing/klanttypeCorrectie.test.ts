@@ -7,6 +7,9 @@ type Rij = Record<string, any>
 const h = vi.hoisted(() => ({
   tabellen: {} as Record<string, Rij[]>,
   omzet: vi.fn(),
+  stopExtra: vi.fn(async () => true),
+  teruggestort: null as null | string,
+  moneybird: false,
   mail: vi.fn(async () => true),
   tg: vi.fn(async (_t: string) => {}),
   leesFout: false,
@@ -16,13 +19,13 @@ vi.mock('@sentry/nextjs', () => ({ captureException: vi.fn(), captureMessage: vi
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: h.tg }))
 vi.mock('@/lib/capaciteit', () => ({ nieuwMelden: async () => true }))
 vi.mock('./mails', () => ({ verstuurBillingMail: h.mail }))
-vi.mock('./moneybird', () => ({ moneybirdIngeschakeld: () => false }))
+vi.mock('./moneybird', () => ({ moneybirdIngeschakeld: () => h.moneybird }))
 vi.mock('./referralKorting', () => ({ redenGeenZelfCorrectie: async () => null }))
-vi.mock('./verwerking', () => ({ tabelOntbreekt: () => false }))
+vi.mock('./verwerking', () => ({ stopCorrectieAbonnementen: h.stopExtra }))
 vi.mock('./klanttypeOmzetten', () => ({ zetAbonnementZakelijk: h.omzet, controleerStart: vi.fn(), zakelijkBedragVan: vi.fn() }))
 vi.mock('./mollie', () => ({
   SITE_URL: 'https://x.test', klantBestaat: async () => true,
-  betaaldeBetalingVanLink: async () => ({ id: 'tr_1', status: 'paid', amount: { currency: 'EUR', value: '12.39' } }),
+  betaaldeBetalingVanLink: async () => ({ id: 'tr_1', status: 'paid', amount: { currency: 'EUR', value: '12.39' }, ...(h.teruggestort ? { amountRefunded: { value: h.teruggestort } } : {}) }),
 }))
 vi.mock('./db', () => ({
   billingDb: {
@@ -36,7 +39,7 @@ vi.mock('./db', () => ({
       }
       const q: any = {
         select: () => q, limit: () => q, order: () => q, returns: () => q, gt: () => { filters.push(() => false); return q },
-        or: () => { filters.push(r => !r.klanttype_bezig_tot || r.klanttype_bezig_tot < new Date().toISOString()); return q },
+        lt: (k: string, v: string) => { filters.push(r => !!r[k] && r[k] < v); return q },
         eq: (k: string, v: unknown) => { filters.push(r => r[k] === v); return q },
         is: (k: string, v: unknown) => { filters.push(r => (r[k] ?? null) === v); return q },
         not: (k: string) => { filters.push(r => (r[k] ?? null) !== null); return q },
@@ -63,6 +66,8 @@ const correctie = () => h.tabellen.arnobot_klanttype_correcties[0]
 beforeEach(() => {
   vi.clearAllMocks()
   h.leesFout = false
+  h.teruggestort = null
+  h.moneybird = false
   h.omzet.mockResolvedValue({ stand: 'omgezet' })
   h.tabellen = {
     arnobot_klanttype_correcties: [rij()],
@@ -121,6 +126,24 @@ describe('betaalde klanttype-correctie', () => {
     expect(correctie()).toMatchObject({ handwerk_reden: 'het abonnement is intussen refunded' })
     expect(afgerond()).toHaveLength(0)
     expect(h.tg.mock.calls[0][0]).toContain('NIET omgezet')
+  })
+  it('verlopen slot wordt overgenomen', async () => {
+    h.tabellen.arnobot_subscriptions[0].klanttype_bezig_tot = '2000-01-01T00:00:00Z'
+    await verwerkKlanttypeCorrectie('pl_1', null)
+    expect(h.omzet).toHaveBeenCalledTimes(1)
+  })
+  it('verschil al teruggestort: niet omzetten, afgevinkt als handwerk', async () => {
+    h.teruggestort = '12.39'
+    await verwerkKlanttypeCorrectie('pl_1', null)
+    expect(h.omzet).not.toHaveBeenCalled()
+    expect(h.stopExtra).toHaveBeenCalled()
+    expect(correctie().handwerk_reden).toBeTruthy()
+  })
+  it('geen e-mailadres terwijl er gefactureerd moet worden: gemeld, niet stil', async () => {
+    h.moneybird = true
+    h.tabellen.approved_users = []
+    await verwerkKlanttypeCorrectie('pl_1', null)
+    expect(h.tg.mock.calls.some(c => c[0].includes('facturatie niet afgerond'))).toBe(true)
   })
   it('databasefout bij het opzoeken gooit, zodat Mollie het opnieuw probeert', async () => {
     h.leesFout = true

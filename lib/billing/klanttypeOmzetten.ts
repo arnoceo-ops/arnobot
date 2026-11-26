@@ -70,7 +70,8 @@ export async function controleerStart(sub: SubRow, nu: Date = new Date()): Promi
       volgende = dagMs(ms.nextPaymentDate)
     } else if (sub.klant_type === 'particulier' && sub.cyclus === 'jaarlijks' && sub.periode_einde) {
       // Een particulier jaar heeft geen incasso; wel moet het jaar nog ruim genoeg lopen.
-      volgende = Date.parse(sub.periode_einde)
+      // Zelfde rekening als bij het omzetten (de startdatum van het nieuwe abonnement), anders kan betalen wel en omzetten niet.
+      volgende = dagMs(sub.periode_einde.slice(0, 10))
     } else {
       return { ok: false, fout: TEKST_NIET_NU }
     }
