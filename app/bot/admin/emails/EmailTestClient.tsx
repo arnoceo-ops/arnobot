@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 
-type Template = { type: string; label: string; description: string; category: 'user' | 'admin'; echteActie?: boolean }
+type Template = { type: string; label: string; description: string; category: 'user' | 'admin'; echteActie?: boolean; cronTekst?: string | null }
 
 const sectionLabel: React.CSSProperties = {
   fontFamily: 'sans-serif',
@@ -53,7 +53,7 @@ export default function EmailTestClient() {
   const userTemplates = templates.filter(t => t.category === 'user')
   const adminTemplates = templates.filter(t => t.category === 'admin')
 
-  function renderRow({ type, label, description, echteActie }: Template) {
+  function renderRow({ type, label, description, echteActie, cronTekst }: Template) {
     return (
       <div key={type} className="email-test-row" style={{
         display: 'grid',
@@ -65,7 +65,14 @@ export default function EmailTestClient() {
         borderLeft: `3px solid ${results[type] === 'ok' ? '#22c55e' : results[type] === 'error' ? '#cc2200' : results[type] === 'skipped' ? '#6b7280' : '#374151'}`,
       }}>
         <p style={{ fontWeight: 700, fontSize: 14, color: '#f1f5f9', letterSpacing: 1, margin: 0 }}>{label}</p>
-        <p style={{ fontSize: 14, color: '#6b7280', letterSpacing: 1, margin: 0 }}>{description}</p>
+        <div>
+          <p style={{ fontSize: 14, color: '#6b7280', letterSpacing: 1, margin: 0 }}>{description}</p>
+          {cronTekst && (
+            <p style={{ fontSize: 12, color: '#6b7280', letterSpacing: 1, margin: '6px 0 0' }}>
+              <span style={{ color: '#f59e0b', fontWeight: 700, letterSpacing: 2, marginRight: 8 }}>CRON</span>{cronTekst}
+            </p>
+          )}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {results[type] === 'ok' && (
             <span style={{ fontSize: 12, color: '#22c55e', letterSpacing: 2 }}>VERZONDEN</span>

@@ -6,6 +6,7 @@ import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getEmailTemplate, getEmailTemplateList, type EmailType } from '@/lib/email-templates'
 import { adminKeyMatches } from '@/lib/adminAuth'
 import { leesCrons } from '@/lib/cronOverzicht'
+import { mailCronTekst } from '@/lib/mailCrons'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -49,7 +50,7 @@ export async function GET() {
   if (!adminKeyMatches(token)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const templates = [...getEmailTemplateList(), ...ADMIN_ONLY_ITEMS]
+  const templates = [...getEmailTemplateList().map(t => ({ ...t, cronTekst: mailCronTekst(t.type) })), ...ADMIN_ONLY_ITEMS]
   return NextResponse.json({ templates })
 }
 
