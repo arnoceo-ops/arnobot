@@ -10,18 +10,19 @@ const h = vi.hoisted(() => ({
   mollie: {} as Record<string, Rij>,
   maak: vi.fn(),
   stop: vi.fn(),
+  sleutels: new Map<string, Record<string, any>>(),
   openstaand: vi.fn(async () => false),
-  maakVoor: vi.fn(async () => {}),
   tg: vi.fn(async (_t: string) => {}),
   schrijfFout: null as null | string,
 }))
 
 vi.mock('@/lib/cron-notify', () => ({ notifyTelegram: h.tg }))
 vi.mock('./openstaandeBetaling', () => ({ heeftOpenstaandeBetaling: h.openstaand }))
-vi.mock('./verwerking', () => ({ stopEnBevestig: h.stop, maakMollieAbonnementVoor: h.maakVoor }))
+vi.mock('./verwerking', () => ({ stopEnBevestig: h.stop }))
 vi.mock('./mollie', () => ({
   MollieError: class extends Error { status = 0 },
   maakAbonnement: h.maak,
+  lijstKlantAbonnementen: vi.fn(async () => Object.values(h.mollie).map(m => ({ ...m }))),
   haalAbonnement: vi.fn(async (_k: string, id: string) => ({ ...h.mollie[id] })),
 }))
 vi.mock('./db', () => ({
@@ -39,6 +40,7 @@ vi.mock('./db', () => ({
       }
       const q: any = {
         select: () => q, limit: () => q,
+        or: () => q,
         eq: (k: string, v: unknown) => { filters.push(r => r[k] === v); return q },
         is: (k: string, v: unknown) => { filters.push(r => (r[k] ?? null) === v); return q },
         update: (p: Rij) => { patch = p; return q },
@@ -60,10 +62,11 @@ const sub = (extra: Rij = {}): any => ({
   gepland_at: null, gepland_mollie_subscription_id: null, ...extra,
 })
 const rij = (extra: Rij = {}): any => ({
-  id: 'c1', user_id: 'u1', subscription_id: 's1', nieuw_bedrag_cent: 7139, nieuw_btw_cent: 1239,
-  nieuw_mollie_subscription_id: null, created_at: '2026-12-01T09:00:00Z', ...extra,
+  id: 'c1', user_id: 'u1', subscription_id: 's1', plan: 'premium', cyclus: 'maandelijks', verschil_cent: 1239,
+  nieuw_bedrag_cent: 7139, nieuw_btw_cent: 1239, omzetting_gestart_at: null, nieuw_mollie_subscription_id: null, ...extra,
 })
 const db = () => h.tabellen.arnobot_subscriptions[0]
+const gestart = () => rij({ omzetting_gestart_at: '2026-12-01T10:00:00Z' })
 const lopend = () => Object.entries(h.mollie).filter(([, m]) => m.status === 'active').map(([id]) => id)
 
 beforeEach(() => {
@@ -72,10 +75,18 @@ beforeEach(() => {
   h.openstaand.mockResolvedValue(false)
   h.tabellen = { arnobot_subscriptions: [sub()], arnobot_klanttype_correcties: [rij()] }
   h.mollie = { sub_oud: { id: 'sub_oud', status: 'active', nextPaymentDate: '2026-12-15' } }
+  h.sleutels.clear()
   let n = 0
+  // Zoals Mollie: dezelfde sleutel speelt het eerste antwoord af, ook als dat abonnement intussen gestopt is.
   h.maak.mockImplementation(async (i: Rij) => {
+    const eerder = h.sleutels.get(i.idempotencyKey)
+    if (eerder) return { ...eerder }
     const id = `sub_nieuw${++n}`
-    h.mollie[id] = { id, status: 'active', nextPaymentDate: i.startDatum.toISOString().slice(0, 10) }
+    h.mollie[id] = {
+      id, status: 'active', nextPaymentDate: i.startDatum.toISOString().slice(0, 10), metadata: i.metadata,
+      amount: { currency: 'EUR', value: (i.brutoCent / 100).toFixed(2) },
+    }
+    h.sleutels.set(i.idempotencyKey, { ...h.mollie[id] })
     return { ...h.mollie[id] }
   })
   h.stop.mockImplementation(async (_s: unknown, id: string) => { h.mollie[id].status = 'canceled'; return true })
@@ -107,7 +118,7 @@ describe('starten', () => {
     expect(await controleerStart(sub(), NU)).toEqual({ ok: false, fout: TEKST_BETALING_LOOPT })
   })
   it('betaald maar nog niet omgezet: niet nog eens laten betalen', async () => {
-    h.tabellen.arnobot_klanttype_correcties = [rij({ status: 'paid', abonnement_omgezet_at: null })]
+    h.tabellen.arnobot_klanttype_correcties = [rij({ status: 'paid', afgehandeld_at: null })]
     expect(await controleerStart(sub(), NU)).toEqual({ ok: false, fout: TEKST_CORRECTIE_OPEN })
   })
   it('particulier jaar zonder incasso: mag', async () => {
@@ -138,7 +149,6 @@ describe('abonnement omzetten', () => {
     h.stop.mockImplementation(async (_s: unknown, id: string) => { if (id === 'sub_oud') return false; h.mollie[id].status = 'canceled'; return true })
     await expect(zetAbonnementZakelijk(rij(), NU)).rejects.toThrow()
     expect(lopend()).toEqual(['sub_oud'])
-    expect(h.tabellen.arnobot_klanttype_correcties[0].nieuw_mollie_subscription_id).toBeNull()
     expect(db().klant_type).toBe('particulier')
   })
   it('geen van beide te stoppen: dringende melding', async () => {
@@ -146,43 +156,88 @@ describe('abonnement omzetten', () => {
     await expect(zetAbonnementZakelijk(rij(), NU)).rejects.toThrow()
     expect(h.tg.mock.calls[0][0]).toContain('HALF AFGEROND')
   })
-  it('nieuw id niet op te slaan: het nieuwe meteen weer gestopt, oude loopt door', async () => {
+  it('nieuw id niet op te slaan: de herhaling vindt hetzelfde abonnement bij Mollie terug', async () => {
     h.schrijfFout = 'nieuw_mollie_subscription_id'
     await expect(zetAbonnementZakelijk(rij(), NU)).rejects.toThrow()
+    h.schrijfFout = null
+    await zetAbonnementZakelijk(gestart(), NU)
+    expect(h.maak).toHaveBeenCalledTimes(1)
+    expect(lopend()).toEqual(['sub_nieuw1'])
+  })
+  it('opnieuw proberen binnen het uur na terugdraaien koppelt nooit het gestopte abonnement (B1)', async () => {
+    h.stop.mockImplementationOnce(async () => false)
+    await expect(zetAbonnementZakelijk(rij(), NU)).rejects.toThrow()
     expect(lopend()).toEqual(['sub_oud'])
+    await zetAbonnementZakelijk(gestart(), new Date(NU.getTime() + 60_000))
+    expect(lopend()).toEqual(['sub_nieuw2'])
+    expect(db().mollie_subscription_id).toBe('sub_nieuw2')
+  })
+  it('antwoord van Mollie verloren: later geen tweede abonnement (B3)', async () => {
+    const echt = h.maak.getMockImplementation()!
+    h.maak.mockImplementationOnce(async (i: Rij) => { await echt(i); throw new Error('time-out') })
+    await expect(zetAbonnementZakelijk(rij(), NU)).rejects.toThrow()
+    await zetAbonnementZakelijk(gestart(), new Date('2026-12-02T10:00:00Z'))
+    expect(h.maak).toHaveBeenCalledTimes(1)
+    expect(lopend()).toEqual(['sub_nieuw1'])
+  })
+  it('verweesd nieuw abonnement en de incasso komt dichtbij: eerst weg, dan wachten', async () => {
+    h.mollie.sub_wees = { id: 'sub_wees', status: 'active', nextPaymentDate: '2026-12-15', metadata: { klanttypeCorrectie: 'c1' }, amount: { value: '71.39' } }
+    expect(await zetAbonnementZakelijk(gestart(), new Date('2026-12-13T10:00:00Z'))).toMatchObject({ stand: 'wacht' })
+    expect(lopend()).toEqual(['sub_oud'])
+  })
+  it.each([
+    ['terugbetaald', { status: 'refunded' }],
+    ['beëindigd', { status: 'ended' }],
+    ['ander bedrag', { bedrag_cent: 2900 }],
+    ['ander plan', { plan: 'basis' }],
+    ['andere cyclus', { cyclus: 'jaarlijks' }],
+  ])('abonnement intussen %s: handwerk, verweesd abonnement weg, niets aan de rij (E2, E3)', async (_n, extra) => {
+    h.tabellen.arnobot_subscriptions = [sub(extra)]
+    h.mollie.sub_wees = { id: 'sub_wees', status: 'active', metadata: { klanttypeCorrectie: 'c1' } }
+    expect(await zetAbonnementZakelijk(gestart(), NU)).toMatchObject({ stand: 'handwerk' })
+    expect(lopend()).toEqual(['sub_oud'])
+    expect(h.maak).not.toHaveBeenCalled()
+    expect(db().klant_type).toBe('particulier')
+  })
+  it('opgezegd na een half afgeronde omzetting: het nieuwe abonnement wordt gestopt (B2)', async () => {
+    h.tabellen.arnobot_subscriptions = [sub({ status: 'cancelled', mollie_sub_geannuleerd_at: 'x' })]
+    h.mollie = { sub_wees: { id: 'sub_wees', status: 'active', metadata: { klanttypeCorrectie: 'c1' } } }
+    expect(await zetAbonnementZakelijk(gestart(), NU)).toEqual({ stand: 'omgezet' })
+    expect(lopend()).toEqual([])
   })
   it('database faalt na het stoppen: de herhaling maakt geen derde abonnement en werkt de database bij', async () => {
     h.schrijfFout = 'klant_type'
     await expect(zetAbonnementZakelijk(rij(), NU)).rejects.toThrow()
     h.schrijfFout = null
-    expect(await zetAbonnementZakelijk(rij({ nieuw_mollie_subscription_id: 'sub_nieuw1' }), new Date('2026-12-02T10:00:00Z'))).toEqual({ stand: 'omgezet' })
+    expect(await zetAbonnementZakelijk(gestart(), new Date('2026-12-02T10:00:00Z'))).toEqual({ stand: 'omgezet' })
     expect(h.maak).toHaveBeenCalledTimes(1)
     expect(lopend()).toEqual(['sub_nieuw1'])
     expect(db().mollie_subscription_id).toBe('sub_nieuw1')
   })
   it('blijven liggen terwijl het oude intussen heeft geïncasseerd: het nieuwe gaat weg en er komt een nieuwe start', async () => {
-    h.mollie.sub_blijf = { id: 'sub_blijf', status: 'active', nextPaymentDate: '2026-12-15' }
+    h.mollie.sub_blijf = { id: 'sub_blijf', status: 'active', nextPaymentDate: '2026-12-15', metadata: { klanttypeCorrectie: 'c1' }, amount: { value: '71.39' } }
     h.mollie.sub_oud.nextPaymentDate = '2027-01-15'
-    await zetAbonnementZakelijk(rij({ nieuw_mollie_subscription_id: 'sub_blijf' }), new Date('2026-12-20T10:00:00Z'))
+    await zetAbonnementZakelijk(gestart(), new Date('2026-12-20T10:00:00Z'))
     expect(lopend()).toEqual(['sub_nieuw1'])
     expect(h.mollie.sub_nieuw1.nextPaymentDate).toBe('2027-01-15')
   })
   it('al omgezet, alleen het afvinken mislukt: niets bij Mollie', async () => {
-    h.tabellen.arnobot_subscriptions = [sub({ klant_type: 'zakelijk', mollie_subscription_id: 'sub_nieuw1' })]
-    expect(await zetAbonnementZakelijk(rij({ nieuw_mollie_subscription_id: 'sub_nieuw1' }), NU)).toEqual({ stand: 'omgezet' })
+    h.tabellen.arnobot_subscriptions = [sub({ klant_type: 'zakelijk', bedrag_cent: 7139, mollie_subscription_id: 'sub_nieuw1' })]
+    expect(await zetAbonnementZakelijk(gestart(), NU)).toEqual({ stand: 'omgezet' })
     expect(h.stop).not.toHaveBeenCalled()
   })
-  it('particulier jaar: geen contracteinde meer en een zakelijk abonnement erbij', async () => {
-    h.tabellen.arnobot_subscriptions = [sub({ cyclus: 'jaarlijks', mollie_subscription_id: null, contract_einde: '2027-11-15T00:00:00Z' })]
-    expect(await zetAbonnementZakelijk(rij(), NU)).toEqual({ stand: 'omgezet' })
-    expect(db()).toMatchObject({ klant_type: 'zakelijk', contract_einde: null })
-    expect(h.maakVoor).toHaveBeenCalledWith(expect.objectContaining({ klant_type: 'zakelijk', bedrag_cent: 7139 }), expect.any(Date))
+  it('particulier jaar: geen contracteinde meer en een jaarabonnement vanaf het einde van het betaalde jaar', async () => {
+    h.tabellen.arnobot_subscriptions = [sub({ cyclus: 'jaarlijks', mollie_subscription_id: null, periode_einde: '2027-11-15T00:00:00Z', contract_einde: '2027-11-15T00:00:00Z' })]
+    h.mollie = {}
+    expect(await zetAbonnementZakelijk(rij({ cyclus: 'jaarlijks' }), NU)).toEqual({ stand: 'omgezet' })
+    expect(h.maak.mock.calls[0][0]).toMatchObject({ interval: '12 months', times: null })
+    expect(h.mollie.sub_nieuw1.nextPaymentDate).toBe('2027-11-15')
+    expect(db()).toMatchObject({ klant_type: 'zakelijk', contract_einde: null, mollie_subscription_id: 'sub_nieuw1' })
   })
   it('opgezegd abonnement: alleen de database, geen nieuwe incasso', async () => {
     h.tabellen.arnobot_subscriptions = [sub({ status: 'cancelled', mollie_sub_geannuleerd_at: 'x' })]
     await zetAbonnementZakelijk(rij(), NU)
     expect(h.maak).not.toHaveBeenCalled()
-    expect(h.maakVoor).not.toHaveBeenCalled()
     expect(db().klant_type).toBe('zakelijk')
   })
 })

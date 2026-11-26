@@ -4,6 +4,7 @@ import { isVolledigTerugbetaald } from './terugbetaling'
 import {
   haalAbonnement,
   haalBetaling,
+  lijstKlantAbonnementen,
   maakAbonnement,
   MollieError,
   stopAbonnement,
@@ -585,7 +586,42 @@ export async function stopMollieAbonnement(sub: SubRow): Promise<boolean> {
   ) {
     alles = (await stopEnBevestig(sub, sub.gepland_mollie_subscription_id, 'gepland')) && alles
   }
-  return alles
+  return (await stopCorrectieAbonnementen(sub)) && alles
+}
+
+/** Ontbreekt de tabel (SQL nog niet uitgevoerd), dan kan er ook geen omzetting zijn gestart. */
+export const tabelOntbreekt = (fout: { message: string }) => /does not exist|schema cache/i.test(fout.message)
+
+/**
+ * Stopt abonnementen die bij een nog niet afgeronde omzetting naar zakelijk zijn aangemaakt (lib/billing/klanttypeOmzetten.ts)
+ * en nog niet in de abonnementsrij staan. De lijst bij Mollie is leidend: zo wordt ook een abonnement gevonden waarvan het
+ * antwoord verloren ging. Geeft false als dat niet is gelukt.
+ */
+export async function stopCorrectieAbonnementen(sub: SubRow): Promise<boolean> {
+  try {
+    const { data, error } = await billingDb
+      .from('arnobot_klanttype_correcties')
+      .select('id, omzetting_gestart_at, afgehandeld_at')
+      .eq('subscription_id', sub.id)
+      .limit(50)
+    if (error) {
+      if (tabelOntbreekt(error)) return true
+      throw new Error(error.message)
+    }
+    const ids = new Set((data ?? []).filter(r => r.omzetting_gestart_at && !r.afgehandeld_at).map(r => r.id as string))
+    if (!ids.size) return true
+    let alles = true
+    for (const ms of await lijstKlantAbonnementen(sub.mollie_customer_id)) {
+      const vanOmzetting = ids.has(String(ms.metadata?.klanttypeCorrectie ?? ''))
+      if (!vanOmzetting || ms.id === sub.mollie_subscription_id || (ms.status !== 'active' && ms.status !== 'pending')) continue
+      alles = (await stopEnBevestig(sub, ms.id, 'ongeregistreerd')) && alles
+    }
+    return alles
+  } catch (e) {
+    Sentry.captureException(e, { tags: { onderdeel: 'billing-correctie-abonnement-stoppen' } })
+    await notifyTelegram(`Abonnement van een omzetting naar zakelijk niet te controleren op arno.bot\n\nUser: ${sub.user_id}\nKijk in Mollie of er voor deze klant nog een extra abonnement loopt.`)
+    return false
+  }
 }
 
 /** Toegang volgt de betaalde periode: approved_users.expires_at is het enige dat proxy.ts leest. */

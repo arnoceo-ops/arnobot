@@ -24,19 +24,30 @@ create table if not exists public.arnobot_klanttype_correcties (
 );
 
 alter table public.arnobot_klanttype_correcties
+  add column if not exists plan text not null,
+  add column if not exists cyclus text not null,
   add column if not exists nieuw_bedrag_cent integer not null,
   add column if not exists nieuw_btw_cent integer not null,
+  add column if not exists omzetting_gestart_at timestamptz,
   add column if not exists nieuw_mollie_subscription_id text,
-  add column if not exists abonnement_omgezet_at timestamptz;
+  add column if not exists afgehandeld_at timestamptz,
+  add column if not exists handwerk_reden text,
+  add column if not exists gecrediteerde_betaling_id uuid,
+  add column if not exists gefactureerd_at timestamptz;
+
+-- Slot zodat een abonnement nooit door twee aanroepen tegelijk wordt omgezet.
+alter table public.arnobot_subscriptions
+  add column if not exists klanttype_bezig_tot timestamptz;
 
 create index if not exists arnobot_klanttype_correcties_user_idx on public.arnobot_klanttype_correcties (user_id);
 
 alter table public.arnobot_klanttype_correcties enable row level security;
 
--- Controle 1: dit moet 4 rijen teruggeven.
-select column_name from information_schema.columns
-  where table_schema = 'public' and table_name = 'arnobot_klanttype_correcties'
-  and column_name in ('nieuw_bedrag_cent', 'nieuw_btw_cent', 'nieuw_mollie_subscription_id', 'abonnement_omgezet_at');
-
--- Controle 2: rowsecurity moet true zijn.
-select tablename, rowsecurity from pg_tables where schemaname = 'public' and tablename = 'arnobot_klanttype_correcties';
+-- Controle (een resultaat, want de SQL Editor toont alleen het laatste): kolommen moet 11 zijn en rowsecurity true.
+select
+  (select count(*) from information_schema.columns
+     where table_schema = 'public' and (
+       (table_name = 'arnobot_klanttype_correcties' and column_name in ('plan', 'cyclus', 'nieuw_bedrag_cent', 'nieuw_btw_cent',
+         'omzetting_gestart_at', 'nieuw_mollie_subscription_id', 'afgehandeld_at', 'handwerk_reden', 'gecrediteerde_betaling_id', 'gefactureerd_at'))
+       or (table_name = 'arnobot_subscriptions' and column_name = 'klanttype_bezig_tot'))) as kolommen,
+  (select rowsecurity from pg_tables where schemaname = 'public' and tablename = 'arnobot_klanttype_correcties') as rowsecurity;

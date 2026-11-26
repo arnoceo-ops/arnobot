@@ -18,6 +18,7 @@ vi.mock('@/lib/capaciteit', () => ({ nieuwMelden: async () => true }))
 vi.mock('./mails', () => ({ verstuurBillingMail: h.mail }))
 vi.mock('./moneybird', () => ({ moneybirdIngeschakeld: () => false }))
 vi.mock('./referralKorting', () => ({ redenGeenZelfCorrectie: async () => null }))
+vi.mock('./verwerking', () => ({ tabelOntbreekt: () => false }))
 vi.mock('./klanttypeOmzetten', () => ({ zetAbonnementZakelijk: h.omzet, controleerStart: vi.fn(), zakelijkBedragVan: vi.fn() }))
 vi.mock('./mollie', () => ({
   SITE_URL: 'https://x.test', klantBestaat: async () => true,
@@ -35,6 +36,7 @@ vi.mock('./db', () => ({
       }
       const q: any = {
         select: () => q, limit: () => q, order: () => q, returns: () => q, gt: () => { filters.push(() => false); return q },
+        or: () => { filters.push(r => !r.klanttype_bezig_tot || r.klanttype_bezig_tot < new Date().toISOString()); return q },
         eq: (k: string, v: unknown) => { filters.push(r => r[k] === v); return q },
         is: (k: string, v: unknown) => { filters.push(r => (r[k] ?? null) === v); return q },
         not: (k: string) => { filters.push(r => (r[k] ?? null) !== null); return q },
@@ -52,7 +54,7 @@ import { verwerkKlanttypeCorrectie } from './klanttypeCorrectie'
 
 const rij = (extra: Rij = {}): Rij => ({
   id: 'c1', user_id: 'u1', subscription_id: 's1', status: 'open', mollie_payment_id: 'pl_1', verschil_cent: 1239,
-  nieuw_bedrag_cent: 7139, nieuw_btw_cent: 1239, abonnement_omgezet_at: null, bedrijfsnaam: 'Voorbeeld BV', created_at: '2026-12-01T09:00:00Z', ...extra,
+  nieuw_bedrag_cent: 7139, nieuw_btw_cent: 1239, afgehandeld_at: null, handwerk_reden: null, bedrijfsnaam: 'Voorbeeld BV', created_at: '2026-12-01T09:00:00Z', ...extra,
 })
 // De melding 'betaald' volgt alleen bij het daadwerkelijk afronden; de klantmail hangt aan Moneybird.
 const afgerond = () => h.tg.mock.calls.filter(c => c[0].startsWith('Klanttype-correctie betaald op'))
@@ -76,14 +78,15 @@ describe('betaalde klanttype-correctie', () => {
     await verwerkKlanttypeCorrectie('pl_1', null)
     await verwerkKlanttypeCorrectie('pl_1', null)
     expect(correctie()).toMatchObject({ status: 'paid' })
-    expect(correctie().abonnement_omgezet_at).toBeTruthy()
+    expect(correctie().afgehandeld_at).toBeTruthy()
+    expect(correctie().gefactureerd_at).toBeTruthy()
     expect(afgerond()).toHaveLength(1)
     expect(h.omzet).toHaveBeenCalledTimes(1)
   })
   it('wachten: niet afgevinkt, niet gemaild, wel gemeld', async () => {
     h.omzet.mockResolvedValue({ stand: 'wacht', reden: 'incasso dichtbij' })
     await verwerkKlanttypeCorrectie('pl_1', null)
-    expect(correctie().abonnement_omgezet_at).toBeNull()
+    expect(correctie().afgehandeld_at).toBeNull()
     expect(h.mail).not.toHaveBeenCalled()
     expect(h.tg.mock.calls[0][0]).toContain('nog niet omgezet')
   })
@@ -95,11 +98,29 @@ describe('betaalde klanttype-correctie', () => {
     expect(afgerond()).toHaveLength(1)
   })
   it('tweede betaalde correctie op hetzelfde abonnement: niet nog eens omzetten, wel terugstorten melden', async () => {
-    h.tabellen.arnobot_klanttype_correcties = [rij(), rij({ id: 'c0', mollie_payment_id: 'pl_0', status: 'paid', abonnement_omgezet_at: '2026-11-30T00:00:00Z' })]
+    h.tabellen.arnobot_klanttype_correcties = [rij(), rij({ id: 'c0', mollie_payment_id: 'pl_0', status: 'paid', afgehandeld_at: '2026-11-30T00:00:00Z' })]
     await verwerkKlanttypeCorrectie('pl_1', null)
     expect(h.omzet).not.toHaveBeenCalled()
     expect(h.mail).not.toHaveBeenCalled()
     expect(h.tg.mock.calls[0][0]).toContain('dubbel betaald')
+  })
+  it('slot bezet door een andere aanroep: niets doen, wel als betaald vastgelegd', async () => {
+    h.tabellen.arnobot_subscriptions[0].klanttype_bezig_tot = '2999-01-01T00:00:00Z'
+    await verwerkKlanttypeCorrectie('pl_1', null)
+    expect(h.omzet).not.toHaveBeenCalled()
+    expect(correctie().status).toBe('paid')
+  })
+  it('het slot komt vrij, ook na een fout', async () => {
+    h.omzet.mockRejectedValueOnce(new Error('mollie plat'))
+    await expect(verwerkKlanttypeCorrectie('pl_1', null)).rejects.toThrow()
+    expect(h.tabellen.arnobot_subscriptions[0].klanttype_bezig_tot).toBeNull()
+  })
+  it('handwerk: afgevinkt met reden, niet gefactureerd, wel gemeld', async () => {
+    h.omzet.mockResolvedValue({ stand: 'handwerk', reden: 'het abonnement is intussen refunded' })
+    await verwerkKlanttypeCorrectie('pl_1', null)
+    expect(correctie()).toMatchObject({ handwerk_reden: 'het abonnement is intussen refunded' })
+    expect(afgerond()).toHaveLength(0)
+    expect(h.tg.mock.calls[0][0]).toContain('NIET omgezet')
   })
   it('databasefout bij het opzoeken gooit, zodat Mollie het opnieuw probeert', async () => {
     h.leesFout = true

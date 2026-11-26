@@ -94,6 +94,14 @@ Geen blokkerende bevindingen. H1 t/m H5 en H7 opgelost, H6 deels (N1).
 
 **Proef in testmodus (nog te doen, eerst Arno vragen):** accepteert Mollie expiresAt in dit formaat; mag een nieuw abonnement starten op de nextPaymentDate van het oude en geeft Mollie daarna dezelfde nextPaymentDate terug (de code leunt daarop bij het hervatten); stoppen en bevestigen van het oude.
 
+**Onafhankelijke controle van N5 (26-11, commit 1f1b2c4c): SQL toen niet veilig.** Blokkerend: B1 een nieuwe poging binnen het uur kreeg door de gelijke idempotentiesleutel het gestopte abonnement terug (https://docs.mollie.com/reference/api-idempotency); B2 na een half afgeronde omzetting stopte geen enkel stoppad het nieuwe abonnement; B3 een verloren antwoord leidde tot een tweede abonnement. Ernstig: E1 geen slot na paid, E2 geen controle of het abonnement nog hetzelfde was, E3 terugbetaling en correctie wisten niets van elkaar, E4 facturatie kon stil wegvallen.
+
+**Hersteld op 26-11, 1506 tests groen, nog niet opnieuw gecontroleerd:** de lijst abonnementen van de klant bij Mollie is leidend (metadata klanttypeCorrectie), elke aanmaakpoging heeft een eigen sleutel, omzetting_gestart_at wordt voor het aanmaken vastgelegd en stopMollieAbonnement stopt dan ook het nieuwe abonnement; een slot per abonnement (klanttype_bezig_tot, vervalt na 10 minuten); bij een gewijzigd, beeindigd of terugbetaald abonnement of dubbele betaling niet omzetten maar handwerk melden; creditnotaVoorBetaling slaat een al bij de correctie gecrediteerde factuur over; gefactureerd_at met melding als die leeg blijft; particulier jaar gebruikt dezelfde weg als de rest; teruggedraaide correctiebetaling wordt gemeld; overstappen weigert bij een databasefout; de bedragcontrole vergelijkt per klant de hele lijst (ook weggevallen en onbekende abonnementen). Gekozen: Mollie als bron. Verworpen: een pogingnummer in de sleutel, want dat dekt het verloren antwoord niet.
+
+Bekende rest: is het oude gestopt en blijft de database dagen onbereikbaar, dan weigert verwerking.ts de eerste betaling van het nieuwe abonnement (met melding).
+
+**Extra voor de proef in testmodus:** geeft Mollie metadata terug in de lijst van abonnementen; geeft een nieuw abonnement dezelfde nextPaymentDate als de gevraagde startdatum (ook bij status pending); wat doet stoppen met een al aangemaakte incasso; weigert Mollie een gelijke omschrijving.
+
 Niet vast te stellen uit de Mollie-documentatie (proef in testmodus): of amountRefunded lopende terugbetalingen meetelt en of amountChargedBack weer 0 wordt bij een teruggedraaide chargeback. R5 leunt daarop.
 
 ## Ronde 2: grootboek, **niet klaar om echt te tellen**

@@ -167,6 +167,13 @@ export async function creditnotaVoorBetaling(payRowId: string): Promise<void> {
     await notifyTelegram(`Creditnota met de hand maken in Moneybird (arno.bot)\n\nBetaling: ${rij.mollie_payment_id}\nOp deze betaling is al referraltegoed verrekend. Crediteer alleen het restant: ${(restantCent(rij) / 100).toFixed(2)} euro.`)
     return
   }
+  // Bij het omzetten naar zakelijk is deze factuur al gecrediteerd. Een fout bij het opzoeken (bijvoorbeeld zonder de
+  // tabel) betekent: geen correctie bekend.
+  const { data: gecrediteerd } = await billingDb.from('arnobot_klanttype_correcties').select('id').eq('gecrediteerde_betaling_id', payRowId).limit(1)
+  if (gecrediteerd?.length) {
+    await notifyTelegram(`Creditnota met de hand beoordelen in Moneybird (arno.bot)\n\nBetaling: ${rij.mollie_payment_id}\nDeze factuur is al gecrediteerd bij het omzetten naar zakelijk. Er is nu geen creditnota gemaakt.`)
+    return
+  }
   try {
     const { data: abonnement } = await billingDb
       .from('arnobot_payments')

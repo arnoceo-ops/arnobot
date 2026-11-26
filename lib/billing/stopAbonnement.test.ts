@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // stopMollieAbonnement stopt het huidige en het geplande Mollie-abonnement, elk met een eigen
 // guardkolom, en legt een stop pas vast als Mollie bevestigt dat het gestopt is. De afhankelijkheden
@@ -18,6 +18,8 @@ const h = vi.hoisted(() => {
     haalAbonnement: vi.fn(),
     notifyTelegram: vi.fn(async () => {}),
     updates: [] as Array<{ tabel: string; data: Record<string, unknown>; id: unknown }>,
+    correcties: [] as Array<Record<string, unknown>>,
+    klantAbonnementen: vi.fn(),
   }
 })
 
@@ -29,6 +31,7 @@ vi.mock('./facturatie', () => ({ creditnotaVoorBetaling: vi.fn(), factureerBetal
 vi.mock('./db', () => ({
   billingDb: {
     from: (tabel: string) => ({
+      select: () => ({ eq: () => ({ limit: async () => ({ data: h.correcties, error: null }) }) }),
       update: (data: Record<string, unknown>) => ({
         eq: (_kolom: string, id: unknown) => {
           h.updates.push({ tabel, data, id })
@@ -42,6 +45,7 @@ vi.mock('./mollie', () => ({
   MollieError: h.MollieError,
   stopAbonnement: h.stopAbonnement,
   haalAbonnement: h.haalAbonnement,
+  lijstKlantAbonnementen: h.klantAbonnementen,
   haalBetaling: vi.fn(),
   maakAbonnement: vi.fn(),
 }))
@@ -194,5 +198,33 @@ describe('stopMollieAbonnement', () => {
   it('telt status "completed" als gestopt', async () => {
     h.haalAbonnement.mockResolvedValue({ id: 'x', status: 'completed' })
     expect(await stopMollieAbonnement(rij({ mollie_subscription_id: 'sub_huidig' }))).toBe(true)
+  })
+})
+
+describe('stoppen tijdens een half afgeronde omzetting naar zakelijk', () => {
+  beforeEach(() => {
+    h.correcties = [{ id: 'c1', omzetting_gestart_at: '2026-12-01T00:00:00Z', afgehandeld_at: null }]
+    h.klantAbonnementen.mockReset()
+    h.klantAbonnementen.mockResolvedValue([
+      { id: 'sub_wees', status: 'active', metadata: { klanttypeCorrectie: 'c1' } },
+      { id: 'sub_ander', status: 'active', metadata: {} },
+    ])
+    h.stopAbonnement.mockReset()
+    h.stopAbonnement.mockResolvedValue(undefined)
+    h.haalAbonnement.mockResolvedValue({ status: 'canceled' })
+  })
+  afterEach(() => { h.correcties = [] })
+  it('neemt ook het nog niet vastgelegde nieuwe abonnement mee, en alleen dat', async () => {
+    expect(await stopMollieAbonnement(rij({ mollie_subscription_id: 'sub_oud' }))).toBe(true)
+    expect(h.stopAbonnement.mock.calls.map(c => c[1])).toEqual(['sub_oud', 'sub_wees'])
+  })
+  it('lijst niet op te halen: niet gelukt', async () => {
+    h.klantAbonnementen.mockRejectedValue(new Error('mollie plat'))
+    expect(await stopMollieAbonnement(rij())).toBe(false)
+  })
+  it('afgehandelde correctie: niets extra', async () => {
+    h.correcties = [{ id: 'c1', omzetting_gestart_at: 'x', afgehandeld_at: 'y' }]
+    await stopMollieAbonnement(rij())
+    expect(h.klantAbonnementen).not.toHaveBeenCalled()
   })
 })

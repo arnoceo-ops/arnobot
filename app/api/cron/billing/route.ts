@@ -16,6 +16,7 @@ import { controleerKoppelingen } from '@/lib/billing/gezondheid'
 import { pushActief } from '@/lib/adminPush'
 import { rondOpenstaandeCorrectiesAf } from '@/lib/billing/klanttypeCorrectie'
 import { controleerAbonnementsBedragen } from '@/lib/billing/bedragControle'
+import { nieuwMelden } from '@/lib/capaciteit'
 import { moetAfsluitingUitstellen, WACHT_OP_BETALING_DAGEN } from '@/lib/billing/openstaandeBetaling'
 
 const iso = (d: Date) => d.toISOString()
@@ -197,7 +198,9 @@ async function cronHandler(req: NextRequest) {
       samenvatting.bedragAfwijkingen = await controleerAbonnementsBedragen()
     } catch (e) {
       samenvatting.fouten++
-      await notifyTelegram(`Bedragcontrole van de abonnementen mislukt op arno.bot\n\n${e instanceof Error ? e.message : e}`)
+      if (await nieuwMelden('billing:bedragcontrole-fout', 'waarschuwing')) {
+        await notifyTelegram(`Bedragcontrole van de abonnementen mislukt op arno.bot\n\n${e instanceof Error ? e.message : e}`)
+      }
     }
 
     return NextResponse.json({ ok: true, ...samenvatting })

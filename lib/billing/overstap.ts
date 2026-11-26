@@ -202,13 +202,17 @@ async function plaats(userId: string, wens: Wens | null, nu: Date, modus: 'overs
   const periodeEinde = new Date(sub.periode_einde)
   if (periodeEinde.getTime() <= nu.getTime()) return weiger(409, 'Je betaalperiode is afgelopen. Rond eerst je betaling af.')
 
-  const { data: correcties } = await billingDb
+  const { data: correcties, error: correctieFout } = await billingDb
     .from('arnobot_klanttype_correcties')
-    .select('status, abonnement_omgezet_at, created_at')
+    .select('status, afgehandeld_at, created_at')
     .eq('subscription_id', sub.id)
     .limit(20)
+  // Zonder de tabel bestaan er geen correcties. Elke andere fout: niet wijzigen.
+  if (correctieFout && !/does not exist|schema cache/i.test(correctieFout.message)) {
+    return weiger(502, 'Controleren is niet gelukt. Probeer het zo opnieuw.')
+  }
   const openVanaf = nu.getTime() - CORRECTIE_OPEN_UREN * 60 * 60 * 1000
-  const correctieOpen = (correcties ?? []).some(c => !c.abonnement_omgezet_at
+  const correctieOpen = (correcties ?? []).some(c => !c.afgehandeld_at
     && (c.status === 'paid' || !c.created_at || Date.parse(c.created_at as string) > openVanaf))
   if (correctieOpen) return weiger(409, 'Er staat nog een correctie open. Rond die eerst af.')
 
