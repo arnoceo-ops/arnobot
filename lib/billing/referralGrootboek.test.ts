@@ -776,3 +776,50 @@ describe('14 Lifetime randgevallen', () => {
     expect(boek().map(r => r.soort)).toEqual(['toekenning'])
   })
 })
+
+describe('tweede controle', () => {
+  const gratis = [{ doel_user_id: 'aanbrenger', actie: 'gratis_toegang' }]
+  it('aanbrenger met gratis toegang: niet definitief afwijzen maar zelf beoordelen', async () => {
+    zet({
+      approved_users: [gebruiker('aanbrenger', { trial_start: null, expires_at: '2027-12-31T00:00:00.000Z', eerste_proef_start: '2027-01-01T10:00:00.000Z' }), gebruiker('klant')],
+      arnobot_subscriptions: [klantSub()], arnobot_admin_log: gratis,
+    })
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['handwerk'])
+  })
+  it('klant met gratis toegang wordt daar niet anders van', async () => {
+    zet({ arnobot_admin_log: [{ doel_user_id: 'klant', actie: 'gratis_toegang' }] })
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+  })
+  it('klant ooit op BETAALD, nu gewoon online op tijd en nog in de bedenktijd: wachten, niet bevriezen', async () => {
+    zet({
+      arnobot_admin_log: [{ doel_user_id: 'klant', actie: 'betaald_gezet' }],
+      arnobot_payments: [jaar('klant', { klant_type: 'particulier', betaald_at: '2027-02-05T10:00:00.000Z' })],
+    })
+    const run = await draai(new Date('2027-02-10T06:00:00.000Z'))
+    expect(uitkomst(run).uitkomst).toBe('wacht')
+    expect(boek()).toHaveLength(0)
+  })
+
+  const drieMaanden = () => [
+    factuur({ id: 'f1', created_at: '2027-01-20T06:00:00.000Z', betaald_at: '2027-01-21T10:00:00.000Z', periode_start: '2027-01-20', periode_einde: '2027-02-20' }),
+    factuur({ id: 'f2', created_at: '2027-02-20T06:00:00.000Z', betaald_at: '2027-02-21T10:00:00.000Z', periode_start: '2027-02-20', periode_einde: '2027-03-20' }),
+  ]
+  const draaiTerug = () => Object.assign(h.tabellen.arnobot_team_facturen[0], { status: 'refunded', reversed_at: '2027-03-05T00:00:00.000Z' })
+  it.each([
+    ['alleen team', [] as Rij[]],
+    ['solo naar team', [soloGestopt('2027-01-20T00:00:00.000Z')]],
+  ])('%s: een teruggedraaide eerste teamfactuur laat een toekenning niet vervallen', async (_naam, solo) => {
+    zet({
+      approved_users: [gebruiker('aanbrenger', { command_manager: true }), gebruiker('klant')],
+      arnobot_subscriptions: [...solo, klantSub()], arnobot_teams: [team({ volgende_factuurdatum: '2027-04-20' })],
+      arnobot_team_facturen: drieMaanden(),
+    })
+    await draai()
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+    draaiTerug()
+    await draai(new Date('2027-03-10T06:00:00.000Z'))
+    expect(boek().map(r => r.soort)).toEqual(['toekenning'])
+  })
+})

@@ -65,7 +65,7 @@ async function cronHandler(req: NextRequest) {
       <li>Supabase: <code>arnobot_documenten</code> van deze gebruiker en de bestanden onder zijn map in de bucket <code>arnobot-documenten</code> verwijderen (functie <code>verwijderGebruikersDocumenten</code> in <code>lib/documenten.ts</code>)</li>
       <li>Supabase: de profielen die deze gebruiker uit een andere AI heeft overgenomen verwijderen (functie <code>verwijderGebruikersImports</code> in <code>lib/historieImport.ts</code>)</li>
       <li>Supabase: <code>arnobot_referrals</code>: bij <code>referred_user_id</code> = deze gebruiker het veld <code>referred_naam</code> leegmaken, bij <code>referrer_user_id</code> = deze gebruiker <code>code_used</code> op <code>verwijderd</code> zetten (daar staat de voornaam in). De rijen laten staan: het voordeel en tegoed van de ander hangen eraan</li>
-      <li>Supabase: <code>arnobot_referral_grootboek</code>: rijen met <code>aanbrenger_user_id</code> = deze gebruiker en <code>meeloop = true</code> verwijderen. Rijen waarin hij alleen de nieuwe gebruiker is laten staan (tegoed van de ander, alleen een intern id)</li>
+      <li>Supabase: <code>arnobot_referral_grootboek</code>: rijen laten staan (alleen interne ids, bedragen en de reden; gewiste regels maakt de dagelijkse controle opnieuw). Staat in de reden van een handmatig besluit een naam of andere persoonsgegevens, haal die dan uit de tekst en laat het begin "handmatig besluit: " staan</li>
       <li>Clerk: gebruiker verwijderen via het Clerk dashboard</li>
     </ol>
   `

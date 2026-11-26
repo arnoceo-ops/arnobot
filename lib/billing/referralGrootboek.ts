@@ -107,6 +107,8 @@ interface Dossier {
   facturen: TeamFactuurRow[]
   /** Ooit met de knop BETAALD gezet: dan kan er buiten ons systeem betaald zijn en is de voorgeschiedenis niet volledig. */
   ooitMetDeHandBetaald: boolean
+  /** Ooit gratis toegang gekregen (knop GRATIS): daar is niets over besloten, dus nooit automatisch tegen hem beslissen. */
+  ooitGratisToegang: boolean
 }
 
 /** null: het account bestaat niet meer, ook als het alleen geanonimiseerd is. */
@@ -118,7 +120,7 @@ async function laadDossier(userId: string): Promise<Dossier | null> {
     billingDb.from('arnobot_payments').select('*').eq('user_id', userId).returns<Betaling[]>(),
     billingDb.from('arnobot_team_members').select('team_id').eq('user_id', userId).limit(1),
     billingDb.from('arnobot_teams').select('id, name, manager_id, min_seats, cyclus, volgende_factuurdatum, geblokkeerd_at, stopt_op').eq('manager_id', userId).returns<Team[]>(),
-    billingDb.from('arnobot_admin_log').select('actie').eq('doel_user_id', userId).eq('actie', 'betaald_gezet').limit(1),
+    billingDb.from('arnobot_admin_log').select('actie').eq('doel_user_id', userId).in('actie', ['betaald_gezet', 'gratis_toegang']).limit(1000),
   ])
   const g = verplicht('gebruiker', gebruiker)
   // Anonimiseren bij een verwijderverzoek: de rij blijft staan, zonder naam en e-mailadres.
@@ -134,7 +136,8 @@ async function laadDossier(userId: string): Promise<Dossier | null> {
     isGewoonTeamlid: (verplicht('teamlidmaatschap', lid) ?? []).length > 0 && g.command_manager !== true,
     teams: eigenTeams,
     facturen,
-    ooitMetDeHandBetaald: (verplicht('adminlog', handLog) ?? []).length > 0,
+    ooitMetDeHandBetaald: (verplicht('adminlog', handLog) ?? []).some(r => r.actie === 'betaald_gezet'),
+    ooitGratisToegang: (verplicht('adminlog', handLog) ?? []).some(r => r.actie === 'gratis_toegang'),
   }
 }
 
@@ -265,8 +268,9 @@ async function klantFeiten(d: Dossier, aangemeldAt: string | null, nu: Date): Pr
     proefEindeAt: proefStart ? new Date(Date.parse(proefStart) + TRIAL_DAGEN * DAG_MS).toISOString() : null,
     betaalMomenten,
     periodes,
-    // Ook eerder met de hand: dan kan er op tijd per bank betaald zijn.
-    handmatigBetaald: handmatigOpBetaald(d, nu) || d.ooitMetDeHandBetaald,
+    handmatigBetaald: handmatigOpBetaald(d, nu),
+    // Eerder met de hand: dan kan er op tijd per bank betaald zijn. Telt alleen waar we anders zouden afwijzen.
+    ooitMetDeHandBetaald: d.ooitMetDeHandBetaald,
     proefMogelijkVerlengd: d.gebruiker.sd_attribution_method === 'link' && betaalMomenten.some(m => m.team),
     bijbetalingLoopt: bijbetalingLoopt(d),
   }
@@ -285,7 +289,8 @@ function dekkingVan(d: Dossier, nu: Date): Dekking[] {
   }
   for (const t of betaaldeTeamsVan(d)) {
     // De vroegste van periodestart en aanmaakdag van de factuur: te laat betalen verschuift het begin niet.
-    const starts = d.facturen.filter(f => f.team_id === t.id && teamFactuurStaat(f))
+    // Alle facturen: een later teruggedraaide of onbetaalde eerste factuur maakt het team niet later begonnen.
+    const starts = d.facturen.filter(f => f.team_id === t.id)
       .flatMap(f => [f.periode_start, f.created_at, f.betaald_at])
       .filter((x): x is string => !!x)
       .sort((a, b) => Date.parse(a) - Date.parse(b))
@@ -361,7 +366,7 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
     // Bij Lifetime vervalt niets: een BETAALD-vlag hoeft dan niets tegen te houden.
     handmatigBetaald: !g.lifetime_sinds && handmatigOpBetaald(d, nu),
     // Als gewoon teamlid is de stand wel zeker; daarna niet meer te zien wanneer dat was.
-    historieOnvolledig: d.ooitMetDeHandBetaald || (!d.isGewoonTeamlid && !!g.ooit_teamlid_at),
+    historieOnvolledig: d.ooitMetDeHandBetaald || d.ooitGratisToegang || (!d.isGewoonTeamlid && !!g.ooit_teamlid_at),
     maandNettoCent: maand,
     bijbetalingLoopt: bijbetalingLoopt(d),
   }
@@ -507,7 +512,7 @@ export async function draaiGrootboek(nu: Date, opties: { schrijf: boolean }): Pr
         if (!nuVervallen && !(vanaf && vervallenNaAanmelding(feiten.historie, vanaf, nu))) continue
         if (feiten.historieOnvolledig) {
           // Niet zeker: niets laten vervallen, een keer aan Arno melden.
-          await voegToe({ ...basis, event_key: `verval-handwerk:${t.referral_id}`, soort: 'handwerk', netto_cent: 0, reden: 'tegoed lijkt te vervallen, maar de aanbrenger stond met de hand op betaald of was teamlid' })
+          await voegToe({ ...basis, event_key: `verval-handwerk:${t.referral_id}`, soort: 'handwerk', netto_cent: 0, reden: 'tegoed lijkt te vervallen, maar de aanbrenger stond met de hand op betaald, had gratis toegang of was teamlid' })
           continue
         }
       }

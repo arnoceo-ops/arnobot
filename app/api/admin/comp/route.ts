@@ -35,10 +35,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Ongeldige datum' }, { status: 400 })
   }
 
-  const { data: oud } = await supabase.from('approved_users').select('expires_at, trial_start, paid_at, trial_reactivated_at').eq('user_id', userId).maybeSingle()
+  const { data: oud } = await supabase.from('approved_users').select('expires_at, trial_start, paid_at, trial_reactivated_at, onboarding_done').eq('user_id', userId).maybeSingle()
 
-  // Gratis toegang wist trial_start: de eerste proef eerst bewaren.
-  if (!oud?.trial_reactivated_at) await bewaarEersteProefStart(supabase, userId, oud?.trial_start)
+  // Gratis toegang wist trial_start: de eerste proef eerst bewaren. Alleen na de intake, daarvoor begint ze nog opnieuw.
+  if (oud?.onboarding_done && !oud.trial_reactivated_at) await bewaarEersteProefStart(supabase, userId, oud?.trial_start)
 
   const { error } = await supabase
     .from('approved_users')

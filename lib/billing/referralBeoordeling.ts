@@ -19,6 +19,8 @@ export interface KlantFeiten {
   periodes: BetaaldePeriode[]
   /** Op betaald gezet zonder betaling in ons systeem. */
   handmatigBetaald: boolean
+  /** Ooit met de knop BETAALD gezet, ook als er daarna online is betaald. */
+  ooitMetDeHandBetaald: boolean
   /** De proef van deze teammanager kan met de hand verlengd zijn: "te laat" is dan niet zeker. */
   proefMogelijkVerlengd: boolean
   /** Een upgrade waarvan de bijbetaling nog niet binnen is. */
@@ -29,7 +31,7 @@ export interface AanbrengerFeiten {
   stand: AanbrengerStand
   historie: AanbrengerHistorie
   handmatigBetaald: boolean
-  /** Ooit met de hand op betaald gezet of teamlid geweest: een gat in de voorgeschiedenis is dan niet zeker. */
+  /** Ooit met de hand op betaald gezet, gratis toegang gehad of teamlid geweest: dan nooit automatisch tegen hem beslissen. */
   historieOnvolledig: boolean
   /** Maandprijs exclusief btw van wat de aanbrenger nu betaalt, of het laatst betaalde. null: nooit betaald. */
   maandNettoCent: number | null
@@ -54,7 +56,7 @@ export function beoordeelReferral(klant: KlantFeiten, aanbrenger: AanbrengerFeit
   if (!klant.aangemeldAt || !klant.proefEindeAt) return handwerk('aanmelddatum van de klant onbekend')
   if (!eersteBetalingOpTijd(eerste.at, klant.proefEindeAt, eerste.team)) {
     if (klant.proefMogelijkVerlengd) return handwerk('eerste teambetaling lijkt te laat, maar de teamproef kan verlengd zijn')
-    if (klant.handmatigBetaald) return handwerk('eerste betaling lijkt te laat, maar de klant staat ook met de hand op betaald')
+    if (klant.handmatigBetaald || klant.ooitMetDeHandBetaald) return handwerk('eerste betaling lijkt te laat, maar de klant stond ook met de hand op betaald')
     return { uitkomst: 'afwijzen', reden: 'eerste betaling te laat na de proef' }
   }
   if (klant.bijbetalingLoopt) return wacht('bijbetaling van een upgrade van de klant loopt nog')
@@ -71,13 +73,13 @@ export function beoordeelReferral(klant: KlantFeiten, aanbrenger: AanbrengerFeit
 
   if (aanbrenger.handmatigBetaald) return handwerk('aanbrenger staat met de hand op betaald')
   if (vervallenNaAanmelding(aanbrenger.historie, klant.aangemeldAt, nu)) {
-    if (aanbrenger.historieOnvolledig) return handwerk('aanbrenger lijkt zonder abonnement te zijn geweest, maar stond ook met de hand op betaald of was teamlid')
+    if (aanbrenger.historieOnvolledig) return handwerk('aanbrenger lijkt zonder abonnement te zijn geweest, maar stond ook met de hand op betaald, had gratis toegang of was teamlid')
     return { uitkomst: 'afwijzen', reden: 'aanbrenger zat na deze aanmelding zonder abonnement, tegoed vervallen' }
   }
 
   const status = tegoedStatus(aanbrenger.stand, nu)
   if (status === 'vervallen') {
-    if (aanbrenger.historieOnvolledig) return handwerk('aanbrenger lijkt geen abonnement meer te hebben, maar stond ook met de hand op betaald of was teamlid')
+    if (aanbrenger.historieOnvolledig) return handwerk('aanbrenger lijkt geen abonnement meer te hebben, maar stond ook met de hand op betaald, had gratis toegang of was teamlid')
     return { uitkomst: 'afwijzen', reden: 'aanbrenger had geen abonnement meer toen de drempel werd gehaald' }
   }
 

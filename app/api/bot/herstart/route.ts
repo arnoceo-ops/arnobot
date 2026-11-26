@@ -32,7 +32,7 @@ export async function POST() {
 
   const { data: user } = await supabase
     .from('approved_users')
-    .select('is_active, deactivated_at, winback_sent_at, trial_reactivated_at, trial_start')
+    .select('is_active, deactivated_at, winback_sent_at, trial_reactivated_at, trial_start, onboarding_done')
     .eq('user_id', userId)
     .maybeSingle()
 
@@ -45,8 +45,8 @@ export async function POST() {
 
   const now = new Date()
 
-  // Vóór het overschrijven: de eerste proef bewaren (alleen als dit de eerste herstart is).
-  if (!user.trial_reactivated_at) await bewaarEersteProefStart(supabase, userId, user.trial_start)
+  // Vóór het overschrijven: de eerste proef bewaren (eerste herstart, en alleen als de intake af was).
+  if ('onboarding_done' in user && user.onboarding_done && !user.trial_reactivated_at) await bewaarEersteProefStart(supabase, userId, user.trial_start)
 
   await supabase.from('approved_users').update({
     is_active: true,
