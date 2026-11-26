@@ -156,6 +156,13 @@ B1 t/m B4, E1 t/m E8, de vier kleine punten en de vier besluiten zijn verwerkt, 
 
 **Tweede onafhankelijke controle (commit 567264e1):** SQL toen nog niet veilig. 5 bevindingen, hersteld: gratis toegang en herstart bewaren de proefstart alleen nog na de intake (anders kon de referral fee bij het afrekenen onterecht vervallen); een later teruggedraaide of onbetaalde teamfactuur verschuift het begin van het team niet meer; een aanbrenger die ooit gratis toegang had wordt nooit automatisch afgewezen en verliest niets automatisch, dat is handwerk (niets over besloten, open punt voor Arno); de verwijderchecklist laat het grootboek staan; een klant die ooit op BETAALD stond wordt alleen nog handwerk als hij anders als te laat zou worden afgewezen.
 
+**Derde, gerichte controle (commit 1680ab60): ja,** de SQL kan worden uitgevoerd en de code kan naar productie met het grootboek in meeloopstand.
+
+**Open, oplossen vóór het grootboek echt telt (ronde 3):**
+1. Heeft een team één betaalde factuur, dan telt de vroegste factuur als begin, ook een nooit betaalde of meteen teruggedraaide. Daarmee kan een te late eerste teambetaling of een gat worden omzeild. Voorstel van de controle: maakt zo een nooit betaalde factuur het verschil, dan handwerk. Controleer tot die tijd bij toekenningen aan teammanagers op oude, nooit betaalde teamfacturen.
+2. Bestond al: is de enige betaalde teamfactuur teruggedraaid en het team geblokkeerd, dan kan het tegoed meteen vervallen in plaats van na 30 dagen.
+3. Gratis toegang van vóór het adminlog (14-11), via SQL gegeven of met een mislukte logregel wordt niet herkend.
+
 ## Voorgesteld herstel
 
 1. **Ronde 1:** R2 t/m R8 repareren met tests; een adminactie die tegoed veilig terugstort (R1); duidelijke Telegram-acties voor R8, R9; R10 t/m R13 en R16; teksten (R15) eerst als platte tekst aan Arno.
