@@ -6,7 +6,6 @@ import { useIsMobile } from '@/hooks/useBreakpoint'
 export default function ReferralSection({ inAccount }: { inAccount?: boolean }) {
   const isMobile = useIsMobile()
   const [data, setData] = useState<{ code: string; link: string; referrals: number; converted: number; credit: number } | null>(null)
-  const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -14,7 +13,6 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
       .then(r => r.json())
       .then(d => { if (d.code) setData(d) })
       .catch(() => {})
-      .finally(() => setLoading(false))
   }, [])
 
   function copy() {
@@ -31,8 +29,17 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
   const statLabel: React.CSSProperties = { fontFamily: "'Space Mono', monospace", fontWeight: 400, fontSize: 13, letterSpacing: 4, color: '#f59e0b', marginBottom: 12 }
   const statValue: React.CSSProperties = { fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, lineHeight: 1 }
 
+  // Zonder code geen referralblok, ook geen kop: een gratis account krijgt geen code.
+  if (!data) return null
+
   return (
     <div style={wrapStyle}>
+      {inAccount && (
+        <>
+          <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>REFERRAL</p>
+          <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>JOUW REFERRAL CODE</h1>
+        </>
+      )}
       {!inAccount && (
         <>
           <p style={{ fontFamily: "'Space Mono', monospace", fontWeight: 400, color: '#f59e0b', fontSize: '13px', letterSpacing: '4px', marginBottom: '16px', display: 'block' }}>REFERRAL</p>
@@ -48,20 +55,19 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
         <code style={{
           background: '#1f2937', border: '1.5px solid #374151',
           borderRadius: 4, padding: '12px 16px', fontSize: 14,
-          fontFamily: "'Space Mono', monospace", color: loading ? '#374151' : '#f1f5f9',
+          fontFamily: "'Space Mono', monospace", color: '#f1f5f9',
           letterSpacing: 2, wordBreak: 'break-all', display: 'block',
         }}>
-          {loading ? 'arno.bot/aanmelden?ref=...' : data?.link ?? ''}
+          {data.link}
         </code>
         <button
           onClick={copy}
-          disabled={loading || !data}
           style={{
             fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 3,
             padding: '12px 36px', borderRadius: 999, border: 'none',
-            cursor: loading || !data ? 'default' : 'pointer',
-            background: copied ? '#374151' : loading ? '#374151' : '#f59e0b',
-            color: copied || loading ? '#9ca3af' : '#111827',
+            cursor: 'pointer',
+            background: copied ? '#374151' : '#f59e0b',
+            color: copied ? '#9ca3af' : '#111827',
             transition: 'all 0.15s', whiteSpace: 'nowrap',
             alignSelf: isMobile ? 'stretch' : 'flex-start',
             textAlign: 'center',
@@ -75,7 +81,7 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
           grootboek komt (docs/REFERRAL_CONTROLE_2026-11-26.md, R13). */}
       <div style={{ display: 'flex', gap: 2, flexDirection: isMobile ? 'column' : 'row' }}>
         {[
-          { label: 'AANGEMELD', value: loading ? '...' : String(data?.referrals ?? 0) },
+          { label: 'AANGEMELD', value: String(data.referrals) },
         ].map(({ label, value }) => (
           <div key={label} style={{
             background: '#1f2937', padding: '16px 20px', flex: 1,
@@ -86,7 +92,7 @@ export default function ReferralSection({ inAccount }: { inAccount?: boolean }) 
             textAlign: isMobile ? 'left' : 'center',
           }}>
             <div style={{ ...statLabel, marginBottom: isMobile ? 0 : 12 }}>{label}</div>
-            <div style={{ ...statValue, color: loading ? '#374151' : '#f1f5f9' }}>{value}</div>
+            <div style={{ ...statValue, color: '#f1f5f9' }}>{value}</div>
           </div>
         ))}
       </div>

@@ -4,7 +4,7 @@ import { lijstBetalingTerugbetalingen, mollieIngeschakeld } from './mollie'
 import { huidigSeats, type TeamFactuurRow, type TeamRow } from './teamFacturatie'
 import { formatEuro, mollieNaarCenten } from './geld'
 import {
-  TERMIJN_NA_PROEF_DAGEN, TERMIJN_NA_TEAMPROEF_DAGEN, maandNettoCent, metJaarKorting, tegoedStatus, tijdigMomentTeam, vervalMoment,
+  TERMIJN_NA_PROEF_DAGEN, TERMIJN_NA_TEAMPROEF_DAGEN, VERVAL_NA_BLOKKADE_DAGEN, VERVAL_NA_EINDE_DAGEN, maandNettoCent, metJaarKorting, tegoedStatus, tijdigMomentTeam, vervalMoment,
   vervallenNaAanmelding,
   type BetaaldePeriode, type Dekking,
 } from './referralRegels'
@@ -12,6 +12,7 @@ import { TEAMBEGIN_ONZEKER, beoordeelReferral, type AanbrengerFeiten, type Beoor
 import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
 import { TRIAL_DAGEN } from '@/lib/toegang'
 import { eersteProefStart } from '@/lib/referralKenmerken'
+import { isGratisAccount } from '@/lib/gratisAccount'
 import { berekenBedrag } from './prijzen'
 import { nlVandaag } from '@/lib/nlTijd'
 import { isInternalTestUser, TEST_TEAM_IDS } from '@/lib/internalTestAccounts'
@@ -214,6 +215,20 @@ const teamGestopt = (t: Team, nu: Date) => !!t.stopt_op && t.stopt_op <= nlVanda
 /** Alleen een team waarvoor echt betaald is (en niet teruggedraaid), telt als abonnement van de manager. */
 const betaaldeTeamsVan = (d: Dossier) => d.teams.filter(t => d.facturen.some(f => f.team_id === t.id && teamFactuurStaat(f)))
 
+const heeftTeruggedraaideFactuur = (d: Dossier, t: Team) =>
+  d.facturen.some(f => f.team_id === t.id && (f.status === 'refunded' || !!f.reversed_at || (f.teruggeboekt_cent ?? 0) > 0))
+
+/** Na de blokkade is weer een eigen abonnement afgesloten: die oude blokkade bepaalt de stand dan niet meer. */
+const blokkadeAchterhaald = (d: Dossier, t: Team) => !!t.geblokkeerd_at && d.subs.some(s =>
+  s.status !== 'pending' && s.status !== 'abandoned' && !!s.created_at && Date.parse(s.created_at) > Date.parse(t.geblokkeerd_at!))
+
+/**
+ * Het einde van een geblokkeerd team in de voorgeschiedenis. Met de 14 dagen respijt erbij vervalt het tegoed dan precies
+ * 30 dagen na de blokkade, ook als daarna weer iets is afgesloten.
+ */
+const eindeNaBlokkade = (geblokkeerdAt: string) =>
+  new Date(Date.parse(geblokkeerdAt) + (VERVAL_NA_BLOKKADE_DAGEN - VERVAL_NA_EINDE_DAGEN) * DAG_MS).toISOString()
+
 /**
  * Staat paid_at met de hand gezet (de knop BETAALD) en is er niets in ons systeem dat de toegang nu verklaart? Bij een
  * online betaling is paid_at precies het betaalmoment van die betaling.
@@ -288,7 +303,12 @@ function dekkingVan(d: Dossier, nu: Date, alleenBetaaldeFacturen = false): Dekki
         : s.periode_einde ?? s.updated_at ?? start
     uit.push({ start, einde, team: false })
   }
-  for (const t of betaaldeTeamsVan(d)) {
+  const betaald = betaaldeTeamsVan(d)
+  // Zonder staande betaling telt een team ook als tijdvak als zijn betaling is teruggedraaid, of als na de blokkade weer
+  // een eigen abonnement is afgesloten. Niet in de strenge variant.
+  const zonderBetaling = alleenBetaaldeFacturen ? [] : d.teams.filter(t => !betaald.includes(t)
+    && (heeftTeruggedraaideFactuur(d, t) || (blokkadeAchterhaald(d, t) && d.facturen.some(f => f.team_id === t.id))))
+  for (const t of [...betaald, ...zonderBetaling]) {
     // De vroegste van periodestart en aanmaakdag van de factuur: te laat betalen verschuift het begin niet.
     // Alle facturen: een later teruggedraaide of onbetaalde eerste factuur maakt het team niet later begonnen. Maakt zo
     // een factuur het verschil, dan beslist Arno: daarvoor rekent aanbrengerFeiten ook de strenge variant uit.
@@ -296,7 +316,10 @@ function dekkingVan(d: Dossier, nu: Date, alleenBetaaldeFacturen = false): Dekki
       .flatMap(f => [f.periode_start, f.created_at, f.betaald_at])
       .filter((x): x is string => !!x)
       .sort((a, b) => Date.parse(a) - Date.parse(b))
-    if (starts[0]) uit.push({ start: starts[0], einde: teamGestopt(t, nu) ? `${t.stopt_op}T00:00:00.000Z` : null, team: true })
+    const einde = teamGestopt(t, nu) ? `${t.stopt_op}T00:00:00.000Z`
+      : t.geblokkeerd_at && (blokkadeAchterhaald(d, t) || zonderBetaling.includes(t)) ? eindeNaBlokkade(t.geblokkeerd_at)
+        : null
+    if (starts[0]) uit.push({ start: starts[0], einde, team: true })
   }
   return uit
 }
@@ -305,16 +328,16 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
   const betaaldeTeams = betaaldeTeamsVan(d)
   const gestopt = (t: Team) => teamGestopt(t, nu)
   const lopendTeam = betaaldeTeams.find(t => !gestopt(t) && !t.geblokkeerd_at)
-  const geblokkeerdTeam = betaaldeTeams.find(t => !gestopt(t) && !!t.geblokkeerd_at)
+  const geblokkeerdTeam = betaaldeTeams.find(t => !gestopt(t) && !!t.geblokkeerd_at && !blokkadeAchterhaald(d, t))
   // Facturatie staat aan en er is nog niets betaald: de eerste factuur komt nog of staat open (ook solo naar Team).
   const heeftOpenFactuur = (t: Team) => d.facturen.some(f => f.team_id === t.id && (f.status === 'open' || f.status === 'overdue'))
   const onbetaald = d.teams.filter(t => !gestopt(t) && !betaaldeTeams.includes(t))
-  const teamInAfwachting = !lopendTeam
-    && onbetaald.some(t => !t.geblokkeerd_at && (heeftOpenFactuur(t) || (t.min_seats !== null && !!t.volgende_factuurdatum)))
+  // Ook na een teruggedraaide factuur: de toegang blokkeren we niet vanzelf, dus tot een blokkade of stop wacht alles.
+  const teamInAfwachting = !lopendTeam && onbetaald.some(t => !t.geblokkeerd_at
+    && (heeftOpenFactuur(t) || heeftTeruggedraaideFactuur(d, t) || (t.min_seats !== null && !!t.volgende_factuurdatum)))
   // Geblokkeerd om een onbetaalde of teruggedraaide eerste factuur: telt niet als betalend, het tegoed staat wel stil.
-  const heeftTeruggedraaideFactuur = (t: Team) =>
-    d.facturen.some(f => f.team_id === t.id && (f.status === 'refunded' || !!f.reversed_at || (f.teruggeboekt_cent ?? 0) > 0))
-  const geblokkeerdOnbetaald = onbetaald.find(t => !!t.geblokkeerd_at && (heeftOpenFactuur(t) || heeftTeruggedraaideFactuur(t)))
+  const geblokkeerdOnbetaald = onbetaald.find(t => !!t.geblokkeerd_at && !blokkadeAchterhaald(d, t)
+    && (heeftOpenFactuur(t) || heeftTeruggedraaideFactuur(d, t)))
 
   const lopendeSub = d.subs
     .filter(lopend)
@@ -370,6 +393,7 @@ async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<AanbrengerFeiten>
     },
     historie,
     strengeHistorie: { ...historie, dekking: dekkingVan(d, nu, true) },
+    gratis: !d.isGewoonTeamlid && !loopt && isGratisAccount(g),
     // Bij Lifetime vervalt niets: een BETAALD-vlag hoeft dan niets tegen te houden.
     handmatigBetaald: !g.lifetime_sinds && handmatigOpBetaald(d, nu),
     // Als gewoon teamlid is de stand wel zeker; daarna niet meer te zien wanneer dat was.

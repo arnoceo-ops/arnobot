@@ -33,6 +33,8 @@ export interface AanbrengerFeiten {
   /** Dezelfde historie, waarin een team pas begint bij een factuur die nu betaald staat. */
   strengeHistorie?: AanbrengerHistorie
   handmatigBetaald: boolean
+  /** Nu een gratis account (lib/gratisAccount.ts): nooit tegoed. */
+  gratis?: boolean
   /** Ooit met de hand op betaald gezet, gratis toegang gehad of teamlid geweest: dan nooit automatisch tegen hem beslissen. */
   historieOnvolledig: boolean
   /** Maandprijs exclusief btw van wat de aanbrenger nu betaalt, of het laatst betaalde. null: nooit betaald. */
@@ -85,6 +87,7 @@ function beoordeel(klant: KlantFeiten, aanbrenger: AanbrengerFeiten, nu: Date): 
   }
   const klantMaandNettoCent = gehaald.periode.maandNettoCent
 
+  if (aanbrenger.gratis) return { uitkomst: 'afwijzen', reden: 'aanbrenger heeft een gratis account' }
   if (aanbrenger.handmatigBetaald) return handwerk('aanbrenger staat met de hand op betaald')
   if (vervallenNaAanmelding(aanbrenger.historie, klant.aangemeldAt, nu)) {
     if (aanbrenger.historieOnvolledig) return handwerk('aanbrenger lijkt zonder abonnement te zijn geweest, maar stond ook met de hand op betaald, had gratis toegang of was teamlid')

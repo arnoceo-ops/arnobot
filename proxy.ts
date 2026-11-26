@@ -1,5 +1,6 @@
 ﻿import { clerkMiddleware, createRouteMatcher, clerkClient } from '@clerk/nextjs/server'
 import { createClient } from '@supabase/supabase-js'
+import { isGratisAccount } from '@/lib/gratisAccount'
 import { NextResponse } from 'next/server'
 import { beslisZonderToegang, datumToegang } from '@/lib/toegang'
 import { BRON_COOKIE, schoonBron } from '@/lib/bron'
@@ -241,10 +242,12 @@ export default clerkMiddleware(async (auth, req) => {
             if (refCode && /^[A-Z0-9-]{4,20}$/.test(refCode)) {
               const { data: referrer } = await supabase
                 .from('approved_users')
-                .select('user_id, voornaam, full_name, email')
+                // Alle kolommen: isGratisAccount heeft ook lifetime_sinds nodig.
+                .select('*')
                 .eq('referral_code', refCode)
                 .maybeSingle()
-              if (referrer && referrer.user_id !== userId) {
+              // De code van een gratis account is niet geldig: geen aanmelding.
+              if (referrer && referrer.user_id !== userId && !isGratisAccount(referrer)) {
                 const { data: existingRef } = await supabase
                   .from('arnobot_referrals')
                   .select('id')

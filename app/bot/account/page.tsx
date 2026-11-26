@@ -297,11 +297,7 @@ export default function AccountPage() {
 
         {/* Referral — openingssectie (verborgen voor gewone teamleden; managers mogen referren) */}
         {teamStatusLoaded && !teamStatusFailed && !isTeamMember && !isNativeApp && (
-          <>
-            <p style={{ color: '#f59e0b', fontSize: 13, letterSpacing: 4, marginBottom: 8 }}>REFERRAL</p>
-            <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 64, letterSpacing: 3, margin: '0 0 32px 0', lineHeight: 1 }}>JOUW REFERRAL CODE</h1>
-            <ReferralSection inAccount />
-          </>
+          <ReferralSection inAccount />
         )}
 
 

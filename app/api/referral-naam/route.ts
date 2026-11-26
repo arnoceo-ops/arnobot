@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
+import { isGratisAccount, type GratisKenmerken } from '@/lib/gratisAccount'
 
 // Openbaar, voor de aanmeldpagina: "[Voornaam] nodigt je uit." Geeft bij een geldige referralcode alleen de
 // voornaam van de aanbrenger terug (die staat meestal al in de code zelf), verder niets.
@@ -31,10 +32,12 @@ export async function GET(req: NextRequest) {
 
     const { data } = await supabase
       .from('approved_users')
-      .select('voornaam')
+      .select('*')
       .eq('referral_code', code)
-      .maybeSingle<{ voornaam: string | null }>()
-    return NextResponse.json({ voornaam: data?.voornaam ?? null })
+      .maybeSingle<GratisKenmerken & { voornaam: string | null }>()
+    // De code van een gratis account is niet geldig.
+    if (!data || isGratisAccount(data)) return niets
+    return NextResponse.json({ voornaam: data.voornaam ?? null })
   } catch {
     return niets
   }

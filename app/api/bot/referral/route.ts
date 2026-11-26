@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { isGewoonTeamlid } from '@/lib/teamAccess'
+import { isGratisAccount } from '@/lib/gratisAccount'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,11 +29,13 @@ export async function GET() {
 
   const { data: user } = await supabase
     .from('approved_users')
-    .select('referral_code, referral_credit, voornaam, full_name')
+    // Alle kolommen: isGratisAccount heeft ook lifetime_sinds nodig.
+    .select('*')
     .eq('user_id', userId)
     .maybeSingle()
 
   if (!user) return NextResponse.json({ error: 'Gebruiker niet gevonden' }, { status: 404 })
+  if (isGratisAccount(user)) return NextResponse.json({ error: 'Referralprogramma is niet beschikbaar voor dit account' }, { status: 400 })
 
   let code = user.referral_code
   if (!code) {
