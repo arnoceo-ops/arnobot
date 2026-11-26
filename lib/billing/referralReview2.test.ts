@@ -71,9 +71,16 @@ describe('F7: wat per bank is gegeven staat apart van wat via Mollie is terugges
   it('vergelijken met wat Mollie noemt gebeurt zonder het bankbedrag', () => {
     expect(heeftAndereTerugbetaling(rij, 1500)).toBe(true)
     expect(heeftAndereTerugbetaling(rij, 1000)).toBe(false)
-    // Een bankbedrag maakt een gedeeltelijke terugbetaling niet volledig.
-    expect(isVolledigTerugbetaald(rij, 3900)).toBe(false)
+    // 2000 per bank en 3900 via Mollie: de klant heeft alles terug, dan eindigt het abonnement.
+    expect(isVolledigTerugbetaald(rij, 3900)).toBe(true)
+    expect(isVolledigTerugbetaald(rij, 3899)).toBe(false)
     expect(isVolledigTerugbetaald(rij, 5900)).toBe(true)
+    // Bij Mollie alleen referraltegoed terug is nooit een terugbetaling van de koop.
+    expect(isVolledigTerugbetaald({ bedrag_cent: 5900, referral_refund_cent: 1000, referral_bank_cent: 4900 }, 1000)).toBe(false)
+    expect(isVolledigTerugbetaald({ bedrag_cent: 5900, referral_bank_cent: 5900 }, 0)).toBe(false)
+    // Zonder bankbedrag precies als voorheen.
+    expect(isVolledigTerugbetaald({ bedrag_cent: 5900 }, 5899)).toBe(false)
+    expect(isVolledigTerugbetaald({ bedrag_cent: 5900 }, 5900)).toBe(true)
   })
   it('de mail na terugbetalen door de beheerder noemt alleen wat nu echt teruggaat', async () => {
     h.rij.referral_bank_cent = 2000

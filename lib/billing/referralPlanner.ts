@@ -445,15 +445,18 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
     // Is zijn voorgeschiedenis niet volledig (met de hand betaald of gratis geweest, of hij betaalde als manager
     // teamfacturen), dan weten we niet of er echt niets meer van hem is: dan beslist de eigenaar, nooit het systeem.
     const onvolledig = feiten.historieOnvolledig || !!feiten.betaaldeTeamfactuur
+    // Heeft de eigenaar van een toekenning besloten haar te behouden, dan wordt er niet opnieuw over gevraagd en
+    // vervalt zij niet, ook niet als de voorgeschiedenis verder volledig is.
+    const teVervallen = toekenningen.filter(t => restVanToekenning(werk, t.referral_id) > 0
+      && !eigen.some(r => r.event_key.startsWith(`verval-behoud:${t.referral_id}:`)))
+    if (!teVervallen.length) return
+    // Wat er echt van zou vervallen: zonder wat behouden is.
+    const vervalCent = teVervallen.reduce((som, t) => som + restVanToekenning(werk, t.referral_id), 0)
     if (onvolledig) {
-      const teVragen = toekenningen.filter(t => restVanToekenning(werk, t.referral_id) > 0
-        // Al eens besloten het te behouden: niet opnieuw vragen en niets laten vervallen.
-        && !eigen.some(r => r.event_key.startsWith(`verval-behoud:${t.referral_id}:`)))
-      if (!teVragen.length) return
       const waarom = 'tegoed lijkt te vervallen, maar de voorgeschiedenis van dit teamlid is niet volledig (met de hand betaald, gratis geweest of als manager teamfacturen betaald)'
-      nieuw({ soort: 'verval_teamlid', userId, nettoCent: overCent, stand: 'niet-automatisch', reden: `${waarom}: de eigenaar beslist op /bot/admin/referrals`, opMeeloop: ronde.opMeeloop })
+      nieuw({ soort: 'verval_teamlid', userId, nettoCent: vervalCent, stand: 'niet-automatisch', reden: `${waarom}: de eigenaar beslist op /bot/admin/referrals`, opMeeloop: ronde.opMeeloop })
       if (!uitvoeren || !omschrijvingen.tegoed_terugstorten) return
-      for (const t of teVragen) {
+      for (const t of teVervallen) {
         const { data, error } = await billingDb.rpc('referral_boek', {
           p_regel: { soort: 'handwerk', event_key: `verval-handwerk:${t.referral_id}`, referral_id: t.referral_id, aanbrenger_user_id: userId, klant_user_id: t.klant_user_id, reden: waarom },
         })
@@ -461,12 +464,11 @@ export async function planReferral(nu: Date, opties: PlanOpties): Promise<PlanRo
       }
       return
     }
-    const v = nieuw({ soort: 'verval_teamlid', userId, nettoCent: overCent, stand: 'vervalt', reden: 'past niet meer in zijn eigen betalingen', opMeeloop: ronde.opMeeloop })
+    const v = nieuw({ soort: 'verval_teamlid', userId, nettoCent: vervalCent, stand: 'vervalt', reden: 'past niet meer in zijn eigen betalingen', opMeeloop: ronde.opMeeloop })
     // Definitief: alleen als terugstorten ook echt ingericht is (schakelaar, SQL en vastgestelde klanttekst).
     if (!uitvoeren || !omschrijvingen.tegoed_terugstorten) return
     await stelVast()
-    for (const t of toekenningen) {
-      if (restVanToekenning(werk, t.referral_id) <= 0) continue
+    for (const t of teVervallen) {
       const { data, error } = await billingDb.rpc('referral_boek', { p_regel: { soort: 'verval', referral_id: t.referral_id, reden: 'teamlid: past niet meer in eigen betalingen' } })
       if (error || !(data as { ok?: boolean } | null)?.ok) throw new Error(`verval niet geboekt: ${error?.message ?? (data as { reden?: string } | null)?.reden}`)
     }

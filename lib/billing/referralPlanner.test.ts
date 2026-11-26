@@ -948,6 +948,20 @@ describe('F3: bij een onvolledige voorgeschiedenis vervalt tegoed van een teamli
     await geenVerval()
     expect(await vragen()).toHaveLength(1)
   })
+  it('"behouden" geldt ook als de voorgeschiedenis wel volledig is', async () => {
+    await teamlidZonderRuimte()
+    await h.db.voegToe('arnobot_referral_grootboek', regel('handwerk', 'r1', 0, { event_key: 'verval-behoud:r1:1', id: uuid(974), reden: 'handmatig besluit: houden' }))
+    const r = await plan()
+    await geenVerval()
+    expect(r.voornemens.filter((v: any) => v.stand === 'vervalt')).toEqual([])
+  })
+  it('de melding noemt alleen wat echt vervalt, niet wat behouden is', async () => {
+    await teamlidZonderRuimte({ arnobot_referral_grootboek: [regel('toekenning', 'r1', 1900), regel('toekenning', 'r2', 1000)] })
+    await h.db.voegToe('arnobot_referral_grootboek', regel('handwerk', 'r1', 0, { event_key: 'verval-behoud:r1:1', id: uuid(975), reden: 'handmatig besluit: houden' }))
+    const r = await plan()
+    expect(r.voornemens).toMatchObject([{ soort: 'verval_teamlid', stand: 'vervalt', nettoCent: 1000 }])
+    expect((await grootboek()).filter(x => x.soort === 'verval').map(x => [x.referral_id, x.netto_cent])).toEqual([['r2', -1000]])
+  })
   it('de droogloop schrijft geen vraag', async () => {
     await teamlidZonderRuimte({ arnobot_admin_log: [{ actie: 'betaald_gezet', doel_user_id: 'aanbrenger' }] })
     await droog()

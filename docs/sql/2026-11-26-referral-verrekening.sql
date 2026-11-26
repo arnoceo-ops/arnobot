@@ -760,6 +760,7 @@ declare
   v record;
   b record;
   afgekapt boolean := false;
+  te_veel integer;
 begin
   if p_refund_id is null or p_refund_id !~ '^re_[A-Za-z0-9]+$' or coalesce(btrim(p_reden), '') = '' then
     return jsonb_build_object('ok', false, 'reden', 'ongeldig');
@@ -783,7 +784,9 @@ begin
       select g.hoort_bij, min(g.referral_id) as referral_id, min(g.aanbrenger_user_id) as aanbrenger_user_id,
         min(g.klant_user_id) as klant_user_id, sum(g.netto_cent)::integer as terug_cent
       from arnobot_referral_grootboek g
-      where not g.meeloop and g.actie_id = p_actie and g.soort in ('vrijgave', 'verval')
+      -- Wat de actie echt gebruikte, ook als het bij het teruggeven meteen weer verviel (dat herstelt de correctie
+      -- hieronder).
+      where not g.meeloop and g.actie_id = p_actie and g.soort = 'vrijgave'
       group by g.hoort_bij
       having sum(g.netto_cent) > 0
     loop
@@ -791,6 +794,25 @@ begin
         netto_cent, reden, klant_maand_netto_cent, actie_id, hoort_bij)
       values ('verrekening:' || p_actie || ':' || v.hoort_bij || ':hand', false, 'verrekening', v.referral_id, v.aanbrenger_user_id,
         v.klant_user_id, -v.terug_cent, 'met de hand bevestigd: ' || p_reden, null, p_actie, v.hoort_bij);
+      -- Verval haalt alleen ongebruikt tegoed weg. Dit geld blijkt toch gebruikt: wat daardoor te veel vervallen is
+      -- gaat van het verval af, hooguit wat er (nog) als vervallen staat. Wat niet door verval komt blijft een schuld.
+      te_veel := least(greatest(0, -public.referral_rest(v.hoort_bij)), greatest(0, coalesce((select -sum(g.netto_cent)
+        from arnobot_referral_grootboek g where not g.meeloop and g.soort = 'verval' and coalesce(g.hoort_bij, g.referral_id) = v.hoort_bij), 0)))::integer;
+      if te_veel > 0 then
+        -- Staat de toekenning teruggedraaid, dan was die terugdraaiing met het te hoge verval berekend. Die ene regel
+        -- wordt gelijk bijgewerkt, zodat de schuld er meteen staat en een later herstel het goede bedrag teruggeeft.
+        -- Dit is de enige plek die een bestaande grootboekregel aanpast; de reden zegt dat en waarom.
+        if public.referral_teruggedraaid(v.hoort_bij) then
+          update arnobot_referral_grootboek set netto_cent = netto_cent - te_veel,
+              reden = coalesce(reden, '') || ' (bijgesteld met ' || (-te_veel) || ' cent na een bevestiging met de hand, actie ' || p_actie || ')'
+            where not meeloop and event_key = 'terugdraaiing:' || v.hoort_bij || ':' || (select count(*) from arnobot_referral_grootboek g
+              where not g.meeloop and g.soort = 'terugdraaiing' and coalesce(g.hoort_bij, g.referral_id) = v.hoort_bij);
+        end if;
+        insert into arnobot_referral_grootboek (event_key, meeloop, soort, referral_id, aanbrenger_user_id, klant_user_id,
+          netto_cent, reden, klant_maand_netto_cent, actie_id, hoort_bij)
+        values ('verval:' || v.hoort_bij || ':correctie:' || p_actie, false, 'verval', v.referral_id, v.aanbrenger_user_id,
+          v.klant_user_id, te_veel, 'dit tegoed was toch gebruikt en dus niet vervallen', null, p_actie, v.hoort_bij);
+      end if;
     end loop;
     if a.doel_soort = 'betaling' and a.bruto_cent > 0 then
       select * into b from arnobot_payments p where p.id::text = a.doel_id and p.user_id::text = a.user_id for update;

@@ -25,7 +25,10 @@ export function heeftAndereTerugbetaling(rij: TerugbetaalRij, terugbetaaldCent: 
   return terugbetaaldCent > tegoedDeel(rij)
 }
 
-/** Volledig terugbetaald: alles is terug én dat is niet alleen referraltegoed. */
+/**
+ * Volledig terugbetaald: alles is terug én dat is niet alleen referraltegoed. terugbetaaldCent is wat Mollie noemt; wat
+ * per bank terugging staat daar niet in, dus bij Mollie hoeft alleen de rest terug te zijn.
+ */
 export function isVolledigTerugbetaald(rij: TerugbetaalRij, terugbetaaldCent: number): boolean {
-  return terugbetaaldCent >= rij.bedrag_cent && heeftAndereTerugbetaling(rij, terugbetaaldCent)
+  return terugbetaaldCent >= rij.bedrag_cent - (rij.referral_bank_cent ?? 0) && heeftAndereTerugbetaling(rij, terugbetaaldCent)
 }
