@@ -108,6 +108,10 @@ Bekende rest: is het oude gestopt en blijft de database dagen onbereikbaar, dan 
 
 **Volgorde nu:** Mollie-proef (alleen API, testsleutel), SQL, proef van de hele keten door de eigenaar, dan KLANTTYPE_OPEN=true. Het slot is niet tegen de echte database beproefd; bij de ketenproef nakijken.
 
+**Controle van 56cf217b (26-11): de SQL kan veilig worden uitgevoerd zolang KLANTTYPE_OPEN niet is gezet.** Slot en teamactivatie in orde (PostgREST neemt alleen or/and mee bij het teruglezen), niemand komt buiten de schakelaar om. Daarna hersteld: N9 (na terugstorten tijdens een half afgeronde omzetting kon de klant zonder incasso blijven; nu blijft het lopende abonnement staan met een waarschuwing) en N10 (bedragcontrole ook voor een gepland abonnement op een afgesloten rij). Deze twee herstellingen zijn niet opnieuw door een agent gecontroleerd.
+
+**Extra voor de proef in testmodus:** is amountRefunded op de betaling van de betaallink al gevuld zolang de terugstorting nog loopt? Zo niet, dan kan de cron na "stort terug om af te breken" toch omzetten.
+
 Niet vast te stellen uit de Mollie-documentatie (proef in testmodus): of amountRefunded lopende terugbetalingen meetelt en of amountChargedBack weer 0 wordt bij een teruggedraaide chargeback. R5 leunt daarop.
 
 ## Ronde 2: grootboek, **niet klaar om echt te tellen**

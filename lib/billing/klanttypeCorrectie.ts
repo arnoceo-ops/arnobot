@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/nextjs'
 import { billingDb, type PayRow, type SubRow } from './db'
 import { mollieNaarCenten } from './geld'
-import { betaaldeBetalingVanLink, klantBestaat, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
+import { betaaldeBetalingVanLink, haalAbonnement, klantBestaat, maakBetaalLink, maakKlant, SITE_URL } from './mollie'
 import {
   btwTariefId,
   omzetGrootboekId,
@@ -195,6 +195,29 @@ async function vinkAf(rijId: string, handwerkReden: string | null = null): Promi
 const meldHandwerk = (rij: KlanttypeCorrectieRow, betaalId: string, reden: string) =>
   notifyTelegram(`Klanttype-correctie betaald, NIET omgezet op arno.bot\n\nUser: ${rij.user_id}\nBetaling: ${betaalId}\nBedrag: €${(rij.verschil_cent / 100).toFixed(2)}\nReden: ${reden}\nEr is niet gefactureerd. Stort het verschil terug of regel het met de hand.`)
 
+/** Het verschil is terug: niet (verder) omzetten, en nooit de klant zonder incasso achterlaten. */
+async function breekAf(rij: KlanttypeCorrectieRow, betaalId: string): Promise<void> {
+  const { data: sub, error } = await billingDb.from('arnobot_subscriptions').select('*').eq('id', rij.subscription_id).maybeSingle<SubRow>()
+  if (error) throw new Error(`abonnement opzoeken mislukt: ${error.message}`)
+
+  let stand = 'Er is niet omgezet en niet gefactureerd.'
+  if (sub && sub.klant_type === 'zakelijk' && sub.bedrag_cent === rij.nieuw_bedrag_cent) {
+    stand = 'LET OP: het abonnement was al omgezet naar zakelijk. Er is niet gefactureerd. Draai het met de hand terug of reken het verschil alsnog af.'
+  } else if (sub) {
+    // Is het oude abonnement al gestopt, dan is dat van de eerdere poging de enige incasso: die laten we staan.
+    const oudWeg = !!rij.omzetting_gestart_at && sub.status === 'active' && !!sub.mollie_subscription_id
+      && (await haalAbonnement(sub.mollie_customer_id, sub.mollie_subscription_id)).status !== 'active'
+    if (oudWeg) {
+      stand = 'LET OP: de omzetting was half klaar. Het oude abonnement is gestopt en het nieuwe loopt op het ZAKELIJKE bedrag; dat is niet gestopt. Herstel dit met de hand in Mollie en in arnobot_subscriptions vóór de volgende incasso. Er is niet gefactureerd.'
+    } else if (!(await stopCorrectieAbonnementen(sub))) {
+      throw new Error('abonnement van een eerdere poging niet te stoppen')
+    }
+  }
+  if (await vinkAf(rij.id, 'het verschil is terugbetaald of teruggeboekt')) {
+    await notifyTelegram(`Klanttype-correctie afgebroken op arno.bot\n\nUser: ${rij.user_id}\nBetaling: ${betaalId}\nHet verschil is terugbetaald of teruggeboekt. ${stand}`)
+  }
+}
+
 /** Het vervolg op een betaalde correctie: abonnement omzetten, daarna een keer factureren en mailen. */
 async function rondCorrectieAf(rijId: string, betaalId: string, teruggestort: boolean): Promise<void> {
   // Opnieuw lezen onder het slot: een eerdere houder kan al klaar zijn.
@@ -207,13 +230,7 @@ async function rondCorrectieAf(rijId: string, betaalId: string, teruggestort: bo
   if (!rij || rij.afgehandeld_at) return
 
   if (teruggestort) {
-    // Een abonnement van een eerdere poging mag niet blijven lopen.
-    const { data: sub, error } = await billingDb.from('arnobot_subscriptions').select('*').eq('id', rij.subscription_id).maybeSingle<SubRow>()
-    if (error) throw new Error(`abonnement opzoeken mislukt: ${error.message}`)
-    if (sub && !(await stopCorrectieAbonnementen(sub))) throw new Error('abonnement van een eerdere poging niet te stoppen')
-    if (await vinkAf(rij.id, 'het verschil is terugbetaald of teruggeboekt')) {
-      await notifyTelegram(`Klanttype-correctie afgebroken op arno.bot\n\nUser: ${rij.user_id}\nBetaling: ${betaalId}\nHet verschil is terugbetaald of teruggeboekt. Er is niet omgezet en niet gefactureerd.`)
-    }
+    await breekAf(rij, betaalId)
     return
   }
 

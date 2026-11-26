@@ -64,6 +64,10 @@ describe('bedragcontrole', () => {
     expect(await controleerAbonnementsBedragen()).toBe(1)
     expect(h.tg.mock.calls[0][0]).toContain('Onbekend lopend abonnement')
   })
+  it('afgesloten rij met een nog lopend gepland abonnement: melding', async () => {
+    h.subs = [sub({ status: 'refunded', mollie_sub_geannuleerd_at: 'x', gepland_mollie_subscription_id: 'a' })]
+    expect(await controleerAbonnementsBedragen()).toBe(1)
+  })
   it('niet te lezen bij Mollie: fout, niet stil', async () => {
     h.plat = true
     await expect(controleerAbonnementsBedragen()).rejects.toThrow()

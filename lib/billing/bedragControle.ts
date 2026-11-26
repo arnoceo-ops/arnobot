@@ -24,7 +24,8 @@ export async function controleerAbonnementsBedragen(): Promise<number> {
   if (error) throw new Error(`abonnementen ophalen mislukt: ${error.message}`)
 
   const hoortTeLopen = (s: SubRow) => s.status === 'active' || s.status === 'cancelled'
-  const mogelijkNogOpen = (s: SubRow) => !!s.mollie_subscription_id && !s.mollie_sub_geannuleerd_at
+  const mogelijkNogOpen = (s: SubRow) => (!!s.mollie_subscription_id && !s.mollie_sub_geannuleerd_at)
+    || (!!s.gepland_mollie_subscription_id && !s.gepland_mollie_sub_geannuleerd_at)
   const perKlant = new Map<string, SubRow[]>()
   for (const s of (data ?? []).filter(s => !isInternalTestUser(s.user_id) && s.mollie_customer_id && (hoortTeLopen(s) || mogelijkNogOpen(s)))) {
     perKlant.set(s.mollie_customer_id, [...(perKlant.get(s.mollie_customer_id) ?? []), s])

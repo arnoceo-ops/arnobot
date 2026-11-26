@@ -10,6 +10,7 @@ const h = vi.hoisted(() => ({
   stopExtra: vi.fn(async () => true),
   teruggestort: null as null | string,
   moneybird: false,
+  oudStatus: 'active',
   mail: vi.fn(async () => true),
   tg: vi.fn(async (_t: string) => {}),
   leesFout: false,
@@ -24,7 +25,7 @@ vi.mock('./referralKorting', () => ({ redenGeenZelfCorrectie: async () => null }
 vi.mock('./verwerking', () => ({ stopCorrectieAbonnementen: h.stopExtra }))
 vi.mock('./klanttypeOmzetten', () => ({ zetAbonnementZakelijk: h.omzet, controleerStart: vi.fn(), zakelijkBedragVan: vi.fn() }))
 vi.mock('./mollie', () => ({
-  SITE_URL: 'https://x.test', klantBestaat: async () => true,
+  SITE_URL: 'https://x.test', klantBestaat: async () => true, haalAbonnement: async () => ({ status: h.oudStatus }),
   betaaldeBetalingVanLink: async () => ({ id: 'tr_1', status: 'paid', amount: { currency: 'EUR', value: '12.39' }, ...(h.teruggestort ? { amountRefunded: { value: h.teruggestort } } : {}) }),
 }))
 vi.mock('./db', () => ({
@@ -68,6 +69,7 @@ beforeEach(() => {
   h.leesFout = false
   h.teruggestort = null
   h.moneybird = false
+  h.oudStatus = 'active'
   h.omzet.mockResolvedValue({ stand: 'omgezet' })
   h.tabellen = {
     arnobot_klanttype_correcties: [rij()],
@@ -138,6 +140,21 @@ describe('betaalde klanttype-correctie', () => {
     expect(h.omzet).not.toHaveBeenCalled()
     expect(h.stopExtra).toHaveBeenCalled()
     expect(correctie().handwerk_reden).toBeTruthy()
+  })
+  it('teruggestort na een half afgeronde omzetting: het enige lopende abonnement blijft, met waarschuwing', async () => {
+    h.teruggestort = '12.39'
+    h.oudStatus = 'canceled'
+    h.tabellen.arnobot_klanttype_correcties = [rij({ omzetting_gestart_at: '2026-12-01T09:30:00Z' })]
+    Object.assign(h.tabellen.arnobot_subscriptions[0], { status: 'active', mollie_subscription_id: 'sub_oud' })
+    await verwerkKlanttypeCorrectie('pl_1', null)
+    expect(h.stopExtra).not.toHaveBeenCalled()
+    expect(h.tg.mock.calls[0][0]).toContain('half klaar')
+  })
+  it('teruggestort terwijl al omgezet: dat staat in de melding', async () => {
+    h.teruggestort = '12.39'
+    Object.assign(h.tabellen.arnobot_subscriptions[0], { klant_type: 'zakelijk', bedrag_cent: 7139 })
+    await verwerkKlanttypeCorrectie('pl_1', null)
+    expect(h.tg.mock.calls[0][0]).toContain('al omgezet')
   })
   it('geen e-mailadres terwijl er gefactureerd moet worden: gemeld, niet stil', async () => {
     h.moneybird = true
