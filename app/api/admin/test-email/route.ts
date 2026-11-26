@@ -32,7 +32,8 @@ const CRON_MET_TESTKNOP: { type: string; cron: string; echteActie?: boolean }[] 
   { type: 'meta_analyse_reminder', cron: '/api/cron/meta-analyse-reminder' },
 ]
 
-const ADMIN_ONLY_ITEMS: { type: string; label: string; description: string; category: 'admin'; cron: string; echteActie: boolean }[] = CRON_MET_TESTKNOP.map(({ type, cron, echteActie }) => {
+// Een functie, zodat de tijden na het verzetten van de klok meteen kloppen.
+const adminItems = (): { type: string; label: string; description: string; category: 'admin'; cron: string; echteActie: boolean }[] => CRON_MET_TESTKNOP.map(({ type, cron, echteActie }) => {
   const regel = leesCrons().find(c => c.pad === cron)
   return {
     type,
@@ -50,7 +51,7 @@ export async function GET() {
   if (!adminKeyMatches(token)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const templates = [...getEmailTemplateList().map(t => ({ ...t, cronTekst: mailCronTekst(t.type) })), ...ADMIN_ONLY_ITEMS]
+  const templates = [...getEmailTemplateList().map(t => ({ ...t, cronTekst: mailCronTekst(t.type) })), ...adminItems()]
   return NextResponse.json({ templates })
 }
 
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
 
   const { type } = await req.json()
 
-  const adminItem = ADMIN_ONLY_ITEMS.find(i => i.type === type)
+  const adminItem = adminItems().find(i => i.type === type)
   if (adminItem) {
     // Gebruik de host van het binnenkomende request om redirect-drops van de Authorization header te voorkomen
     const host = req.headers.get('host') ?? 'arno.bot'

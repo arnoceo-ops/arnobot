@@ -62,10 +62,22 @@ export type CronRegel = CronInfo & { pad: string; schema: string; schemaTekst: s
 const DAGEN = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag']
 const MAANDEN = ['', 'januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december']
 
-const tijd = (uur: string, minuut: string) => `${uur.padStart(2, '0')}:${minuut.padStart(2, '0')} UTC`
+/**
+ * vercel.json plant in UTC, wij tonen Nederlandse tijd. Het verschil (1 of 2 uur) hangt van de datum
+ * af: vandaag, of bij een schema met een vaste maand die maand. Zou de omrekening over middernacht
+ * gaan, dan klopt de dag in de tekst niet meer en blijft de tijd in UTC staan, met die vermelding.
+ */
+function tijd(uur: string, minuut: string, maand: string, dag: string, nu: Date): string {
+  const peil = /^\d+$/.test(maand)
+    ? Date.UTC(nu.getUTCFullYear(), Number(maand) - 1, parseInt(dag, 10), Number(uur), Number(minuut))
+    : Date.UTC(nu.getUTCFullYear(), nu.getUTCMonth(), nu.getUTCDate(), Number(uur), Number(minuut))
+  const nl = new Intl.DateTimeFormat('nl-NL', { timeZone: 'Europe/Amsterdam', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(peil))
+  if (Number(nl.slice(0, 2)) < Number(uur)) return `${uur.padStart(2, '0')}:${minuut.padStart(2, '0')} UTC`
+  return nl
+}
 
 /** Leesbare tekst bij een vijfdelig cron-schema. Onbekende vormen komen ongewijzigd terug, de test faalt daarop. */
-export function schemaTekst(schema: string): string {
+export function schemaTekst(schema: string, nu: Date = new Date()): string {
   const d = schema.trim().split(/\s+/)
   if (d.length !== 5) return schema
   const [min, uur, dag, maand, weekdag] = d
@@ -79,13 +91,13 @@ export function schemaTekst(schema: string): string {
     return `elk uur, op :${min.padStart(2, '0')}`
   }
   if (getal.test(min) && getal.test(uur)) {
-    if (dag === '*' && maand === '*' && weekdag === '*') return `dagelijks ${tijd(uur, min)}`
-    if (dag === '*' && maand === '*' && getal.test(weekdag)) return `${DAGEN[Number(weekdag) % 7]} ${tijd(uur, min)}`
-    if (getal.test(dag) && maand === '*' && weekdag === '*') return `maandelijks op de ${dag}e, ${tijd(uur, min)}`
-    if (getal.test(dag) && getal.test(maand) && weekdag === '*') return `${dag} ${MAANDEN[Number(maand)]}, ${tijd(uur, min)}`
+    if (dag === '*' && maand === '*' && weekdag === '*') return `dagelijks ${tijd(uur, min, maand, dag, nu)}`
+    if (dag === '*' && maand === '*' && getal.test(weekdag)) return `${DAGEN[Number(weekdag) % 7]} ${tijd(uur, min, maand, dag, nu)}`
+    if (getal.test(dag) && maand === '*' && weekdag === '*') return `maandelijks op de ${dag}e, ${tijd(uur, min, maand, dag, nu)}`
+    if (getal.test(dag) && getal.test(maand) && weekdag === '*') return `${dag} ${MAANDEN[Number(maand)]}, ${tijd(uur, min, maand, dag, nu)}`
     if (/^\d+-\d+$/.test(dag) && getal.test(maand) && weekdag === '*') {
       const [van, tot] = dag.split('-')
-      return `${van} t/m ${tot} ${MAANDEN[Number(maand)]}, ${tijd(uur, min)}`
+      return `${van} t/m ${tot} ${MAANDEN[Number(maand)]}, ${tijd(uur, min, maand, dag, nu)}`
     }
   }
   return schema
@@ -99,7 +111,7 @@ export function leesCrons(): CronRegel[] {
   })
 }
 
-/** Tekst voor een cron op pad, bijvoorbeeld voor "Trigger: Cron:trial-emails (dagelijks 04:05 UTC)". */
+/** Tekst voor een cron op pad, bijvoorbeeld voor "Trigger: Cron:trial-emails (dagelijks 05:05)". */
 export function cronTrigger(slug: string): string {
   const regel = leesCrons().find(c => c.pad === `/api/cron/${slug}`)
   return `Cron:${slug} (${regel ? regel.schemaTekst : 'niet in vercel.json'})`

@@ -51,12 +51,20 @@ describe('schemaTekst', () => {
     expect(schemaTekst('*/15 * * * *')).toBe('elk kwartier')
     expect(schemaTekst('0 * * * *')).toBe('elk uur, op :00')
     expect(schemaTekst('40 * * * *')).toBe('elk uur, op :40')
-    expect(schemaTekst('5 4 * * *')).toBe('dagelijks 04:05 UTC')
-    expect(schemaTekst('0 4 * * 6')).toBe('zaterdag 04:00 UTC')
-    expect(schemaTekst('15 7 * * 1')).toBe('maandag 07:15 UTC')
-    expect(schemaTekst('5 4 1 * *')).toBe('maandelijks op de 1e, 04:05 UTC')
-    expect(schemaTekst('0 8 16 10 *')).toBe('16 oktober, 08:00 UTC')
-    expect(schemaTekst('0 8 25-29 11 *')).toBe('25 t/m 29 november, 08:00 UTC')
+    const winter = new Date('2026-11-26T12:00:00Z')
+    expect(schemaTekst('5 4 * * *', winter)).toBe('dagelijks 05:05')
+    expect(schemaTekst('0 4 * * 6', winter)).toBe('zaterdag 05:00')
+    expect(schemaTekst('15 7 * * 1', winter)).toBe('maandag 08:15')
+    expect(schemaTekst('5 4 1 * *', winter)).toBe('maandelijks op de 1e, 05:05')
+    // Een vaste maand rekent met die maand: 16 oktober is nog zomertijd.
+    expect(schemaTekst('0 8 16 10 *', winter)).toBe('16 oktober, 10:00')
+    expect(schemaTekst('0 8 25-29 11 *', winter)).toBe('25 t/m 29 november, 09:00')
+  })
+  it('rekent in de zomer met twee uur verschil', () => {
+    expect(schemaTekst('5 4 * * *', new Date('2027-07-01T12:00:00Z'))).toBe('dagelijks 06:05')
+  })
+  it('houdt UTC aan als de omrekening op een andere dag uitkomt', () => {
+    expect(schemaTekst('30 23 * * 6', new Date('2026-11-26T12:00:00Z'))).toBe('zaterdag 23:30 UTC')
   })
   it('geeft een onbekende vorm ongewijzigd terug', () => {
     expect(schemaTekst('1 2 3')).toBe('1 2 3')
@@ -70,6 +78,6 @@ describe('leesCrons en cronTrigger', () => {
     expect(crons.every(c => c.schemaTekst && c.naam)).toBe(true)
   })
   it('bouwt de triggertekst uit het echte schema', () => {
-    expect(cronTrigger('trial-emails')).toBe('Cron:trial-emails (dagelijks 04:05 UTC)')
+    expect(cronTrigger('trial-emails')).toMatch(/^Cron:trial-emails \(dagelijks 0[56]:05\)$/)
   })
 })

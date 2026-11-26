@@ -164,7 +164,7 @@ export default async function KennisbankPage() {
             )}
           </div>
           <div style={{ borderTop: '1px solid #374151', paddingTop: 16 }}>
-            <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 4 }}>RSS INGEST: loopt automatisch elke zaterdag om middernacht UTC</p>
+            <p style={{ fontFamily: 'sans-serif', fontSize: 12, letterSpacing: 3, color: '#6b7280', marginBottom: 4 }}>RSS INGEST: loopt automatisch in de nacht van vrijdag op zaterdag</p>
             <p style={{ fontFamily: 'sans-serif', fontSize: 14, color: meta['last_rss_run'] ? '#f1f5f9' : '#374151', marginBottom: 12 }}>
               {meta['last_rss_run']
                 ? `Laatst gedraaid: ${new Date(meta['last_rss_run']).toLocaleString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`

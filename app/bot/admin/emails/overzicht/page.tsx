@@ -69,7 +69,7 @@ export default async function EmailsOverzichtPage() {
           ]} />
         </Section>
 
-        <Section title={`ALLE GEPLANDE CRONS (${crons.length})`} subtitle="Rechtstreeks uit vercel.json, dus altijd compleet. Tijden in UTC: Nederlandse tijd is 1 uur later in de winter en 2 uur later in de zomer.">
+        <Section title={`ALLE GEPLANDE CRONS (${crons.length})`} subtitle="Rechtstreeks uit vercel.json, dus altijd compleet. Tijden in Nederlandse tijd. De crons draaien op een vaste tijd in UTC, dus in de zomer een uur later dan in de winter.">
           <Table rows={crons.map(c => {
             const g = beoordeelCron(runs[c.pad], c.schema, new Date(), registratieStart)
             return {
