@@ -7,6 +7,7 @@
  *            of:  [{ "code": "O1", "sessie": "<begin session_id>", "vraag": "..." }]  nieuwe vraag vandaag na het hele gesprek, zonder
  *                 geheugen en kennisfragmenten: de geschiedenis is dan de enige bron van oude informatie.
  * Met "tot": 4 bij een nieuwe vraag ziet het model alleen de eerste 4 beurten, op het tijdstip van beurt 5.
+ * Met "kaal": true bij een nieuwe vraag, ter vergelijking als doorlopend gesprek: zonder datums en zonder hervatinstructie.
  * Schrijft niets in de database. Harde grens: $2.
  */
 import { readFileSync, writeFileSync, existsSync } from 'fs'
@@ -22,7 +23,7 @@ for (const l of readFileSync(envPad, 'utf8').split(/\r?\n/)) {
 }
 process.env.VITEST = '1' // zet de kostenmeting uit, zodat niets in de database komt
 
-type Geval = { code: string; sessie: string; beurt?: number; vraag?: string; tot?: number }
+type Geval = { code: string; sessie: string; beurt?: number; vraag?: string; tot?: number; kaal?: boolean }
 type Rij = { session_id: string; question: string; answer: string; bron_context: string | null; verbruik: { lengte?: string } | null; created_at: string; user_id: string }
 type Uitslag = { code: string; run: number; vraag: string; vraagRegel: string; historie: number; antwoord: string; kostenUsd: number; stop: string }
 
@@ -63,7 +64,7 @@ async function main() {
     if (!hervatting) throw new Error(`${g.code}: geen stilte van meer dan 48 uur`)
 
     let kennis = ''
-    let persoonlijk = bouwProfielContext(null, '', new Date(nu)) + HERVAT_TEKST
+    let persoonlijk = bouwProfielContext(null, '', new Date(nu)) + (g.kaal ? '' : HERVAT_TEKST)
     if (g.beurt) {
       if (!rij?.bron_context) throw new Error(`${g.code}: geen bewaarde context`)
       const oudBlok = /EERDER DEEL VAN DIT GESPREK \(laatste bericht .*?\):\n[^\n]*\n[^\n]*/
@@ -76,9 +77,10 @@ async function main() {
       kennis = delen.slice(0, start).join('\n\n---\n\n')
       persoonlijk = delen[iProfiel] + (iGeheugen >= 0 ? delen.slice(iGeheugen, iProfiel).join('\n\n---\n\n') : '') + delen.slice(iProfiel + 1).join('\n\n---\n\n')
     }
-    if (!persoonlijk.includes('Je ziet het eerdere gesprek')) throw new Error(`${g.code}: nieuwe instructie ontbreekt`)
+    if (persoonlijk.includes('Je ziet het eerdere gesprek') === Boolean(g.kaal)) throw new Error(`${g.code}: hervatinstructie klopt niet met het geval`)
 
-    const historie = hervatting.gedateerd as Anthropic.MessageParam[]
+    const historie = (g.kaal ? hervatting.kaal : hervatting.gedateerd) as Anthropic.MessageParam[]
+    const vraagRegel = g.kaal ? '' : hervatting.vraagRegel
     const vraag = g.vraag ?? rij!.question
     const eerste = sessie[0]
     const eerdereSessies = new Set(logs.filter(r => r.user_id === eerste.user_id && r.created_at < eerste.created_at).map(r => r.session_id)).size
@@ -88,7 +90,7 @@ async function main() {
     const metTools = /\d/.test(vraag + ' ' + hervatting.kaal.slice(-6).map(h => h.content).join(' '))
     const tools = metTools ? CHAT_REKENTOOLS.filter(t => /[|\t]/.test(vraag) || (t.name !== 'schrijf_tabel_over' && t.name !== 'tabel_vraag')) : undefined
 
-    const berichten: Anthropic.MessageParam[] = [...historie, { role: 'user', content: `${hervatting.vraagRegel}\n${vraag}` }]
+    const berichten: Anthropic.MessageParam[] = [...historie, { role: 'user', content: vraagRegel ? `${vraagRegel}\n${vraag}` : vraag }]
     const tabelStaat = maakTabelStaat()
     const decoder = new TextDecoder()
     let antwoord = ''
@@ -114,7 +116,7 @@ async function main() {
     }
     uitgegeven += kosten
     duurste = Math.max(duurste, kosten)
-    uitslagen.push({ code: g.code, run, vraag, vraagRegel: hervatting.vraagRegel, historie: historie.length, antwoord: haalWerkruisWeg(antwoord), kostenUsd: kosten, stop })
+    uitslagen.push({ code: g.code, run, vraag, vraagRegel, historie: historie.length, antwoord: haalWerkruisWeg(antwoord), kostenUsd: kosten, stop })
     writeFileSync(uitPad, JSON.stringify(uitslagen, null, 1))
   }
   console.log(`klaar: ${uitslagen.length} antwoorden, geschatte kosten $${uitgegeven.toFixed(2)} (grens $${MAX_USD})`)
