@@ -3221,13 +3221,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 </p>
               ) : (
               <p className="groeibalans-tellers">
-                <b>{groeibalans.tellers.gesprekken}</b> gesprekken
+                <b>{groeibalans.tellers.gesprekken}</b> {groeibalans.tellers.gesprekken === 1 ? 'gesprek' : 'gesprekken'}
                 <span className="sep">·</span>
-                <b style={groeibalans.bouwsteen === 'sparsessies' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.sparsessies}</b> sparsessies
+                <b style={groeibalans.bouwsteen === 'sparsessies' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.sparsessies}</b> {groeibalans.tellers.sparsessies === 1 ? 'sparsessie' : 'sparsessies'}
                 <span className="sep">·</span>
-                <b style={groeibalans.bouwsteen === 'analyses' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.analyses}</b> analyses
+                <b style={groeibalans.bouwsteen === 'analyses' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.analyses}</b> {groeibalans.tellers.analyses === 1 ? 'analyse' : 'analyses'}
                 <span className="sep">·</span>
-                <b style={groeibalans.bouwsteen === 'coaching' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.coaching}</b> coachings
+                <b style={groeibalans.bouwsteen === 'coaching' && groeibalans.state !== 'neutraal' ? { color: groeibalans.kleur.border } : undefined}>{groeibalans.tellers.coaching}</b> {groeibalans.tellers.coaching === 1 ? 'coaching' : 'coachings'}
               </p>
               )}
               <div className="groeibalans-onder">

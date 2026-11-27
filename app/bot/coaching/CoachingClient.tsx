@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { coachingIsActueel } from '@/lib/coachingActueel'
+import { nieuweCoachingZeker } from '@/lib/coachingActueel'
 import Link from 'next/link'
 import BotNav from '../BotNav'
 import { useUser, useAuth } from '@clerk/nextjs'
@@ -35,6 +35,7 @@ interface CoachingDoc {
   blogs: { title: string; url: string; reden: string }[]
   conversation_count: number
   updated_at?: string
+  used_session_ids?: string[]
   weinig_voortgang?: boolean
   stagnatie?: boolean
   signalen?: string[]
@@ -43,13 +44,7 @@ interface CoachingDoc {
 interface Stats {
   sessionCount: number
   totalQuestions: number
-  lastSessionDate: string | null
-}
-
-interface SavedAnalyse {
-  id: string
-  created_at: string
-  session_count: number
+  sessionIds: string[]
 }
 
 interface CoachingHistoryEntry {
@@ -114,9 +109,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
   const [blockReason, setBlockReason] = useState<'te_weinig' | 'te_weinig_voortgang' | 'stagnatie' | 'hoge_scores' | null>(null)
   const [teWeinigCount, setTeWeinigCount] = useState(0)
   const [stats, setStats] = useState<Stats | null>(null)
-  const [analyses, setAnalyses] = useState<SavedAnalyse[]>([])
   const [statsKlaar, setStatsKlaar] = useState(false)
-  const [analysesKlaar, setAnalysesKlaar] = useState(false)
   const autoStartGedaan = useRef(false)
   const [uitdaging, setUitdaging] = useState<string | null>(null)
   const [scoreHistory, setScoreHistory] = useState<ScoreEntry[]>([])
@@ -197,16 +190,11 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
         setStats({
           sessionCount: sessions.length,
           totalQuestions: sessions.reduce((sum: number, s: { message_count?: number }) => sum + (s.message_count || 0), 0),
-          lastSessionDate: sessions[0]?.created_at ?? null,
+          sessionIds: sessions.map((s: { session_id: string }) => s.session_id),
         })
       })
       .catch(() => {})
       .finally(() => setStatsKlaar(true))
-    fetch('/api/bot/coaching-analyses')
-      .then(r => r.json())
-      .then(data => setAnalyses(data.analyses ?? []))
-      .catch(() => {})
-      .finally(() => setAnalysesKlaar(true))
     fetch('/api/bot/coaching-history')
       .then(r => r.json())
       .then(data => setHistory(data.history ?? []))
@@ -280,7 +268,9 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
     setGenerating(false)
   }
 
-  const isUpToDate = coachingIsActueel(doc?.updated_at, stats?.lastSessionDate, analyses[0]?.created_at)
+  // Actueel = er is een advies en een nieuw advies lukt niet zeker (zelfde regel als de kaart op /bot).
+  // Zonder used_session_ids (oude cache) of gesprekken is dat nog niet te zeggen.
+  const isUpToDate = !!doc?.used_session_ids && !!stats && !nieuweCoachingZeker(doc, stats.sessionIds)
 
   // Leesmoment (lib/coachingGelezen.ts): pas als het advies echt zichtbaar is, dus geladen uit de
   // database en niet tijdens het genereren (dan staat het oude advies gedimd). Per versie van het
@@ -300,7 +290,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
   // te bepalen), één keer, de parameter gaat uit de URL zodat een refresh niet opnieuw genereert,
   // en nooit als het advies al actueel is.
   useEffect(() => {
-    if (autoStartGedaan.current || loading || !statsKlaar || !analysesKlaar || !scoresLoaded) return
+    if (autoStartGedaan.current || loading || !statsKlaar || !scoresLoaded) return
     if (new URLSearchParams(window.location.search).get('start') !== '1') return
     autoStartGedaan.current = true
     const url = new URL(window.location.href)
@@ -309,7 +299,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
     if (!isUpToDate && !generating) setTimeout(() => { void generate() }, 0)
     // generate is een functie in dezelfde render en leest alleen setters; bewust niet in de deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, statsKlaar, analysesKlaar, scoresLoaded, isUpToDate, generating])
+  }, [loading, statsKlaar, scoresLoaded, isUpToDate, generating])
 
   const hasMSA = doc?.mindset_score != null && doc?.systeem_score != null && doc?.actie_score != null
 
@@ -484,7 +474,7 @@ export default function CoachingClient({ userId, plan, gesprekBookedAt, showSpar
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
               <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', flexShrink: 0, marginTop: 10 }} />
               <p style={{ fontFamily: "'Space Mono', monospace", color: '#9ca3af', fontSize: 15, lineHeight: '29px', fontWeight: 400 }}>
-                Je coaching is recent. Doe nog een paar gesprekken, dan heeft een nieuw advies meer diepte.
+                Er is nog te weinig nieuws sinds je laatste coaching. Doe nog een paar gesprekken, dan heeft een nieuw advies meer diepte.
               </p>
             </div>
           )}

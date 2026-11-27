@@ -10,6 +10,7 @@ import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
 import { getRelevantChunks } from '@/lib/rag'
 import { computeMsaScore } from '@/lib/msa'
+import { nieuweCoachingZeker, COACHING_MAX_GESPREKKEN } from '@/lib/coachingActueel'
 import { planHistorieBlok } from '@/lib/analyseContext'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS } from '@/lib/systemPrompt'
 import { berekenActiePatroon } from '@/lib/actiePatroon'
@@ -89,7 +90,7 @@ export async function POST() {
       .is('deleted_at', null)
       .eq('community_excluded', false)
       .order('created_at', { ascending: false })
-      .limit(50),
+      .limit(COACHING_MAX_GESPREKKEN),
     // Los van de 50-limiet hierboven (die de AI-analyse behapbaar houdt): het werkelijke totaal
     // aantal gesprekken, voor tellingen die de gebruiker te zien krijgt (signalen, conversation_count).
     // sessions.length zou daarvoor nooit boven de 50 kunnen uitkomen, ook niet bij bijvoorbeeld 65.
@@ -118,7 +119,7 @@ export async function POST() {
       .maybeSingle(),
     supabase
       .from('arnobot_coaching')
-      .select('updated_at, used_session_ids, used_analyse_ids, mindset_score, mindset_diagnose, systeem_score, systeem_diagnose, actie_score, actie_diagnose, voortgang')
+      .select('updated_at, used_session_ids, used_analyse_ids, mindset_score, mindset_diagnose, systeem_score, systeem_diagnose, actie_score, actie_diagnose, voortgang, weinig_voortgang')
       .eq('user_id', userId)
       .maybeSingle(),
     supabase
@@ -191,7 +192,6 @@ export async function POST() {
   let stagnatie = false
 
   if (prevCoaching) {
-    const hoursSince = (Date.now() - new Date((prevCoaching as any).updated_at ?? 0).getTime()) / 3600000
     const allPrevHighScores =
       ((prevCoaching.mindset_score ?? 0) >= 4) &&
       ((prevCoaching.systeem_score ?? 0) >= 4) &&
@@ -203,7 +203,7 @@ export async function POST() {
     const newSessions = sessions.filter(s => !prevSessionIds.has(s.session_id))
     const newAnalyses = analyses.filter(a => !prevAnalyseIds.has(a.id))
     const newSparring = sparringSessions.filter(s => new Date(s.created_at) > new Date((prevCoaching as any).updated_at ?? 0))
-    const forceAllow = newSessions.length >= 3 && hoursSince >= 48
+    const forceAllow = nieuweCoachingZeker(prevCoaching, sessions.map(s => s.session_id))
 
     // Alleen het handmatige testaccount mag de voortgangsblokkade omzeilen, om de generatietijd te kunnen meten.
     const isMeettestAccount = userId === MANUAL_TEST_USER_ID
@@ -677,7 +677,8 @@ Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken
   meet('opslaan')
   const tijden = { ...stappen, totaal: Date.now() - t0 }
   console.log('[coaching tijden ms]', JSON.stringify(tijden))
-  return NextResponse.json({ coaching: doc }, {
+  // payload i.p.v. doc: de coachingspagina heeft updated_at en used_session_ids nodig voor "Advies is actueel".
+  return NextResponse.json({ coaching: payload }, {
     headers: { 'Server-Timing': Object.entries(tijden).map(([naam, ms]) => `${naam};dur=${ms}`).join(', ') },
   })
 }
