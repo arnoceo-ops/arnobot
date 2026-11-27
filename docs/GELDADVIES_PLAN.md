@@ -3,7 +3,7 @@
 ## Status
 
 **Laatst bijgewerkt:** 27 november 2026
-**Waar we staan:** nulmeting en voorstel voor de kernset van het examen zijn klaar. Er is niets aan de chat, de prompt of de database aangepast. Arno moet de kernset en vier salesoordelen nog goedkeuren.
+**Waar we staan:** nulmeting en voorstel voor de kernset van het examen zijn klaar, de vier salesoordelen zijn gegeven. Er is niets aan de chat, de prompt of de database aangepast. Arno moet de kernset als geheel nog goedkeuren.
 **Eerstvolgende stap:** na akkoord op de kernset het oorzaakonderzoek (zie fase 2). Modellen en betaalde testruns pas na dat akkoord.
 
 - [x] Fase 0: nulmeting en kritische toets van het plan
@@ -32,7 +32,8 @@ Gesprekken, namen en bedragen van gebruikers komen niet in dit document of elder
 - **Toets (Arno, 27 november):** kan een ontbrekend gegeven het oordeel omdraaien, dan vraagt ArnoBot eerst; anders noemt het de aanname hardop.
 - **Toets (Arno, 27 november):** bij een prijswijziging vraagt ArnoBot of de kosten meedalen of al meegedaald zijn.
 - **Toets (Arno, 27 november):** vraagt een klant om andere contractvoorwaarden, dan eerst bellen en de aanleiding achterhalen (mogelijk wil de klant weg) en kijken wat de klant kan behouden. Een al gegeven voordeel wordt in dat gesprek benoemd.
-- Van de vier salesoordelen staat er nog één open.
+- **Toets (Arno, 27 november):** bij korting is de vraag altijd wat je ervoor terugkrijgt, bijvoorbeeld welk commitment. Komt er niets terug, dan praat je waarschijnlijk met de verkeerde persoon of is de relatie niet wat je zou willen. Klanten besluiten nooit alleen op prijs; bij een slechte relatie helpt een lage prijs niet.
+- Alle vier de salesoordelen zijn gegeven.
 
 ## Fase 1: examen
 
