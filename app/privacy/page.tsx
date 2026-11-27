@@ -46,7 +46,7 @@ export default function PrivacyPage() {
             Jouw gegevens zijn van jou. Hier lees je precies wat we opslaan, waarom, hoe lang, en wie er verder bij betrokken is.
           </p>
           <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.9, marginBottom: 48 }}>
-            Laatst bijgewerkt: 26 november 2026
+            Laatst bijgewerkt: 27 november 2026
           </p>
 
           <div style={{ borderTop: '3px solid #f59e0b', paddingTop: 32, marginBottom: 48 }}>

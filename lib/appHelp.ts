@@ -49,7 +49,7 @@ Opzeggen: via de accountpagina met één klik. De toegang blijft actief tot het 
 
 Koop ongedaan maken: binnen 14 dagen na een aankoop of upgrade staat op de accountpagina het blok BEDENKTIJD met de knop KOOP ONGEDAAN MAKEN. Na een bevestiging krijgt de gebruiker het bedrag terug op de rekening waarmee is betaald en volgt een bevestiging per e-mail. Bij een eerste aankoop stopt het abonnement direct en eindigt de toegang. Bij een upgrade wordt alleen de upgrade teruggedraaid en loopt het abonnement door. Is er niets te herroepen, dan staat het blok er niet. In de Android-app staat de knop niet.
 
-Overstappen: een maandabonnement kan per einde van de betaalperiode naar jaar en Pro kan naar Basic. Basic naar Pro kan direct. De gebruiker regelt dit op de accountpagina. Van jaar naar maand overstappen kan niet: opzeggen en daarna een maandabonnement nemen. Een geplande overstap of opzegging kan tot een dag van tevoren worden ingetrokken.
+Overstappen: een maandabonnement kan per einde van de betaalperiode naar jaar. Basic naar Pro kan direct. De gebruiker regelt dit op de accountpagina. Voor Pro naar Basic mailt de gebruiker admin@arno.bot. Van jaar naar maand overstappen kan niet: opzeggen en daarna een maandabonnement nemen. Een geplande overstap of opzegging kan tot een dag van tevoren worden ingetrokken.
 
 Referral: link staat bij het account, niet voor gewone teamleden en niet bij een gratis account. Nieuwe gebruiker: eenmalig een referral fee. Aanbrenger: tegoed, behalve bij Basic per maand. Tegoed vervalt 14 dagen na het einde van je abonnement als je geen nieuw abonnement neemt (behalve bij Lifetime). Details in de spelregels.
 

@@ -107,7 +107,7 @@ const FAQ_GROUPS = [
       },
       {
         q: 'Kan ik overstappen naar een jaarabonnement of een ander abonnement?',
-        a: 'Een maandabonnement kan per einde van je betaalperiode naar jaar, en Pro kan naar Basic. Basic naar Pro kan direct. Je regelt dit op de accountpagina. Van jaar naar maand overstappen kan niet: zeg aan het einde van je jaar op en neem daarna een maandabonnement. Een geplande overstap of opzegging kun je tot een dag van tevoren intrekken.',
+        a: 'Een maandabonnement kan per einde van je betaalperiode naar jaar. Basic naar Pro kan direct. Je regelt dit op de accountpagina. Wil je van Pro naar Basic, mail dan admin@arno.bot. Van jaar naar maand overstappen kan niet: zeg aan het einde van je jaar op en neem daarna een maandabonnement. Een geplande overstap of opzegging kun je tot een dag van tevoren intrekken.',
       },
     ],
   },
