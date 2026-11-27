@@ -4,7 +4,8 @@
 
 - **Laatst bijgewerkt:** 2026-11-27
 - **Waar we staan:** LIVE sinds 2026-11-27 (commit edbad599, gepusht om 07:58 UTC op uitdrukkelijk akkoord van Arno). Vlak vóór de push gemeten: alleen het Basic-abonnement van €228, geen Pro tegen de oude prijs, geen gefactureerd team. Na de uitrol op arno.bot nagekeken: /prijzen (jaarstand €19, €33, €77, teamregel), /team, /team/aanvragen en /voorwaarden (versie 3.2); het klantabonnement staat nog op 22800.
-- **Eerstvolgende stap:** de controles na livegang die een login vragen (afrekenscherm Pro €49,00 en €396,00, zakelijk €59,29 en €479,16; manager plus 3 is €244 en €2.112; Abacus), morgenochtend geen meldingen van bedragcontrole, referral-uitvoeren en team-facturatie, en bij de eerste echte Pro-betaling Mollie en Moneybird nakijken. Daarna "Bekende restpunten"; restpunt (a), de betalende klant, is besloten en staat gepland voor 27 september 2027. Terugdraaien is niet veilig zodra er na 27-11 een team is geactiveerd.
+- **Afrekenscherm gecontroleerd (Arno, 2026-11-27, via `/bot/doorgaan?preview=idle`):** pakketkaarten jaarlijks en maandelijks kloppen; totalen particulier per maand €49,00 en zakelijk €59,29 en €479,16 gezien. Particulier per jaar is alleen op de kaart gezien (€396), niet als totaal. Jaarkorting via referral (€363,00) toont dit voorbeeld niet.
+- **Eerstvolgende stap:** de resterende controles na livegang (manager plus 3 is €244 en €2.112; Abacus), morgenochtend geen meldingen van bedragcontrole, referral-uitvoeren en team-facturatie, en bij de eerste echte Pro-betaling Mollie en Moneybird nakijken. Daarna "Bekende restpunten"; restpunt (a), de betalende klant, is besloten en staat gepland voor 27 september 2027. Terugdraaien is niet veilig zodra er na 27-11 een team is geactiveerd.
 
 ### Afvinklijst
 
