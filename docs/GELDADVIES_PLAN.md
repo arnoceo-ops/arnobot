@@ -145,3 +145,14 @@ Geldstap met Opus 5.5 (laag) voor invullen, schrijven en controleren, 7 pogingen
 - Gezien in `lib/systemPrompt.ts`: "vraag en lever tegelijk" (altijd eerst een antwoord op een aanname) botst met "een richting" (eerst een vraag, nog geen advies). Dat dit fouten veroorzaakt is niet bewezen; ronde 2 bevestigde het voor de geldgevallen niet.
 
 **Geparkeerd tot na die vergelijking:** de drie verbeteringen onder ronde 4 en het grote examen (apart akkoord op het bedrag).
+
+### Bijgesteld na controle door een agent zonder voorgeschiedenis (27 november 2026)
+
+**Grens (Arno):** testantwoorden samen maximaal $10, uit het actietegoed. Dit vervangt het voorstel van $20 tot $30 en het 2 bij 2.
+
+- **Eerst zonder testantwoorden:** bestaande antwoorden uit 6 tot 10 gesprekken ontleden. Per fout: stond de informatie in wat het model zag, welke instructie speelde, ontstond de fout hier of eerder. Daaruit volgen de gevallen en sleutels.
+- **Daarna:** huidig tegen Opus 5.5 op effort laag, beide met de huidige prompt. 8 beurten (6 mislukt uit minstens 5 gesprekken, hooguit 2 uit een gesprek en hooguit 2 over geld, plus 2 goed gegaan), 2 pogingen. Verwacht $5,45, ongunstig $9,10. `EXAMEN_MAX_USD=10` zetten (standaard onbegrensd).
+- **Vooraf vastleggen:** lat per foutsoort, maximale wachttijd en lengte. Juryleden zien alles wat het model zag.
+- **Verworpen voor deze ronde:** de korte prompt. Weinig voorbewijs, geheugenteksten bevatten zelf ook instructies, past niet in het budget en vraagt een schrijver die de gevallen niet zag.
+- **Naspelen is niet gelijk aan live:** `bron_context` mist delen van bijlagen en sessiedocumenten, historie vervalt live na 48 uur, en het script mist linktool, documentlezer en vervolg na `max_tokens`. Per geval controleren, niet getrouwe gevallen vervangen.
+- **Uitslag zegt alleen** of het op deze beurten kansrijk is. Geen foutpercentage, veiligheid of gedrag over hele gesprekken.
