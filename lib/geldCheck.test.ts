@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getallenIn, voerGeldCheckUit, moetGeldCheck, bouwCheckInvoer, gebruikersTekst, metGeldBlok, doeGeldCheck } from '@/lib/geldCheck'
+import { getallenIn, voerGeldCheckUit, bouwCheckInvoer, gebruikersTekst, metGeldBlok, doeGeldCheck } from '@/lib/geldCheck'
 
 // Alle bedragen hier zijn verzonnen.
 describe('getallenIn', () => {
@@ -41,12 +41,6 @@ describe('voerGeldCheckUit', () => {
 })
 
 describe('hulpfuncties voor de chat', () => {
-  it('controleert alleen bij cijfers of geldwoorden', () => {
-    expect(moetGeldCheck('hoe open ik een lastig gesprek?', [])).toBe(false)
-    expect(moetGeldCheck('de klant wil een langere garantie', [])).toBe(true)
-    expect(moetGeldCheck('en dan?', [{ role: 'user', content: 'het gaat om 12 stuks' }])).toBe(true)
-  })
-
   it('merkt eerdere antwoorden als geen bron en telt ze niet als tekst van de gebruiker', () => {
     const h = [{ role: 'user', content: 'omzet 300k' }, { role: 'assistant', content: 'dat is 999' }]
     expect(bouwCheckInvoer(h, 'en nu?')).toContain('EERDER ANTWOORD COACH (geen bron):\ndat is 999')

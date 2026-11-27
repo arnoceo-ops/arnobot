@@ -74,7 +74,7 @@ import { Redis } from '@upstash/redis'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
 import { CHAT_REKENTOOLS, voerToolUit } from '@/lib/rekenTool'
-import { doeGeldCheck, moetGeldCheck, metGeldBlok, GELD_ANTWOORD_MODEL, GELD_DENKRUIMTE, type GeldUitkomst } from '@/lib/geldCheck'
+import { doeGeldCheck, metGeldBlok, GELD_ANTWOORD_MODEL, GELD_DENKRUIMTE, type GeldUitkomst } from '@/lib/geldCheck'
 import { streamRonde, haalWerkruisWeg } from '@/lib/chatStreamRonde'
 import { vindOnjuisteSuperlatieven } from '@/lib/tabelClaims'
 import { maakVerbruik, telOp, telOpLezer, telTool, telWeggegooid } from '@/lib/chatVerbruik'
@@ -559,7 +559,7 @@ export async function POST(req: NextRequest) {
     // Geldcontrole (lib/geldCheck.ts): een klein model haalt de gegevens uit het gesprek, de code rekent, en de uitkomst gaat bij de vraag mee.
     // Mislukt of duurt het te lang, dan loopt de beurt zoals zonder controle. Uitzetten zonder codewijziging: GELDCONTROLE_UIT=1.
     let geld: GeldUitkomst | null = null
-    if (process.env.GELDCONTROLE_UIT !== '1' && moetGeldCheck(questionWithDocument, effectieveHistory)) {
+    if (process.env.GELDCONTROLE_UIT !== '1') {
       try {
         geld = await Sentry.startSpan({ name: 'chat.geldcontrole', op: 'ai.claude' }, () =>
           doeGeldCheck(client, effectieveHistory, questionWithDocument, aiContext(userId, 'chat-geldcontrole')))

@@ -120,11 +120,8 @@ const TIJDSLIMIET_MS = 6000
 type Beurt = { role?: string; content?: unknown }
 const tekstVan = (b: Beurt) => (typeof b.content === 'string' ? b.content : '')
 
-/** Alleen bij cijfers of geldwoorden, zodat een gewone coachvraag niet op de controle wacht. */
-export function moetGeldCheck(vraag: string, historie: Beurt[]): boolean {
-  const tekst = [...historie.slice(-6).map(tekstVan), vraag].join(' ')
-  return /\d|€|prijs|prijzen|korting|marge|omzet|kosten|salaris|verhoging|verlaging|tarief|offerte|budget|winst|verlies|gratis|contract|opzeg|betal|investe|index|bonus|vergoeding|garantie|Preis|Rabatt|Umsatz|price|discount|salary/i.test(tekst)
-}
+// Geen voorfilter op cijfers of geldwoorden (verworpen 27-11): dat hield 3 van de 10 duidelijke geldvragen tegen, bijvoorbeeld
+// een klant die iets te duur vindt, terwijl het kleine model alle geldvragen die het wel zag herkende.
 
 /** Het gesprek voor het kleine model; eerdere antwoorden van de coach zijn duidelijk als geen bron gemerkt. */
 export function bouwCheckInvoer(historie: Beurt[], vraag: string): string {
