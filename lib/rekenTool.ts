@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { SCHRIJF_TABEL_OVER_TOOL, TABEL_VRAAG_TOOL, voerSchrijfTabelOverUit, voerTabelVraagUit, maakTabelStaat, type TabelStaat } from './tabelTool'
+import { CHAT_GELDTOOLS, voerGeldToolUit } from './geldTool'
 
 // Exacte rekenmachine voor de hoofdchat (2026-11-01). Aanleiding: ArnoBot schreef "115 m2 tegen 90 euro
 // = 12.420" (moet 10.350 zijn) en herhaalde bij de correctie een tweede foute som. Een taalmodel rekent
@@ -164,13 +165,21 @@ export function voerGroeidoelUit(input: unknown): { content: string; isError: bo
 // en scripts/eval-cijfers.ts, zodat de meetset precies dezelfde tools gebruikt als productie).
 export const CHAT_REKENTOOLS: Anthropic.Tool[] = [REKEN_TOOL, GROEIDOEL_TOOL, SCHRIJF_TABEL_OVER_TOOL, TABEL_VRAAG_TOOL]
 
+// Met de geldfuncties (lib/geldTool.ts), alleen voor wie geldBeschikbaarVoor toestaat. De rekenmachine verwijst dan door naar die
+// functies, anders gebruikt het model haar met de verkeerde som.
+const NIET_MET_REKENMACHINE = 'NIET met deze tool: het effect van een prijsverlaging, prijsverhoging of indexering op omzet of marge (gebruik prijswijziging), prijzen vergelijken waarbij inclusief of exclusief btw speelt (gebruik prijzen_vergelijken) en een eigen cijfer naast een team- of totaalcijfer (gebruik deel_van_totaal). '
+export const CHAT_REKENTOOLS_GELD: Anthropic.Tool[] = [
+  { ...REKEN_TOOL, description: REKEN_TOOL.description!.replace('Een korting van 25%', NIET_MET_REKENMACHINE + 'Een korting van 25%') },
+  GROEIDOEL_TOOL, ...CHAT_GELDTOOLS, SCHRIJF_TABEL_OVER_TOOL, TABEL_VRAAG_TOOL,
+]
+
 // De tabelstaat leeft per verzoek (lib/tabelTool.ts): een nieuwe per chatverzoek, niet bewaard.
 export function voerToolUit(naam: string, input: unknown, staat: TabelStaat = maakTabelStaat()): { content: string; isError: boolean } {
   if (naam === 'bereken') return voerRekenToolUit(input)
   if (naam === 'groeidoel') return voerGroeidoelUit(input)
   if (naam === 'schrijf_tabel_over') return voerSchrijfTabelOverUit(input, staat)
   if (naam === 'tabel_vraag') return voerTabelVraagUit(input, staat)
-  return { content: 'Onbekende tool.', isError: true }
+  return voerGeldToolUit(naam, input) ?? { content: 'Onbekende tool.', isError: true }
 }
 
 export function voerRekenToolUit(input: unknown): { content: string; isError: boolean } {

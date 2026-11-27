@@ -2,10 +2,9 @@
 
 ## Status
 
-**Laatst bijgewerkt:** 27 november 2026
-**Waar we staan:** ronde 4 klaar: de afgedwongen geldstap is kansrijk (eerste geslaagde antwoorden op de prijsverlaging, geen omdraaiing meer), maar traag, duur en niet foutloos (zie fase 2). Alles zit alleen in testscripts; aan de chat, de prompt en de database is niets aangepast.
-**Eerstvolgende stap:** de geldstap staat stil. Er ligt een voorstel (nog niet goedgekeurd) om eerst model en instructies samen te vergelijken op coachgesprekken, zie "Overdracht" onderaan.
-**Stand einde dag 27 november:** niets aan de rekenfouten of het geldadvies is live veranderd; de modeltest op coachgesprekken haalde de lat niet (zie onderaan). Een betalende gebruiker heeft van Arno gehoord dat de fouten gezien zijn en dat eraan gewerkt wordt, en wacht op antwoord; of Arno dat inmiddels gaf, is niet bekend. Betaalde tests: zie "Testsleutels en kosten" in `docs/GEHEUGEN_PLAN.md`.
+**Laatst bijgewerkt:** 27 november 2026 (avond)
+**Waar we staan:** gebouwd op de tak `feat/geldfuncties` (werkmap `C:\Users\arno\arnobot-geldfuncties`), **niet op master en niet live**: vaste geldsommen, een geldcontrole vóór het antwoord en Sonnet 5.5 voor herkende geldvragen. Op nieuwe momenten beter dan de huidige chat; de herkenningslat is niet gehaald. Alleen via Claude Code getest, nog nooit via de echte API. Zie "Bouw en meting" onderaan.
+**Eerstvolgende stap:** gestopt voor 27 november (afspraak met Arno: zakt de laatste proef, dan niet meer bijschaven en testen). Stap 1 van die proef zakte op 1 van 20 pogingen, zie "Laatste proef". Niets live. In een nieuwe sessie eerst met Arno bepalen of en hoe verder.
 
 - [x] Fase 0: nulmeting en kritische toets van het plan
 - [ ] Fase 1: examen goedkeuren (kernset gedaan) en uitbreiden
@@ -181,3 +180,69 @@ Geldstap met Opus 5.5 (laag) voor invullen, schrijven en controleren, 7 pogingen
 Mediaan eerste tekst 7,4 s (huidig 2,7 s), mediaan 322 woorden (128), 2 van 16 Opus-antwoorden boven 450. Beide juryleden vonden meerdere sleutels te streng of gestapeld; niet achteraf versoepeld. Een korte wedervraag zonder fouten is niet vanzelf goed.
 
 **Besluit:** niet overstappen op grond van deze test. Niets live. Bestanden: `C:\Users\arno\arnobot-prive\coach-ontleding\blind\`.
+
+## Bouw en meting (27 november 2026, avond)
+
+### Correctie op ronde 4
+De uitslag van de afgedwongen geldstap was te gunstig. Alle prijsformulieren rekenden met margepercentage keer het omzetbedrag als effect van een prijsverlaging. Voorbeeld met verzonnen cijfers (omzet 500.000, marge 30%, prijs 10% omlaag):
+- **Tussen wel en niet doorvoeren** scheelt altijd 50.000, want de keuze verandert de eigen kosten niet (bij gelijke afname).
+- **Ten opzichte van vandaag** lever je bij gelijke kosten 50.000 in, en alleen als alle kosten evenredig meedalen 15.000.
+
+Ook de uitleg die de bouwsessie hier eerst over gaf, haalde deze twee vergelijkingen door elkaar.
+
+### Gekozen en verworpen
+- **Gekozen:** vaste code rekent (`lib/geldTool.ts`: prijswijziging, prijzen op dezelfde btw-basis, deel van een totaal). Een klein model (Haiku 5.5) haalt alleen de gegevens uit het gesprek en herkent een geldvraag; een berekening met een getal dat niet in de tekst van de gebruiker staat vervalt (`lib/geldCheck.ts`). Herkende geldvragen gaan naar Sonnet 5.5 (denkstap, lage inzet, eigen denkruimte), de rest blijft op Sonnet 4.6. Niet bij een link of de documentlezer. Wie dit krijgt: `geldBeschikbaarVoor` (nu alleen `ARNOBOT_OWNER_USER_ID`; iedereen met `GELDCONTROLE_OPEN=true`; meteen uit met `GELDCONTROLE_UIT=1`). Voor alle anderen zijn model, rekenfuncties en berichten gelijk aan hiervoor.
+- **Verworpen: alleen tools aanbieden.** Het chatmodel koos bij de prijswijziging 0 van 4 keer de nieuwe tool.
+- **Verworpen: rekenstap met het huidige chatmodel.** Prijsverlaging nog 3 van 4 fout met de juiste uitkomst bij de vraag (kleine ronde).
+- **Verworpen: voorfilter op cijfers en geldwoorden.** Hield 3 van 10 duidelijke geldvragen tegen. De controle draait nu bij elk bericht.
+- **Verworpen: Opus 5.5.** Op de prijsmomenten niet beter dan Sonnet 5.5 en duurder (alleen daar vergeleken).
+- **Niet gedaan: "reken het na" in de prompt.** Niet getest; verwante proeven (denkstap op hetzelfde model, controle op dezelfde invulling) vielen tegen.
+
+### Meting 1: momenten waarop de aanpak is bijgeschaafd (6 gevallen, 5 pogingen, blind)
+Huidig 10 van 30 geslaagd, alleen Sonnet 5.5 22 van 30, voorstel 30 van 30. Te gunstig als bewijs: op deze momenten bijgeschaafd, en de beoordelaars telden stellige beweringen zonder bron niet. Bij het teamgeval (cijfers nagebouwd) slaagde ook de huidige chat 5 van 5, dus de vooraf gestelde eis "vaker dan huidig" is daar niet gehaald. In de huidige variant stond nog de verwijzing naar de nieuwe tools in de beschrijving van de rekenmachine (in meting 2 hersteld).
+
+### Meting 2: nieuwe momenten (code commit d1ab5882, sleutels vooraf door een losse agent, 4 pogingen, blind)
+
+| | Huidig | Nieuwe route |
+|---|---|---|
+| Geldmomenten geslaagd (7 momenten) | 18 van 28 | 26 van 28 |
+| Antwoorden met een ernstige andere fout (geld) | 14 | 5 |
+| Waarvan de 5 momenten die echt naar Sonnet 5.5 gingen: geslaagd | 16 van 20 | 20 van 20 |
+| Idem: ernstige andere fout | 10 | 0 |
+| Idem: bruikbaarheid 1 tot 5 | 2,1 | 4,6 |
+| Controlemomenten geslaagd (2) | 6 van 8 | 7 van 8 |
+
+- De lat voor de antwoorden is gehaald.
+- **Ruis is groot:** twee momenten gingen in beide varianten naar hetzelfde oude model (door het voorfilter van toen) en scoorden toch 2 tegen 6 van 8. Kleine verschillen zeggen niets.
+- **Op de nieuwe momenten voerde de rekencode geen enkele som uit** (ook niet in 65 herkenningsbeurten). De winst daar komt van het nieuwe model; de rekencode is alleen op de bijgeschaafde momenten aan het werk gezien.
+- Beoordelaars zijn Claude en kunnen het model aan de stijl herkennen. De bouwsessie las 5 antwoorden van de nieuwe route na: goed, met enkele kleine aannames.
+- Mediaan 334 woorden tegen 279; tijd via Claude Code 17 s in beide, zegt niets over de app.
+
+### Herkenning (65 beurten uit ongebruikte gesprekken, labels van een losse agent, na het weghalen van het voorfilter)
+9 van 10 duidelijke geldvragen herkend (lat: niets missen), vals alarm 11 van 48 (23%, lat hooguit 20%). **Lat niet gehaald.** De gemiste vraag bevat zelf geen geld en leunt op wat eraan voorafgaat. Een vals alarm stuurt een gewone vraag naar het nieuwere model. De 20 eerder overgeslagen beurten zijn apart nagemeten; de andere 45 niet opnieuw.
+
+### Wat niet is opgelost of niet is getest
+- Arno's salesregels (eerst vragen of je door wilt, wat je terugkrijgt) zijn niet gebouwd en niet gemeten.
+- Verzonnen superlatieven, tegenspraak en oordelen zonder gegevens: geen vaste oplossing, alleen mogelijk minder door het model.
+- Nooit via de echte API gedraaid: de instellingen van beide nieuwe modellen, de doorgifte van de denkstap bij toolrondes, de wachttijd van de geldcontrole (bij elk bericht) en de kosten per antwoord. De naspeeltest zette eerdere berichten als tekst in de vraag.
+- Geldt niet voor spraak (`lib/voice.ts`) en sparren.
+- Het kostenoverzicht per maand (`lib/maandKosten.ts`) rekent chatbeurten nog met het tarief van Sonnet 4.6.
+- Bij live: `docs/ARNOBOT_OVERZICHT.md` bijwerken.
+
+### Proef met de echte API (27 november, avond)
+Eerst geweigerd door de limiet van de werkruimte Development (30 dollar); met akkoord van Arno verhoogd naar 35 dollar. 10 berichten, 0,85 dollar (grens 2).
+- **Technisch geslaagd:** geen API-fouten of lege antwoorden, toolronde met het nieuwe model werkt (2 keer), kostenmeting met prijzen voor beide nieuwe modellen, geen interne tekst zichtbaar.
+- **Inhoudelijk niet geslaagd:** bij de prijsverlaging koos het kleine model een verkeerde berekening en maakte het antwoord de oude fout (margepercentage keer omzetbedrag, advies om de verlaging toe te passen). Bij de korting weer 21% in plaats van 9% btw.
+- **Oorzaak (aangetoond voor het verschil in instelling, niet dat dit de fouten verklaart):** in de naspeeltest via Claude Code dacht het kleine model wel na, de code zette de denkstap uit. Alle eerdere metingen van de geldcontrole, ook de herkenning, gelden dus voor de versie met denkstap. De code staat nu op denkstap aan (tijdslimiet 10 s, max_tokens 6000); dat is nog niet via de API gemeten.
+- Wachttijd zonder denkstap in de controle: controle 1,0 tot 2,2 s, eerste tekst 3,5 tot 20,6 s. Gemiddeld per bericht ongeveer 0,08 dollar (nieuw model, 8 berichten) tegen 0,10 dollar (oud model, 2 berichten, kleine steekproef). Controle 0,0004 dollar.
+
+### Laatste proef, stap 1: alleen de geldcontrole met denkstap, via de echte API (27 november)
+Eisen vooraf: prijsverlaging krijgt alleen de prijsberekening met de juiste gegevens; korting rekent met 9% btw; elke controle zonder fout binnen 10 s; een keer niet gehaald is gezakt. 20 pogingen (10 berichten, 2 keer), 0,011 dollar.
+- **19 van 20 geslaagd, dus gezakt.** Korting 2 van 2 met 9%, prijsverlaging 1 van 2. Alle controles binnen 10 s (langste 6,9 s), geen API-fouten.
+- De mislukte poging: het model gaf het percentage zonder de omzet. De code weigerde die berekening, er ging niets verkeerds mee, maar het antwoord had dan geen uitkomst van de code.
+- In de andere kortingspoging stond naast de goede berekening een tweede met een zelf uitgerekend bedrag; de controle op getallen van de gebruiker keurde die af.
+- Stap 2 (volledige antwoorden) is niet gedraaid. De antwoorden met de denkstap in de controle zijn dus nog niet via de API gemeten.
+- API-kosten van beide proeven samen: ongeveer 0,86 dollar.
+
+Testkosten tot de proef: geen API-tegoed, alles via het Claude Code-abonnement. Testbestanden met gebruikersgegevens: `C:\Users\arno\arnobot-prive\test-geldtools\` (criteria in `criteria.md`) en `C:\Users\arno\arnobot-prive\geldadvies-jvk\`.
+
