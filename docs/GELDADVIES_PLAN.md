@@ -4,7 +4,7 @@
 
 **Laatst bijgewerkt:** 27 november 2026 (avond)
 **Waar we staan:** gebouwd op de tak `feat/geldfuncties` (werkmap `C:\Users\arno\arnobot-geldfuncties`), **niet op master en niet live**: vaste geldsommen, een geldcontrole vóór het antwoord en Sonnet 5.5 voor herkende geldvragen. Op nieuwe momenten beter dan de huidige chat; de herkenningslat is niet gehaald. Alleen via Claude Code getest, nog nooit via de echte API. Zie "Bouw en meting" onderaan.
-**Eerstvolgende stap:** de proef met de echte API (akkoord Arno, harde grens 2 dollar) is op 27 november niet gelukt: de testsleutel uit .env.local geeft "workspace API usage limits" tot 1 december 00:00 UTC, 0 dollar uitgegeven. Eerst de limiet van die werkruimte verhogen in de Console of wachten; daarna het script apiproef.mts in de testmap opnieuw draaien. Daarna besluit over live. Een betalende gebruiker wacht nog op antwoord (27 november: nog niet gegeven; Arno stuurt geen tussenbericht).
+**Eerstvolgende stap:** gestopt voor 27 november (afspraak met Arno: zakt de laatste proef, dan niet meer bijschaven en testen). Stap 1 van die proef zakte op 1 van 20 pogingen, zie "Laatste proef". Niets live. In een nieuwe sessie eerst met Arno bepalen of en hoe verder.
 
 - [x] Fase 0: nulmeting en kritische toets van het plan
 - [ ] Fase 1: examen goedkeuren (kernset gedaan) en uitbreiden
@@ -235,6 +235,14 @@ Eerst geweigerd door de limiet van de werkruimte Development (30 dollar); met ak
 - **Inhoudelijk niet geslaagd:** bij de prijsverlaging koos het kleine model een verkeerde berekening en maakte het antwoord de oude fout (margepercentage keer omzetbedrag, advies om de verlaging toe te passen). Bij de korting weer 21% in plaats van 9% btw.
 - **Oorzaak (aangetoond voor het verschil in instelling, niet dat dit de fouten verklaart):** in de naspeeltest via Claude Code dacht het kleine model wel na, de code zette de denkstap uit. Alle eerdere metingen van de geldcontrole, ook de herkenning, gelden dus voor de versie met denkstap. De code staat nu op denkstap aan (tijdslimiet 10 s, max_tokens 6000); dat is nog niet via de API gemeten.
 - Wachttijd zonder denkstap in de controle: controle 1,0 tot 2,2 s, eerste tekst 3,5 tot 20,6 s. Gemiddeld per bericht ongeveer 0,08 dollar (nieuw model, 8 berichten) tegen 0,10 dollar (oud model, 2 berichten, kleine steekproef). Controle 0,0004 dollar.
+
+### Laatste proef, stap 1: alleen de geldcontrole met denkstap, via de echte API (27 november)
+Eisen vooraf: prijsverlaging krijgt alleen de prijsberekening met de juiste gegevens; korting rekent met 9% btw; elke controle zonder fout binnen 10 s; een keer niet gehaald is gezakt. 20 pogingen (10 berichten, 2 keer), 0,011 dollar.
+- **19 van 20 geslaagd, dus gezakt.** Korting 2 van 2 met 9%, prijsverlaging 1 van 2. Alle controles binnen 10 s (langste 6,9 s), geen API-fouten.
+- De mislukte poging: het model gaf het percentage zonder de omzet. De code weigerde die berekening, er ging niets verkeerds mee, maar het antwoord had dan geen uitkomst van de code.
+- In de andere kortingspoging stond naast de goede berekening een tweede met een zelf uitgerekend bedrag; de controle op getallen van de gebruiker keurde die af.
+- Stap 2 (volledige antwoorden) is niet gedraaid. De antwoorden met de denkstap in de controle zijn dus nog niet via de API gemeten.
+- API-kosten van beide proeven samen: ongeveer 0,86 dollar.
 
 Testkosten tot de proef: geen API-tegoed, alles via het Claude Code-abonnement. Testbestanden met gebruikersgegevens: `C:\Users\arno\arnobot-prive\test-geldtools\` (criteria in `criteria.md`) en `C:\Users\arno\arnobot-prive\geldadvies-jvk\`.
 
