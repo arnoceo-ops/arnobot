@@ -185,13 +185,15 @@ export default function TeamActiverenSectie({ stand, laad }: { stand: ActivatieS
                 <p style={{ fontSize: 14, color: '#9ca3af', margin: 0 }}>
                   {euro(bedrag.brutoCent)} incl. btw, {cyclus === 'jaarlijks' ? 'per jaar' : 'per maand'}.
                   {gefactureerd !== null ? ` Voor jou als manager en ${gefactureerd} teamleden.` : ''}
+                  {gefactureerd !== null && gefactureerd > Number(seats) ? ` Je team heeft al ${gefactureerd} teamleden, die tellen allemaal mee.` : ''}
                 </p>
               </>
             ) : (
               <p style={{ fontSize: 14, color: '#6b7280', margin: 0 }}>
                 {Number(seats) < TEAM_MIN_TEAMLEDEN ? <TeamKleinTekst />
-                  : Number(seats) > TEAM_MAX_TEAMLEDEN ? TEAM_GROOT_TEKST
-                    : 'Het bedrag verschijnt hier zodra het is berekend.'}
+                  : Number(seats) > TEAM_MAX_TEAMLEDEN ? <TeamKleinTekst tekst={TEAM_GROOT_TEKST} />
+                    : !Number.isInteger(Number(seats)) ? 'Vul een heel getal in.'
+                      : 'Het bedrag verschijnt hier zodra het is berekend.'}
               </p>
             )}
           </div>

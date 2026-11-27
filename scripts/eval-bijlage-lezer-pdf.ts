@@ -73,8 +73,8 @@ const DOCS: { naam: string; pad: (grafiek: string) => string; vragen: Vraag[]; s
     naam: 'abonnementen',
     pad: () => 'docs/ABONNEMENTEN.pdf',
     vragen: [
-      { vraag: 'Wat kost Pro per maand bij jaarbetaling?', controle: heeft('39') },
-      { vraag: 'En als je maandelijks betaalt?', controle: heeft('59') },
+      { vraag: 'Wat kost Pro per maand bij jaarbetaling?', controle: heeft('33') },
+      { vraag: 'En als je maandelijks betaalt?', controle: heeft('49') },
       { vraag: 'Hoeveel chatberichten per dag mag een Basic-gebruiker sturen?', controle: heeft('25') },
       { vraag: 'Wat is het maximale referral-tegoed voor de manager van een team?', controle: heeft('97', '49') },
       { vraag: 'Wat staat er in dit document over betalen met Bitcoin?', controle: ontbreekt },

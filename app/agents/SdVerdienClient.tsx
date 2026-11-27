@@ -611,7 +611,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
           <p style={{ fontSize: 12, letterSpacing: 3, textTransform: 'uppercase', color: '#f59e0b', fontWeight: 600 }}>ArnoBot Sales Development</p>
           <h1 style={{ fontSize: 'clamp(30px, 4.2vw, 42px)', fontWeight: 800, letterSpacing: '-0.5px', marginTop: 6, textWrap: 'balance' }}>Agents Fee</h1>
           <p style={{ color: '#8b96a8', fontSize: 15, lineHeight: 1.7, marginTop: 10 }}>
-            Vul in hoeveel klanten je gemiddeld per maand denkt te converteren naar betalend, met hoeveel users en hoeveel er gemiddeld weer opzeggen (churn). De grafiek laat per maand zien wat binnenloopt (new business), wat doorloopt (recurring business), en wat wegloopt (churn), plus de 20% fee die je ontvangt op de omzet die niet door agents is gegenereerd. Dat aandeel kent wel een plafond: je krijgt nooit meer uit die pool dan wat je zelf aan eigen klanten verdient.
+            Vul in hoeveel klanten je gemiddeld per maand denkt te converteren naar betalend, met hoeveel teamleden en hoeveel er gemiddeld weer opzeggen (churn). De grafiek laat per maand zien wat binnenloopt (new business), wat doorloopt (recurring business), en wat wegloopt (churn), plus de 20% fee die je ontvangt op de omzet die niet door agents is gegenereerd. Dat aandeel kent wel een plafond: je krijgt nooit meer uit die pool dan wat je zelf aan eigen klanten verdient.
           </p>
           {isAdmin && (
             <div style={{ display: 'flex', gap: 6, background: '#1f2937', border: '1.5px solid #2d3a4d', borderRadius: 9, padding: 3, width: 'fit-content', marginTop: 18 }}>

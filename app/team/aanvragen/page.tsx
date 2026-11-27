@@ -231,7 +231,7 @@ export default function TeamAanvraagPage() {
                   <button type="button" className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
                 </div>
                 <p style={{ fontSize: 13, color: '#6b7280', marginTop: -12, marginBottom: 20 }}>
-                  {cyclus === 'jaarlijks' ? 'Jaarlijks vooruitbetaald.' : 'Opzegtermijn één maand.'} Jij als manager zit in het managerbedrag.
+                  {cyclus === 'jaarlijks' ? 'Jaarlijks vooruitbetaald.' : 'Opzegtermijn één maand.'} Je eigen Pro-gebruik als manager zit in het managerbedrag.
                 </p>
 
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: eliteInteresse ? 12 : 20, cursor: 'pointer' }}>

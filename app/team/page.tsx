@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
 import SiteFooter from '../SiteFooter'
+import TeamKleinTekst from '../components/TeamKleinTekst'
 
 export const metadata: Metadata = {
   title: 'ArnoBot Team',
@@ -262,7 +263,7 @@ export default async function TeamPage() {
           <div className="tm-faq">
             <div className="tm-faq-item">
               <p className="tm-faq-q">Wat is het minimum?</p>
-              <p className="tm-faq-a">Drie verkopers, inclusief jezelf.</p>
+              <p className="tm-faq-a"><TeamKleinTekst /></p>
             </div>
             <div className="tm-faq-item">
               <p className="tm-faq-q">Kan ik het eerst zien zonder mijn team erbij?</p>
@@ -291,7 +292,7 @@ export default async function TeamPage() {
           <h2 className="tm-h2">Zie het op je eigen scherm</h2>
           <p>
             Dertig minuten, jouw vragen, een ingericht voorbeeldteam. Of sla de demo over en
-            vraag direct aan, daar zie je meteen de prijs vanaf een manager en 3 teamleden.
+            vraag direct aan, daar zie je vanaf een manager en 3 teamleden meteen je prijs.
           </p>
           <div className="tm-cta-row">
             <a

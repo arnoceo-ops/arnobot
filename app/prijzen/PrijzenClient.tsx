@@ -201,8 +201,8 @@ export default function PrijzenClient() {
             <li>Volledig 1:1 archief met eigen notities</li>
           </ul>
 
+          <p className="prijzen-tier-billingnote"><TeamKleinTekst /></p>
           <a href="/team" className="prijzen-tier-cta secundair">Bekijk Team</a>
-          <p className="prijzen-tier-billingnote" style={{ marginTop: 12, whiteSpace: 'normal' }}><TeamKleinTekst /></p>
         </div>
       </div>
     </>

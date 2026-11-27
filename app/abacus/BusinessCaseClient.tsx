@@ -290,11 +290,11 @@ export default function BusinessCaseClient({
             </div>
             <div style={{ fontSize: 12, lineHeight: '17px', color: '#6b7280', marginBottom: 12, height: 34 }}>
               <div>Maandelijks: € {SCENARIO_TEAM_PRIJS.basisMaandelijks} manager + € {SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks} per teamlid</div>
-              <div>Jaarlijks: € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12} manager + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12} per teamlid (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/user/jr)</div>
+              <div>Jaarlijks: € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12} manager + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12} per teamlid (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal} per teamlid/jr)</div>
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
               <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: clamp(v, 0, MAX_GEBRUIKERS_ZOEKGRENS) })} />
-              <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: clamp(v, TEAM_MIN_TEAMLEDEN, 10000) })} />
+              <TariefField label="# leden excl. mgr" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: clamp(v, TEAM_MIN_TEAMLEDEN, 10000) })} />
               <TariefDisplay label="% team van totaal" value={`${pctTeamVanTotaal.toFixed(0)}%`} />
             </div>
             {teamVolumeWaarschuwing && (

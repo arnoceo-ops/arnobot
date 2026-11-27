@@ -78,9 +78,10 @@ export default async function TeamsAdminPage() {
     ledenPerTeam.set(l.team_id, (ledenPerTeam.get(l.team_id) ?? 0) + 1)
   }
   const vandaag = nlVandaag()
+  const aantalLeden = (n: number) => `${n} ${n === 1 ? 'teamlid' : 'teamleden'}`
   function standVoor(team: { id: string; min_seats: number | null; cyclus: string | null; volgende_factuurdatum: string | null }) {
     const leden = ledenPerTeam.get(team.id) ?? 0
-    if (team.min_seats == null) return { tekst: `${leden} teamleden, nog niet geactiveerd voor facturatie`, kleur: '#6b7280' }
+    if (team.min_seats == null) return { tekst: `${aantalLeden(leden)}, nog niet geactiveerd voor facturatie`, kleur: '#6b7280' }
     const cyclus = team.cyclus === 'jaarlijks' ? 'jaarlijks' : 'maandelijks'
     const seats = Math.max(leden, team.min_seats)
     const perMaand = berekenTeamPrijsPerMaand(seats, cyclus)
@@ -92,7 +93,7 @@ export default async function TeamsAdminPage() {
       factuur = dagen < 0 ? `volgende factuur ${Math.abs(dagen)} dagen te laat (${team.volgende_factuurdatum.slice(0, 10)})` : `volgende factuur ${team.volgende_factuurdatum.slice(0, 10)}, over ${dagen} dag${dagen === 1 ? '' : 'en'}`
       kleur = dagen < 0 ? '#ef4444' : dagen < 7 ? '#f59e0b' : '#9ca3af'
     }
-    return { tekst: `${leden} teamleden${leden < team.min_seats ? ` (minimum ${team.min_seats})` : ''}, gefactureerd op manager plus ${seats}, ${bedrag}, ${factuur}`, kleur }
+    return { tekst: `${aantalLeden(leden)}${leden < team.min_seats ? ` (minimum ${team.min_seats})` : ''}, gefactureerd op manager plus ${seats}, ${bedrag}, ${factuur}`, kleur }
   }
 
   return (
