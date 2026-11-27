@@ -29,6 +29,10 @@ Gesprekken, namen en bedragen van gebruikers komen niet in dit document of elder
 - **Eerst de oorzaak aantonen, dan pas kiezen** (model, denkstap, promptregels, gestructureerde geldstap, controle vooraf). Verworpen als eerste stap: direct van model wisselen, want dat verandert model en denkstap tegelijk en de diagnose is niet bewezen.
 - **Het examen is een regressietest, geen bewijs van veiligheid.** Verworpen als enige lat: "geen omgedraaid advies in 10 tot 15 gevallen". Zelfs 45 foutloze onafhankelijke pogingen sluiten ongeveer 6% fouten niet uit. Daarom ook bewaking in productie en een herstelprocedure. Nul fouten wordt niet beloofd.
 - Kwaliteit gaat vóór kosten.
+- **Toets (Arno, 27 november):** kan een ontbrekend gegeven het oordeel omdraaien, dan vraagt ArnoBot eerst; anders noemt het de aanname hardop.
+- **Toets (Arno, 27 november):** bij een prijswijziging vraagt ArnoBot of de kosten meedalen of al meegedaald zijn.
+- **Toets (Arno, 27 november):** vraagt een klant om andere contractvoorwaarden, dan eerst bellen en de aanleiding achterhalen (mogelijk wil de klant weg) en kijken wat de klant kan behouden. Een al gegeven voordeel wordt in dat gesprek benoemd.
+- Van de vier salesoordelen staat er nog één open.
 
 ## Fase 1: examen
 
