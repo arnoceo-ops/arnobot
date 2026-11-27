@@ -3,14 +3,14 @@
 ## Status
 
 **Laatst bijgewerkt:** 27 november 2026
-**Waar we staan:** ontwerp C afgeraden na toets. Op tak `fix/hervatten-30-dagen`, niet live: de 30-dagenregel en de datumreparatie (akkoord Arno om door te gaan). Unit-tests, typecontrole en lint geslaagd; de nieuwe zoekvraag alleen-lezen op echte data gedraaid (155 van 155 gesprekken met berichtdata, geen enkel gesprek verschuift nu tussen oud en recent, langste vraag 427 ms). Niet met het model getest.
-**Eerstvolgende stap:** akkoord van Arno om deze twee live te zetten. Daarna het opzoeken op vraag (niet goedgekeurd, niet ontworpen).
+**Waar we staan:** de 30-dagenregel en de datumreparatie zijn op 27 november naar master gegaan (akkoord Arno, samengevoegd en gepusht). Tests, typecontrole en lint op de samengevoegde code geslaagd. Niet met het model getest en niet in de app nagelopen. Ontwerp C is afgeraden. Terugdraaien: `git revert -m 1` op de samenvoegcommit "feat(geheugen): voortgezet gesprek".
+**Eerstvolgende stap:** in de app nalopen met een oud gesprek vanuit het archief. Daarna besluit over opzoeken op vraag (niet goedgekeurd, niet ontworpen).
 
 **Datumregel (gekozen):** eerste en laatste berichtdatum uit `arnobot_rds_logs`. Spreidt een gesprek hooguit 30 dagen, dan telt de leeftijd vanaf het laatste bericht en staat de begindatum erbij. Spreidt het meer, dan blijft de rij zoals voorheen gedateerd. Verworpen: altijd het laatste bericht (oude inhoud uit hetzelfde gesprek zou recent worden). Open: bij meer dan 30 dagen spreiding gelden nieuwe feiten nog steeds op de begindatum. Gemeten op 121 gesprekken: 104 binnen een dag, 13 tot en met 7 dagen, 4 tussen 8 en 30, geen langer. De 6 weken in het geheugen tellen voor gesprekken tot 30 dagen spreiding dus vanaf het laatste bericht. De analyses en de grens van de laatste 10 of 25 gesprekken gebruiken nog de datum van de rij.
 
 - [x] Ontwerp getoetst door agent
 - [x] Datering repareren (op de tak)
-- [ ] Akkoord Arno op live (30-dagenregel en datering)
+- [x] Akkoord Arno op live (30-dagenregel en datering), gepusht
 - [ ] Akkoord Arno op opzoeken op vraag, dan ontwerp
 - [ ] Alleen het ophalen meten op een vooraf bevroren set (zonder testantwoorden)
 - [ ] Akkoord Arno op testlat en bedrag, daarna gedragstest
@@ -19,7 +19,7 @@ Geen gebruikersgegevens in dit document.
 
 ## Maatstaf (Arno, 27 november)
 
-ArnoBot bouwt anders dan een gewone LLM een geschiedenis op van de gebruiker. Het mag niet slechter worden dan het was: beter, of minstens gelijk. De bouw van de 30-dagenregel staat op tak `fix/hervatten-30-dagen`, niet live.
+ArnoBot bouwt anders dan een gewone LLM een geschiedenis op van de gebruiker. Het mag niet slechter worden dan het was: beter, of minstens gelijk. De 30-dagenregel staat sinds 27 november op master.
 
 Uitgangspunt: oude samenvattingen en feiten zijn op 31 oktober niet gewist, ze gaan alleen niet meer mee (behalve verwijderde gesprekken en bij Basic alles boven 25 gesprekken).
 
