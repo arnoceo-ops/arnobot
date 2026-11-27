@@ -4,7 +4,7 @@
 
 **Laatst bijgewerkt:** 27 november 2026
 **Waar we staan:** eerste versie aangevallen door een agent zonder voorgeschiedenis en daarop herzien. Niets gebouwd, de chat is niet aangepast, geen nieuwe testkosten.
-**Eerstvolgende stap:** akkoord van Arno op stap 1.
+**Eerstvolgende stap:** stap 1 staat gebouwd op de tak `fix/hervatten-48u` (werkmap `C:\Users\arno\arnobot-48u`), niet op master en niet live. Tests, typecontrole en lint geslaagd. Wacht op akkoord voor de gedragstest (naspelen, geschat $1,50, harde grens $2) en daarna op akkoord om live te zetten. Keurt Arno ook de nieuwe instructietekst in `lib/hervatGesprek.ts` goed.
 
 - [ ] Stap 1: gesprek hervatten na 48 uur, smalle reparatie
 - [ ] Stap 2: een controlerun op bestaande antwoorden (apart akkoord, harde grens)
