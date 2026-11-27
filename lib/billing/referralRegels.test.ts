@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   brutoVanNetto, eersteBetalingOpTijd, kwalificatie, levertTegoedOp, maandNettoCent, tegoedNettoCent,
-  tegoedStatus, verdeelOverEigenBetalingen, verrekening, type BetaaldePeriode,
-} from './referralRegels'
+  tegoedStatus, verdeelOverEigenBetalingen, verrekening, type BetaaldePeriode } from './referralRegels'
 
 const basicJaar = (k: 'particulier' | 'zakelijk') => maandNettoCent('basis', 'jaarlijks', k)
 
@@ -25,9 +24,16 @@ describe('bedrag', () => {
     expect(brutoVanNetto(t)).toBe(bruto)
   })
   it('een particulier krijgt precies zijn getoonde maandprijs terug, ook bij Pro', () => {
-    expect(brutoVanNetto(maandNettoCent('premium', 'jaarlijks', 'particulier'))).toBe(3900)
-    expect(brutoVanNetto(maandNettoCent('premium', 'maandelijks', 'particulier'))).toBe(5900)
+    expect(brutoVanNetto(maandNettoCent('premium', 'jaarlijks', 'particulier'))).toBe(3300)
+    // 49 / 1,21 is niet in hele centen netto uit te drukken: 4050 netto is los teruggerekend 49,01. Op de eigen
+    // maandbetaling begrenst de verrekening op precies 49,00 (zie hieronder).
+    expect(brutoVanNetto(maandNettoCent('premium', 'maandelijks', 'particulier'))).toBe(4901)
     expect(brutoVanNetto(maandNettoCent('basis', 'maandelijks', 'particulier'))).toBe(2900)
+  })
+  it('Pro per maand: tegoed op de eigen maandbetaling is precies 49,00 en daarna is het op', () => {
+    const netto = maandNettoCent('premium', 'maandelijks', 'particulier')
+    expect(verrekening(netto, 4900)).toEqual({ brutoCent: 4900, verbruiktNettoCent: netto })
+    expect(verrekening(2 * netto, 4900)).toEqual({ brutoCent: 4900, verbruiktNettoCent: netto })
   })
   it('nooit meer dan de maandprijs van de aanbrenger', () => {
     expect(tegoedNettoCent(maandNettoCent('premium', 'maandelijks', 'zakelijk'), basicJaar('zakelijk'))).toBe(1900)

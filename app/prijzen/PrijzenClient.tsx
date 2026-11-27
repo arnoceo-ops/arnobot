@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import SignupCTA from '../components/SignupCTA'
 import { SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS } from '@/lib/kostenTarieven'
+import TeamKleinTekst from '../components/TeamKleinTekst'
 
 type Cyclus = 'maandelijks' | 'jaarlijks'
 
@@ -179,12 +180,12 @@ export default function PrijzenClient() {
             </div>
             <p className="prijzen-tier-billingnote">
               {cyclus === 'jaarlijks'
-                ? `+ €${TEAM_PERGEBRUIKER_JAARLIJKS} per gebruiker, vanaf 3 gebruikers`
-                : `+ €${TEAM_PERGEBRUIKER_MAANDELIJKS} per gebruiker, vanaf 3 gebruikers`}
+                ? `Incl. manager, + €${TEAM_PERGEBRUIKER_JAARLIJKS} per teamlid`
+                : `Incl. manager, + €${TEAM_PERGEBRUIKER_MAANDELIJKS} per teamlid`}
             </p>
             <p className="prijzen-tier-billingnote">
               {cyclus === 'jaarlijks'
-                ? `€${TEAM_BASIS_JAARLIJKS * 12} + €${TEAM_PERGEBRUIKER_JAARLIJKS * 12} per gebruiker, per jaar`
+                ? `€${TEAM_BASIS_JAARLIJKS * 12} + €${TEAM_PERGEBRUIKER_JAARLIJKS * 12} per teamlid, per jaar`
                 : 'Opzegtermijn één maand.'}
             </p>
           </div>
@@ -201,6 +202,7 @@ export default function PrijzenClient() {
           </ul>
 
           <a href="/team" className="prijzen-tier-cta secundair">Bekijk Team</a>
+          <p className="prijzen-tier-billingnote" style={{ marginTop: 12, whiteSpace: 'normal' }}><TeamKleinTekst /></p>
         </div>
       </div>
     </>

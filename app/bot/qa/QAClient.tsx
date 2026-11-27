@@ -95,7 +95,7 @@ const FAQ_GROUPS = [
     items: [
       {
         q: 'Hoeveel kost ArnoBot?',
-        a: 'ArnoBot heeft meerdere niveaus, vanaf €19 per maand. Pro, het meest gekozen abonnement, kost €39 per maand bij jaarbetaling of €59 per maand bij maandbetaling. Bekijk het volledige overzicht op de prijzenpagina. Je begint altijd met een gratis proefperiode van 30 dagen, zonder verplichtingen.',
+        a: 'ArnoBot heeft meerdere niveaus, vanaf €19 per maand. Pro, het meest gekozen abonnement, kost €33 per maand bij jaarbetaling of €49 per maand bij maandbetaling. Bekijk het volledige overzicht op de prijzenpagina. Je begint altijd met een gratis proefperiode van 30 dagen, zonder verplichtingen.',
       },
       {
         q: 'Hoe lang duurt de proefperiode?',

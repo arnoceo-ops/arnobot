@@ -98,7 +98,8 @@ function benodigdeSchaalVoorWinst(
   }
   const solo = Math.round(baseN * hi)
   const teamKlanten = Math.round(baseTeam.aantalKlanten * hi)
-  const teamLeden = teamKlanten * baseTeam.gemiddeldeLeden
+  // Personen in teams, de manager per klant meegeteld.
+  const teamLeden = teamKlanten * (baseTeam.gemiddeldeLeden + 1)
   return { solo, teamKlanten, teamLeden, totaal: solo + teamLeden }
 }
 
@@ -249,8 +250,8 @@ export default function BusinessCaseClient({
       <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 18 }}>
         <TariefDisplay label="Basic (€)" value={String(DEFAULT_PRIJZEN.basis)} />
         <TariefDisplay label="Pro (€)" value={String(DEFAULT_PRIJZEN.premium)} />
-        <TariefDisplay label="Team basis (vast, €)" value={`${SCENARIO_TEAM_PRIJS.basisMaandelijks}/${SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}`} />
-        <TariefDisplay label="Team p/user (vast, €)" value={`${SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/${SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}`} />
+        <TariefDisplay label="Manager (vast, €)" value={`${SCENARIO_TEAM_PRIJS.basisMaandelijks}/${SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}`} />
+        <TariefDisplay label="Per teamlid (vast, €)" value={`${SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/${SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}`} />
       </div>
 
       <div style={cardStyle}>
@@ -288,8 +289,8 @@ export default function BusinessCaseClient({
               Team
             </div>
             <div style={{ fontSize: 12, lineHeight: '17px', color: '#6b7280', marginBottom: 12, height: 34 }}>
-              <div>Maandelijks: € {SCENARIO_TEAM_PRIJS.basisMaandelijks}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks}/user</div>
-              <div>Jaarlijks: € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12}/account + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12}/user (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/user/jr)</div>
+              <div>Maandelijks: € {SCENARIO_TEAM_PRIJS.basisMaandelijks} manager + € {SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks} per teamlid</div>
+              <div>Jaarlijks: € {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal / 12} manager + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal / 12} per teamlid (€ {SCENARIO_TEAM_PRIJS.basisJaarlijksTotaal}/jr + € {SCENARIO_TEAM_PRIJS.perGebruikerJaarlijksTotaal}/user/jr)</div>
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
               <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: clamp(v, 0, MAX_GEBRUIKERS_ZOEKGRENS) })} />
@@ -298,13 +299,13 @@ export default function BusinessCaseClient({
             </div>
             {teamVolumeWaarschuwing && (
               <p style={{ fontSize: 12, color: '#f59e0b', lineHeight: 1.5, marginBottom: 12 }}>
-                Let op: {scenario.teamLeden.toLocaleString('nl-NL')} teamleden is {teamVsSoloRatio.toFixed(1)}&times; het aantal solo users hierboven ({nGebruikers.toLocaleString('nl-NL')}). Check of # teamklanten/# teamleden nog bij dit scenario passen.
+                Let op: {scenario.teamLeden.toLocaleString('nl-NL')} gebruikers in teams is {teamVsSoloRatio.toFixed(1)}&times; het aantal solo users hierboven ({nGebruikers.toLocaleString('nl-NL')}). Check of # teamklanten/# teamleden nog bij dit scenario passen.
               </p>
             )}
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
               <TariefField label="% Team jaarlijks" value={teamBillingSplit.pctJaarlijks} onChange={v => setTeamBillingSplit({ pctJaarlijks: clamp(v, 0, 100) })} />
-              <TariefDisplay label="Team basis (blend)" value={'€ ' + Math.round(scenario.teamBasisGemiddeld).toLocaleString('nl-NL')} />
-              <TariefDisplay label="Team p/user (blend)" value={'€ ' + Math.round(scenario.teamPerGebruikerGemiddeld).toLocaleString('nl-NL')} />
+              <TariefDisplay label="Manager (blend)" value={'€ ' + Math.round(scenario.teamBasisGemiddeld).toLocaleString('nl-NL')} />
+              <TariefDisplay label="Per teamlid (blend)" value={'€ ' + Math.round(scenario.teamPerGebruikerGemiddeld).toLocaleString('nl-NL')} />
             </div>
           </div>
         </div>
@@ -316,7 +317,7 @@ export default function BusinessCaseClient({
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginTop: 12 }}>
             <div>
               <div style={statLabel}>Verdeling</div>
-              <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.basicN} basic &middot; {scenario.proN} pro &middot; {scenario.teamLeden} teamleden</div>
+              <div style={{ fontSize: 13, color: '#94a3b8' }}>{scenario.basicN} basic &middot; {scenario.proN} pro &middot; {scenario.teamLeden} in teams</div>
             </div>
             <div>
               <div style={statLabel}>Gemiddelde prijs/maand</div>
@@ -371,7 +372,7 @@ export default function BusinessCaseClient({
                   {benodigdeGebruikers === null ? '-' : (benodigdeGebruikers + scenario.teamLeden).toLocaleString('nl-NL')}
                 </div>
                 <div style={{ fontSize: 11.5, color: '#6b7280', marginTop: 2 }}>
-                  = solo hierboven + de huidige {scenario.teamLeden.toLocaleString('nl-NL')} teamleden ({teamScenario.aantalKlanten} klanten &times; {teamScenario.gemiddeldeLeden})
+                  = solo hierboven + de huidige {scenario.teamLeden.toLocaleString('nl-NL')} in teams ({teamScenario.aantalKlanten} klanten &times; manager plus {teamScenario.gemiddeldeLeden})
                 </div>
               </div>
             </div>
@@ -398,7 +399,7 @@ export default function BusinessCaseClient({
                 <div style={statLabel}>Benodigd # teamklanten</div>
                 <div style={statValue}>{benodigdeSchaal === null ? '-' : benodigdeSchaal.teamKlanten.toLocaleString('nl-NL')}</div>
                 <div style={{ fontSize: 11.5, color: '#6b7280', marginTop: 2 }}>
-                  {benodigdeSchaal === null ? '' : `= ${benodigdeSchaal.teamLeden.toLocaleString('nl-NL')} teamleden bij ${teamScenario.gemiddeldeLeden}/klant`}
+                  {benodigdeSchaal === null ? '' : `= ${benodigdeSchaal.teamLeden.toLocaleString('nl-NL')} in teams bij manager plus ${teamScenario.gemiddeldeLeden} per klant`}
                 </div>
               </div>
               <div>

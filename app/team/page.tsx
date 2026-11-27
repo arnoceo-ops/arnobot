@@ -291,7 +291,7 @@ export default async function TeamPage() {
           <h2 className="tm-h2">Zie het op je eigen scherm</h2>
           <p>
             Dertig minuten, jouw vragen, een ingericht voorbeeldteam. Of sla de demo over en
-            vraag direct aan, daar zie je meteen de prijs voor jouw teamgrootte.
+            vraag direct aan, daar zie je meteen de prijs vanaf een manager en 3 teamleden.
           </p>
           <div className="tm-cta-row">
             <a

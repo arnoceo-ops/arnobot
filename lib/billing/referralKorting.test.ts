@@ -2,13 +2,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // De referral fee op de eerste jaarbetaling: het bedrag en wie er recht op heeft. Database nagemaakt.
-const h = vi.hoisted(() => ({ referral: null as any, betalingen: [] as any[], gebruiker: null as any, fout: null as any }))
+const h = vi.hoisted(() => ({ referral: null as any, betalingen: [] as any[], gebruiker: null as any, fout: null as any, abonnement: null as any }))
 
 vi.mock('./db', () => ({
   billingDb: {
     from(tabel: string) {
       const uit = () => ({
-        data: tabel === 'arnobot_referrals' ? h.referral : tabel === 'arnobot_payments' ? h.betalingen : h.gebruiker,
+        data: tabel === 'arnobot_referrals' ? h.referral : tabel === 'arnobot_payments' ? h.betalingen : tabel === 'arnobot_subscriptions' ? h.abonnement : h.gebruiker,
         error: h.fout,
       })
       const q: any = { select: () => q, eq: () => q, limit: () => q, returns: () => q, maybeSingle: async () => uit(), then: (res: any) => Promise.resolve(uit()).then(res) }
@@ -23,9 +23,9 @@ import { metJaarKorting } from './referralRegels'
 
 describe('bedrag van de eerste jaarbetaling', () => {
   it.each([
-    ['premium', 'particulier', 42900, 3900],
+    ['premium', 'particulier', 36300, 3300],
     ['basis', 'particulier', 20900, 1900],
-    ['premium', 'zakelijk', 51909, 4719],
+    ['premium', 'zakelijk', 43923, 3993],
     ['basis', 'zakelijk', 25289, 2299],
   ] as const)('%s %s', (plan, klant, bruto, korting) => {
     const r = metJaarKorting(berekenBedrag(plan, 'jaarlijks', klant))
@@ -34,13 +34,29 @@ describe('bedrag van de eerste jaarbetaling', () => {
     expect(r.bedrag.nettoCent + r.bedrag.btwCent).toBe(bruto)
   })
   it('zakelijk: netto precies een maand minder', () => {
-    expect(metJaarKorting(berekenBedrag('premium', 'jaarlijks', 'zakelijk')).bedrag.nettoCent).toBe(42900)
+    expect(metJaarKorting(berekenBedrag('premium', 'jaarlijks', 'zakelijk')).bedrag.nettoCent).toBe(36300)
   })
 })
 
 describe('zelf omzetten naar zakelijk', () => {
   const eerste = (bedrag_cent: number) => ({ status: 'paid', soort: 'eerste', plan: 'basis', cyclus: 'jaarlijks', klant_type: 'particulier', bedrag_cent })
-  beforeEach(() => { h.betalingen = []; h.fout = null })
+  beforeEach(() => { h.betalingen = []; h.fout = null; h.abonnement = null })
+  const proJaar = (bedrag_cent: number) => ({ ...eerste(bedrag_cent), plan: 'premium' })
+  it('oude Pro-jaarbetaling met fee blijft herkend nu de prijslijst lager is', async () => {
+    h.abonnement = { plan: 'premium', cyclus: 'jaarlijks', klant_type: 'particulier', bedrag_cent: 46800 }
+    h.betalingen = [proJaar(42900)]
+    expect(await redenGeenZelfCorrectie('s')).toBe('referral_fee')
+  })
+  it('oude volle Pro-jaarbetaling is geen fee', async () => {
+    h.abonnement = { plan: 'premium', cyclus: 'jaarlijks', klant_type: 'particulier', bedrag_cent: 46800 }
+    h.betalingen = [proJaar(46800)]
+    expect(await redenGeenZelfCorrectie('s')).toBeNull()
+  })
+  it('nieuwe volle Pro-jaarbetaling is geen fee', async () => {
+    h.abonnement = { plan: 'premium', cyclus: 'jaarlijks', klant_type: 'particulier', bedrag_cent: 39600 }
+    h.betalingen = [proJaar(39600)]
+    expect(await redenGeenZelfCorrectie('s')).toBeNull()
+  })
   it('volle prijs: mag', async () => {
     h.betalingen = [eerste(22800)]
     expect(await redenGeenZelfCorrectie('s')).toBeNull()

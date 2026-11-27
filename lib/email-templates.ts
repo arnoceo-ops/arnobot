@@ -423,9 +423,9 @@ export function getEmailTemplate(
       const t = options?.team
       const bedrag = billingEuro(t?.bedragCent ?? 0)
       return {
-        subject: `${prefix}Factuur ArnoBot Team${t?.tussentijds ? ', nieuwe gebruiker toegevoegd' : ''}`,
+        subject: `${prefix}Factuur ArnoBot Team${t?.tussentijds ? ', nieuw teamlid toegevoegd' : ''}`,
         html: mail(
-          `${t?.tussentijds ? `Je team heeft een gebruiker toegevoegd.` : `Dit is de factuur voor jullie Team-abonnement${t?.teamNaam ? ` (${t.teamNaam})` : ''}.`} Bedrag: ${bedrag}, voor ${t?.seats ?? 0} gebruikers.<br><br>Betaal binnen 14 dagen via de knop hieronder. Je ontvangt de factuur zelf ook via Moneybird.`,
+          `${t?.tussentijds ? `Je team heeft een teamlid toegevoegd.` : `Dit is de factuur voor jullie Team-abonnement${t?.teamNaam ? ` (${t.teamNaam})` : ''}.`} Bedrag: ${bedrag}. Jullie team: de manager en ${t?.seats ?? 0} ${t?.seats === 1 ? 'teamlid' : 'teamleden'}.<br><br>Betaal binnen 14 dagen via de knop hieronder. Je ontvangt de factuur zelf ook via Moneybird.`,
           'BETAAL DE FACTUUR →', t?.betaalLink ?? 'https://arno.bot/bot/team'
         ),
       }

@@ -110,7 +110,7 @@ function centen(euroBedrag: number): number {
   return Math.round(euroBedrag * 100)
 }
 
-/** Reguliere factuur voor een volledige cyclus: platformtarief + seats × prijs/seat, altijd excl. btw (zakelijk). */
+/** Reguliere factuur voor een volledige cyclus: bedrag voor de manager + teamleden × prijs per teamlid, altijd excl. btw (zakelijk). */
 export function berekenReguliereBedrag(seats: number, cyclus: Cyclus): { nettoCent: number; btwCent: number; brutoCent: number } {
   const perMaand = teamPrijsPerMaandStrikt(seats, cyclus)
   const nettoEuro = cyclus === 'jaarlijks' ? perMaand * 12 : perMaand

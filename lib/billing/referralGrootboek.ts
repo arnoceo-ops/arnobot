@@ -209,7 +209,8 @@ const teamMaandCent = (seats: number, cyclus: Cyclus) => teamPrijsPerMaandStrikt
 function teamOndergrens(t: Team, facturen: TeamFactuurRow[]): number {
   if (t.min_seats !== null) return t.min_seats
   const laatste = facturen
-    .filter(f => f.team_id === t.id && f.soort === 'regulier' && f.seats_aantal > 0)
+    // Alleen facturen die echt staan: een teruggedraaide, verlopen of onbetaalde factuur zegt niets over de teamgrootte.
+    .filter(f => f.team_id === t.id && f.soort === 'regulier' && f.seats_aantal > 0 && teamFactuurStaat(f))
     .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0]
   return laatste?.seats_aantal ?? TEAM_MIN_TEAMLEDEN
 }

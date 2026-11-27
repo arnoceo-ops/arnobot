@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import BotNav from '../BotNav'
 import { berekenBedrag, type KlantType } from '@/lib/billing/prijzen'
+import { SCENARIO_PRIJZEN } from '@/lib/kostenTarieven'
 import { metJaarKorting } from '@/lib/billing/referralRegels'
 import { formatEuro } from '@/lib/billing/geld'
 
@@ -415,11 +416,11 @@ export default function DoorgaanClient({ demoLink, teamNaam = null }: { demoLink
                 <div>
                   <div className="plan-amount">
                     <span className="plan-currency">€</span>
-                    <span className="plan-prijs">{cyclus === 'jaarlijks' ? '19' : '29'}</span>
+                    <span className="plan-prijs">{cyclus === 'jaarlijks' ? SCENARIO_PRIJZEN.basicJaarlijksTotaal / 12 : SCENARIO_PRIJZEN.basicMaandelijks}</span>
                     <span className="plan-periode">/ maand</span>
                   </div>
                   <p className="plan-billingnote">
-                    {cyclus === 'jaarlijks' ? 'Bij jaarbetaling, €228 per jaar' : 'Per maand.'}
+                    {cyclus === 'jaarlijks' ? `Bij jaarbetaling, €${SCENARIO_PRIJZEN.basicJaarlijksTotaal} per jaar` : 'Per maand.'}
                   </p>
                 </div>
 
@@ -441,11 +442,11 @@ export default function DoorgaanClient({ demoLink, teamNaam = null }: { demoLink
                 <div>
                   <div className="plan-amount">
                     <span className="plan-currency">€</span>
-                    <span className="plan-prijs">{cyclus === 'jaarlijks' ? '39' : '59'}</span>
+                    <span className="plan-prijs">{cyclus === 'jaarlijks' ? SCENARIO_PRIJZEN.proJaarlijksTotaal / 12 : SCENARIO_PRIJZEN.proMaandelijks}</span>
                     <span className="plan-periode">/ maand</span>
                   </div>
                   <p className="plan-billingnote">
-                    {cyclus === 'jaarlijks' ? 'Bij jaarbetaling, €468 per jaar' : 'Per maand.'}
+                    {cyclus === 'jaarlijks' ? `Bij jaarbetaling, €${SCENARIO_PRIJZEN.proJaarlijksTotaal} per jaar` : 'Per maand.'}
                   </p>
                 </div>
 

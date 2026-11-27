@@ -347,7 +347,7 @@ describe('B4: verrekenen bij de verlenging', () => {
   it('wat niet past gaat op de volgende, oudste eerst', async () => {
     const p = await metTegoed(7000)
     await plan()
-    expect((await acties()).map(a => [a.doel_id, a.netto_cent])).toEqual([[p[2].id, 4876], [p[3].id, 2124]])
+    expect((await acties()).map(a => [a.doel_id, a.netto_cent])).toEqual([[p[2].id, 4050], [p[3].id, 2950]])
   })
   it('twee runs tegelijk geven niet meer dan het saldo', async () => {
     await metTegoed(7000)

@@ -3,7 +3,7 @@ import { klantBestaat, maakKlant } from '@/lib/billing/mollie'
 import { valideerZakelijk, type ZakelijkeGegevens } from '@/lib/billing/zakelijk'
 import { berekenReguliereBedrag, huidigSeats, maakTeamFactuur, type TeamRow } from '@/lib/billing/teamFacturatie'
 import { voegMaandenToe } from '@/lib/billing/perioden'
-import { TEAM_MIN_TEAMLEDEN, TEAM_MAX_TEAMLEDEN, TEAM_KLEIN_TEKST, type Cyclus } from '@/lib/teamPricing'
+import { TEAM_MIN_TEAMLEDEN, TEAM_MAX_TEAMLEDEN, TEAM_KLEIN_TEKST, TEAM_GROOT_TEKST, type Cyclus } from '@/lib/teamPricing'
 import { isAgentProef, proefEinde, proefStand, toegangTot, type ProefStaat } from '@/lib/teamProef'
 import { TEST_PROEF_TEAM_ID } from '@/lib/internalTestAccounts'
 import { logAdminActie } from '@/lib/adminLog'
@@ -27,7 +27,7 @@ export async function valideerActivatie(raw: Record<string, unknown> | null | un
   const r = raw ?? {}
   const seats = Number(r.seats)
   if (!Number.isInteger(seats) || seats < TEAM_MIN_TEAMLEDEN) return { ok: false, fout: TEAM_KLEIN_TEKST }
-  if (seats > MAX_SEATS) return { ok: false, fout: `Voor meer dan ${MAX_SEATS} teamleden nemen we contact met je op` }
+  if (seats > MAX_SEATS) return { ok: false, fout: TEAM_GROOT_TEKST }
   if (r.cyclus !== 'maandelijks' && r.cyclus !== 'jaarlijks') return { ok: false, fout: 'Kies maandelijks of jaarlijks' }
   const zakelijk = await valideerZakelijk({ bedrijfsnaam: r.bedrijfsnaam, kvk: r.kvkNummer, btwNummer: r.btwNummer, straat: r.straat, postcode: r.postcode, plaats: r.plaats })
   if (!zakelijk.ok) return zakelijk

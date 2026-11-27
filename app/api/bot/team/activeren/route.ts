@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { Ratelimit } from '@upstash/ratelimit'
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
   const geldig = Number.isInteger(seats) && seats >= TEAM_MIN_TEAMLEDEN && seats <= MAX_SEATS && (cyclus === 'maandelijks' || cyclus === 'jaarlijks')
   // Het voorbeeld telt hetzelfde als de factuur: het werkelijke aantal teamleden als dat hoger is dan het ingevulde.
   // Lukt tellen niet, dan geen bedrag in plaats van een te laag bedrag.
-  const gefactureerd = geldig ? await huidigSeats(stand.teamId, seats).catch(() => null) : null
+  const gefactureerd = geldig ? await huidigSeats(stand.teamId, seats).catch(e => { Sentry.captureException(e, { tags: { onderdeel: 'team-activeren' } }); return null }) : null
   const bedrag = gefactureerd !== null ? activatieBedrag(gefactureerd, cyclus as 'maandelijks' | 'jaarlijks') : null
   return NextResponse.json({ stand, bedrag, gefactureerdeTeamleden: gefactureerd, betalenBeschikbaar: mollieBeschikbaarVoor(userId) })
 }

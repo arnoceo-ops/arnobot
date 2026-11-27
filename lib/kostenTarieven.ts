@@ -201,11 +201,11 @@ export const TARIEVEN = {
   // Omzettarieven per plan, EUR/maand. Command/team heeft geen vlak tarief
   // (staffel per seat, zie project-team-pricing) en telt daarom niet mee in
   // de omzetprognose, alleen het aantal gebruikers wordt getoond.
-  // prijsBasisEur/prijsPremiumEur vastgezet op 29/59 (besloten/bevestigd
-  // 2026-08-01, vervangt het eerdere 38/77 van 2026-07-31), gelijk aan
+  // prijsBasisEur/prijsPremiumEur: 29/49 (Pro verlaagd van 59, besloten
+  // 2026-11-26, zie docs/PRICING_DECISIONS.md), gelijk aan
   // SCENARIO_PRIJZEN.basicMaandelijks/proMaandelijks hieronder.
   prijsBasisEur: 29,
-  prijsPremiumEur: 59,
+  prijsPremiumEur: 49,
 }
 
 // Boven de Business-tier: volle Business-tiers kopen voor het grootste deel,
@@ -602,8 +602,9 @@ export type Betaalprovider = {
 // want een teamklant is geen individu maar een manager-account met eigen
 // teamleden eronder (besloten 2026-08-01, optie B uit het gesprek over hoe
 // Team in Abacus te modelleren). aantalKlanten = aantal teamaccounts,
-// gemiddeldeLeden = totaal aantal betalende gebruikers per account,
-// inclusief de manager zelf (die ook chat/coacht en dus kosten genereert).
+// gemiddeldeLeden = teamleden per account, zonder de manager (die zit in het
+// managerbedrag, herzien 2026-11-26). Voor kosten en aantallen gebruikers telt
+// de manager wel mee: hij chat en coacht ook.
 export type TeamScenario = { aantalKlanten: number; gemiddeldeLeden: number }
 // %-verdeling maandelijks/jaarlijks voor Team, zelfde patroon als
 // ScenarioBillingSplit voor Basic/Pro (besloten 2026-08-10, bij de invoering
@@ -615,10 +616,10 @@ export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium
 // vervangt het eerdere 38/347/77/707 van 2026-07-31): niet meer instelbaar
 // in de UI, de enige keuzeopties zijn de %-verdeling (TierVerdeling) en de
 // %-betaalcyclus per tier (ScenarioBillingSplit). TARIEVEN.prijsBasisEur/
-// prijsPremiumEur hierboven zijn in dezelfde beslissing meegewijzigd naar
-// 29/59. Sinds 2026-08-10 importeert app/prijzen/PrijzenClient.tsx deze
+// prijsPremiumEur hierboven horen bij dezelfde bron (sinds 2026-11-26:
+// Basic 29/228, Pro 49/396). Sinds 2026-08-10 importeert app/prijzen/PrijzenClient.tsx deze
 // constanten direct, dezelfde bron, geen losse hardgecodeerde bedragen meer.
-export const SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 29, basicJaarlijksTotaal: 228, proMaandelijks: 59, proJaarlijksTotaal: 468 }
+export const SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 29, basicJaarlijksTotaal: 228, proMaandelijks: 49, proJaarlijksTotaal: 396 }
 export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 40, proPctJaarlijks: 10 }
 export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 80, pro: 20 }
 export const DEFAULT_BETAALPROVIDER: Betaalprovider = {
@@ -626,20 +627,20 @@ export const DEFAULT_BETAALPROVIDER: Betaalprovider = {
   sepaPct: 0, sepaFixed: 0.35,
   teamFixed: 0.25,
 }
-// Team-tarief (besloten 2026-08-01, jaaroptie toegevoegd 2026-08-10): €97
-// basis + €49/gebruiker/maand bij maandelijkse betaling, €77 + €39/gebruiker
-// als maand-equivalent bij jaarlijkse vooruitbetaling (~20% korting, bewust
-// minder dan Basic/Pro's ~34%, zie lib/teamPricing.ts voor de volledige
-// onderbouwing). Zelfde structuur als ScenarioPrijzen hierboven.
+// Team-tarief (herzien 2026-11-26): €97 voor de manager, inclusief eigen Pro,
+// + €49 per teamlid per maand; bij jaarlijkse vooruitbetaling €77 + €33 als
+// maand-equivalent. Een teamlid betaalt hetzelfde als een solo Pro-klant, zie
+// lib/teamPricing.ts. Zelfde structuur als ScenarioPrijzen hierboven.
+// perGebruiker* is de prijs per teamlid, de manager niet meegerekend.
 export type ScenarioTeamPrijzen = {
   basisMaandelijks: number; basisJaarlijksTotaal: number
   perGebruikerMaandelijks: number; perGebruikerJaarlijksTotaal: number
 }
 export const SCENARIO_TEAM_PRIJS: ScenarioTeamPrijzen = {
   basisMaandelijks: 97, basisJaarlijksTotaal: 924,
-  perGebruikerMaandelijks: 49, perGebruikerJaarlijksTotaal: 468,
+  perGebruikerMaandelijks: 49, perGebruikerJaarlijksTotaal: 396,
 }
-export const DEFAULT_TEAM_SCENARIO: TeamScenario = { aantalKlanten: 5, gemiddeldeLeden: 5 }
+export const DEFAULT_TEAM_SCENARIO: TeamScenario = { aantalKlanten: 5, gemiddeldeLeden: 4 }
 // Startaanname, instelbaar op de Business case-tab: nog geen gemeten data
 // over hoeveel Team-klanten voor jaarlijks kiezen (de optie is nieuw).
 export const DEFAULT_TEAM_BILLING_SPLIT: TeamBillingSplit = { pctJaarlijks: 20 }
@@ -681,7 +682,9 @@ export function berekenScenarioOmzetEnBetaalprovider(
   // transactie per teamaccount per factuurmoment (basistarief + alle seats in
   // één gecombineerde factuur), dus geteld over team.aantalKlanten, niet over
   // teamLeden.
-  const teamLeden = team.aantalKlanten * team.gemiddeldeLeden
+  // teamLeden = alle personen in teams (managers inbegrepen), voor kosten en aantallen. De omzet hieronder rekent per
+  // teamlid zonder manager.
+  const teamLeden = team.aantalKlanten * (team.gemiddeldeLeden + 1)
   const teamBasisGemiddeld = gemiddeldePrijsPerMaand(teamPrijs.basisMaandelijks, teamPrijs.basisJaarlijksTotaal, teamBillingSplit.pctJaarlijks)
   const teamPerGebruikerGemiddeld = gemiddeldePrijsPerMaand(teamPrijs.perGebruikerMaandelijks, teamPrijs.perGebruikerJaarlijksTotaal, teamBillingSplit.pctJaarlijks)
   const teamOmzet = team.aantalKlanten * (teamBasisGemiddeld + team.gemiddeldeLeden * teamPerGebruikerGemiddeld)

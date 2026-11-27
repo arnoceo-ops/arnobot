@@ -30,9 +30,9 @@ describe('maandklant', () => {
     expect(s.opzeggingIntrekbaar).toBe(false)
   })
 
-  it('Pro: besparing van €240 en geen upgradekaart', () => {
+  it('Pro: besparing van €192 en geen upgradekaart', () => {
     const s = bepaalOverstapStatus(rij({ plan: 'premium' }), NU, '2026-12-04')
-    expect(s.naarJaar).toMatchObject({ maandbedragEuro: 59, jaarbedragEuro: 468, besparingEuro: 240 })
+    expect(s.naarJaar).toMatchObject({ maandbedragEuro: 49, jaarbedragEuro: 396, besparingEuro: 192 })
     expect(s.upgrade).toBeNull()
   })
 

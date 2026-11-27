@@ -5,13 +5,13 @@ import { useEffect, useRef, useState } from 'react'
 const HORIZON = 60
 const PRIJZEN = {
   maandelijks: { platform: 97, perSeat: 49 },
-  jaarlijks: { platform: 77, perSeat: 39 },
+  jaarlijks: { platform: 77, perSeat: 33 },
 } as const
 type Facturatie = keyof typeof PRIJZEN
 
 // Gemiddelde omzet per solo-gebruiker, afgeleid uit Arno's eigen sheet:
-// 80% Basic (€228/jr) + 20% Pro (€468/jr) = €276/jaar = €23/maand per gebruiker.
-const SOLO_OMZET_PER_GEBRUIKER_PER_MAAND = 23
+// 80% Basic (€228/jr) + 20% Pro (€396/jr) = €262/jaar = ongeveer €22/maand per gebruiker.
+const SOLO_OMZET_PER_GEBRUIKER_PER_MAAND = 22
 
 type Maand = {
   maand: number
@@ -517,7 +517,8 @@ function tekenBedrijfsChart(
 
 export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
   const [instroom, setInstroom] = useState(4)
-  const [seats, setSeats] = useState(5)
+  // Teamleden per klant, zonder de manager: die zit in het platformtarief.
+  const [seats, setSeats] = useState(4)
   const [churnPct, setChurnPct] = useState(10)
   const [groeiPct, setGroeiPct] = useState(20)
   const [soloJaarOmzet, setSoloJaarOmzet] = useState(36000)
@@ -552,8 +553,8 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
   const cum5jrDeel2 = deel2.reduce((s, d) => s + d.bedrag, 0)
   const cumDeel2 = deel2.reduce((s, x) => s + x.bedrag, 0)
 
-  const teamGebruikersEigen = Math.round(dMaand.klantenAantal * seats)
-  const teamGebruikersBuiten = Math.round((teamBuitenOmzetPerMaand[maandIdx] / omzetPerKlant) * seats)
+  const teamGebruikersEigen = Math.round(dMaand.klantenAantal * (seats + 1))
+  const teamGebruikersBuiten = Math.round((teamBuitenOmzetPerMaand[maandIdx] / omzetPerKlant) * (seats + 1))
   const soloGebruikers = Math.round(soloOmzetPerMaand[maandIdx] / SOLO_OMZET_PER_GEBRUIKER_PER_MAAND)
   const totaalGebruikers = teamGebruikersEigen + teamGebruikersBuiten + soloGebruikers
 
@@ -678,9 +679,9 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
             <NumberInput value={instroom} onChange={setInstroom} min={0} max={20} step={1} />
             <Unit>gemiddeld</Unit>
           </Field>
-          <Field label="Gebruikers per klant">
+          <Field label="Teamleden per klant">
             <NumberInput value={seats} onChange={setSeats} min={3} max={100} step={1} />
-            <Unit>seats</Unit>
+            <Unit>excl. manager</Unit>
           </Field>
           <Field label="Churn">
             <NumberInput value={churnPct} onChange={v => setChurnPct(Math.round(v))} min={0} max={30} step={1} />
@@ -812,7 +813,7 @@ export default function SdVerdienClient({ isAdmin }: { isAdmin: boolean }) {
 
         {!isBedrijfsWeergave && (
           <footer style={{ fontSize: 12, color: '#5b6576', lineHeight: 1.6, borderTop: '1px solid #2d3a4d', paddingTop: 20 }}>
-            Dit is een rekenvoorbeeld om je eigen situatie mee te verkennen, geen garantie of toezegging. Gebaseerd op het ArnoBot Team-tarief (platformtarief plus een bedrag per gebruiker, vanaf 3 gebruikers) en een aangenomen, gelijkmatig churn-percentage, niet op werkelijke opzeggingen.
+            Dit is een rekenvoorbeeld om je eigen situatie mee te verkennen, geen garantie of toezegging. Gebaseerd op het ArnoBot Team-tarief (een bedrag voor de manager plus een bedrag per teamlid, vanaf 3 teamleden) en een aangenomen, gelijkmatig churn-percentage, niet op werkelijke opzeggingen.
           </footer>
         )}
       </div>

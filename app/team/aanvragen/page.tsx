@@ -3,7 +3,8 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
-import { berekenTeamPrijsPerMaand, TEAM_MIN_TEAMLEDEN, TEAM_ELITE_SURPLUS_PER_MAAND, type Cyclus } from '@/lib/teamPricing'
+import { berekenTeamPrijsPerMaand, TEAM_MIN_TEAMLEDEN, TEAM_ELITE_SURPLUS_PER_MAAND, TEAM_BASISTARIEF_MAANDELIJKS, TEAM_BASISTARIEF_JAARLIJKS, TEAM_PRIJS_PER_GEBRUIKER_MAANDELIJKS, TEAM_PRIJS_PER_GEBRUIKER_JAARLIJKS, type Cyclus } from '@/lib/teamPricing'
+import TeamKleinTekst from '../../components/TeamKleinTekst'
 
 export default function TeamAanvraagPage() {
   const { isSignedIn, isLoaded } = useUser()
@@ -26,7 +27,8 @@ export default function TeamAanvraagPage() {
   const [eliteInteresse, setEliteInteresse] = useState(false)
   const [eliteAantal, setEliteAantal] = useState(1)
 
-  const prijs = useMemo(() => berekenTeamPrijsPerMaand(aantalSeats, cyclus), [aantalSeats, cyclus])
+  // Onder het minimum geen prijs maar de contacttekst: aanmelden kan dan niet via dit formulier.
+  const prijs = useMemo(() => (aantalSeats < TEAM_MIN_TEAMLEDEN ? null : berekenTeamPrijsPerMaand(aantalSeats, cyclus)), [aantalSeats, cyclus])
   // Elite-surplus meteen in de getoonde prijs verwerkt (besloten 2026-08-11,
   // op Arno's verzoek): geen aparte jaarkorting op dit bedrag, dus telt bij
   // jaarlijks gewoon voor het volle bedrag mee in de x12-jaarprijs, net als
@@ -208,7 +210,7 @@ export default function TeamAanvraagPage() {
 
                 <div className="ca-row">
                   <div className="ca-field">
-                    <label>Aantal gebruikers (inclusief jijzelf) *</label>
+                    <label>Aantal teamleden (zonder jezelf) *</label>
                     <input
                       required type="number" min={TEAM_MIN_TEAMLEDEN} value={aantalSeats}
                       onChange={e => {
@@ -229,7 +231,7 @@ export default function TeamAanvraagPage() {
                   <button type="button" className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
                 </div>
                 <p style={{ fontSize: 13, color: '#6b7280', marginTop: -12, marginBottom: 20 }}>
-                  {cyclus === 'jaarlijks' ? 'Jaarlijks vooruitbetaald, ~20% korting.' : 'Opzegtermijn één maand.'} Vanaf {TEAM_MIN_TEAMLEDEN} gebruikers.
+                  {cyclus === 'jaarlijks' ? 'Jaarlijks vooruitbetaald.' : 'Opzegtermijn één maand.'} Jij als manager zit in het managerbedrag.
                 </p>
 
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: eliteInteresse ? 12 : 20, cursor: 'pointer' }}>
@@ -259,14 +261,14 @@ export default function TeamAanvraagPage() {
                 <div className="ca-prijs-box">
                   {prijsMetElite === null ? (
                     <>
-                      <p className="ca-prijs-num">Vanaf {TEAM_MIN_TEAMLEDEN} gebruikers</p>
-                      <p className="ca-prijs-sub">Vul het aantal gebruikers in voor een prijsberekening.</p>
+                      <p className="ca-prijs-num">Vanaf {TEAM_MIN_TEAMLEDEN} teamleden</p>
+                      <p className="ca-prijs-sub"><TeamKleinTekst /></p>
                     </>
                   ) : cyclus === 'jaarlijks' ? (
                     <>
                       <p className="ca-prijs-num">€ {(prijsMetElite * 12).toLocaleString('nl-NL')} / jaar</p>
                       <p className="ca-prijs-sub">
-                        € 77 platformtarief + € 39 per gebruiker, maand-equivalent
+                        € {TEAM_BASISTARIEF_JAARLIJKS} voor de manager + € {TEAM_PRIJS_PER_GEBRUIKER_JAARLIJKS} per teamlid, maand-equivalent
                         {eliteInteresse && <> + € {TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;, geen jaarkorting op dit deel)</>}, exclusief BTW
                       </p>
                     </>
@@ -274,7 +276,7 @@ export default function TeamAanvraagPage() {
                     <>
                       <p className="ca-prijs-num">€ {prijsMetElite.toLocaleString('nl-NL')} / maand</p>
                       <p className="ca-prijs-sub">
-                        € 97 platformtarief + € 49 per gebruiker
+                        € {TEAM_BASISTARIEF_MAANDELIJKS} voor de manager + € {TEAM_PRIJS_PER_GEBRUIKER_MAANDELIJKS} per teamlid
                         {eliteInteresse && <> + € {TEAM_ELITE_SURPLUS_PER_MAAND} per Elite-teamlid ({eliteAantal}&times;)</>}, exclusief BTW
                       </p>
                     </>

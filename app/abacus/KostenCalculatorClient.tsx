@@ -381,7 +381,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 </div>
               </div>
               <p style={{ fontSize: 12, color: '#6b7280', marginTop: 12 }}>
-                %-verdeling Basic/Pro, betaalcyclus, Team-aantallen en betaalprovider-instellingen komen van tab 3 (Business case), dit tabblad kent zelf geen prijzen. Teamleden (inclusief de manager) tellen mee als extra Pro-users, plus een kleine teamspecifieke meerkost.
+                %-verdeling Basic/Pro, betaalcyclus, Team-aantallen en betaalprovider-instellingen komen van tab 3 (Business case), dit tabblad kent zelf geen prijzen. Teammanagers en teamleden tellen mee als extra Pro-users, plus een kleine teamspecifieke meerkost.
               </p>
             </div>
 

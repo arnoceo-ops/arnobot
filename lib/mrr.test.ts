@@ -43,8 +43,8 @@ describe('berekenTeamMrrEuro', () => {
   it('gebruikt de factuurformule: 97 + 3 x 49 = 244 per maand bij 3 seats', () => {
     expect(berekenTeamMrrEuro([team()], { t1: 3 }, betaald)).toBe(244)
   })
-  it('telt jaarlijks als maand-equivalent: 77 + 3 x 39 = 194', () => {
-    expect(berekenTeamMrrEuro([team({ cyclus: 'jaarlijks' })], { t1: 3 }, betaald)).toBe(194)
+  it('telt jaarlijks als maand-equivalent: 77 + 3 x 33 = 176', () => {
+    expect(berekenTeamMrrEuro([team({ cyclus: 'jaarlijks' })], { t1: 3 }, betaald)).toBe(176)
   })
   it('rekent met het actuele ledenaantal als dat boven het minimum ligt', () => {
     expect(berekenTeamMrrEuro([team()], { t1: 5 }, betaald)).toBe(97 + 5 * 49)

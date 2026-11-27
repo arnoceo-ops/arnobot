@@ -10,7 +10,7 @@ import { VOICE_USD_PER_1000_TEKENS } from '@/lib/maandKosten'
 import { MANUAL_TEST_USER_ID, isInternalTestUser } from '@/lib/internalTestAccounts'
 
 /** Referentieprijs per maand in euro bij jaarbetaling (docs/ABONNEMENTEN.md): alleen om de kostenkolom in de admin te kleuren, niet de echte factuur. */
-export const REFERENTIE_PRIJS_EUR: Record<string, number> = { basis: 19, premium: 39, team: 49 }
+export const REFERENTIE_PRIJS_EUR: Record<string, number> = { basis: 19, premium: 33, team: 33 }
 
 /**
  * Gebruikers die de Abacus-tab Gebruikers niet toont (besluit Arno 2026-11-19): alleen de interne testaccounts en de nepleden uit de demo,

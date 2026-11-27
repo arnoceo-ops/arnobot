@@ -36,20 +36,20 @@ describe('prijzen en btw', () => {
   it('gebruikt de getoonde prijzen uit kostenTarieven', () => {
     expect(getoondBedragEuro('basis', 'maandelijks')).toBe(29)
     expect(getoondBedragEuro('basis', 'jaarlijks')).toBe(228)
-    expect(getoondBedragEuro('premium', 'maandelijks')).toBe(59)
-    expect(getoondBedragEuro('premium', 'jaarlijks')).toBe(468)
+    expect(getoondBedragEuro('premium', 'maandelijks')).toBe(49)
+    expect(getoondBedragEuro('premium', 'jaarlijks')).toBe(396)
   })
   it('particulier betaalt precies het getoonde bedrag, btw zit erin', () => {
     const b = berekenBedrag('premium', 'jaarlijks', 'particulier')
-    expect(b.brutoCent).toBe(46800)
-    expect(b.nettoCent + b.btwCent).toBe(46800)
-    expect(b.nettoCent).toBe(38678)
+    expect(b.brutoCent).toBe(39600)
+    expect(b.nettoCent + b.btwCent).toBe(39600)
+    expect(b.nettoCent).toBe(32727)
   })
   it('zakelijk betaalt het getoonde bedrag plus 21%', () => {
     const b = berekenBedrag('premium', 'jaarlijks', 'zakelijk')
-    expect(b.nettoCent).toBe(46800)
-    expect(b.btwCent).toBe(9828)
-    expect(b.brutoCent).toBe(56628)
+    expect(b.nettoCent).toBe(39600)
+    expect(b.btwCent).toBe(8316)
+    expect(b.brutoCent).toBe(47916)
   })
   it('bruto is altijd netto plus btw', () => {
     for (const plan of ['basis', 'premium'] as const)

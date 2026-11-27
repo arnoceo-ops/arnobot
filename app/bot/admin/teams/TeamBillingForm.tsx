@@ -148,7 +148,7 @@ export default function TeamBillingForm({ initial }: { initial: TeamBillingIniti
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 12 }}>
         <div>
-          <label style={label}>Min. seats</label>
+          <label style={label}>Min. teamleden (zonder manager)</label>
           <input style={input} type="number" min={1} value={minSeats} onChange={e => setMinSeats(e.target.value)} placeholder="niet geactiveerd" />
         </div>
         <div>
@@ -205,7 +205,7 @@ export default function TeamBillingForm({ initial }: { initial: TeamBillingIniti
             <button onClick={soloVoorbeeld} disabled={!minSeats} style={{ ...btn, background: '#374151', color: '#f1f5f9', opacity: minSeats ? 1 : 0.5 }}>
               SOLO NAAR TEAM
             </button>
-            <span style={{ fontSize: 12, color: '#6b7280', marginLeft: 12 }}>Vul eerst min. seats en cyclus in. Toont eerst een voorbeeld.</span>
+            <span style={{ fontSize: 12, color: '#6b7280', marginLeft: 12 }}>Vul eerst min. teamleden en cyclus in. Toont eerst een voorbeeld.</span>
             {solo.stap === 'fout' && <p style={{ fontSize: 13, color: '#ef4444', marginTop: 8 }}>{solo.fout}</p>}
           </>
         ) : solo.stap === 'bezig' ? (
@@ -225,7 +225,7 @@ export default function TeamBillingForm({ initial }: { initial: TeamBillingIniti
                 <>
                   <li>{solo.voorbeeld.hervat ? 'De Mollie-incasso is al gestopt; de rest wordt afgemaakt.' : 'De Mollie-incasso stopt nu.'}</li>
                   <li>Het solo-abonnement loopt door tot {datumNl(solo.voorbeeld.ingaatOp)}.</li>
-                  <li>Team-factuur 1 op {datumNl(solo.voorbeeld.ingaatOp)}: {euro(solo.voorbeeld.teamNettoCent)} excl. BTW ({solo.voorbeeld.seats} seats, {solo.voorbeeld.cyclus}).</li>
+                  <li>Team-factuur 1 op {datumNl(solo.voorbeeld.ingaatOp)}: {euro(solo.voorbeeld.teamNettoCent)} excl. BTW (manager plus {solo.voorbeeld.seats} teamleden, {solo.voorbeeld.cyclus}).</li>
                   <li>De teambaas krijgt een mail.</li>
                 </>
               )}

@@ -1,6 +1,6 @@
 // Omzet per gebruiker per kalendermaand voor de Abacus-tab Gebruikers, uit de betaaladministratie (arnobot_payments en arnobot_subscriptions).
 // Netto, dus zonder btw, en een jaarbetaling gespreid over de 12 maanden vanaf de maand van betalen (besluit Arno 2026-11-19): anders staat
-// €468 in één maand en nul in de elf daarna, en zegt de marge per maand niets. Een maandbetaling telt in de maand van betalen.
+// €396 in één maand en nul in de elf daarna, en zegt de marge per maand niets. Een maandbetaling telt in de maand van betalen.
 import { maandSleutel } from '@/lib/maandKosten'
 import { dagenInMaand, dagenTussen } from '@/lib/amsterdamTijd'
 

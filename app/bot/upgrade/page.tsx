@@ -72,7 +72,7 @@ export default async function UpgradePage() {
           <div style={section}>
             <p style={label}>TEAM</p>
             <p style={body}>
-              Voor meerdere gebruikers onder één deal. Iedereen in het team krijgt Pro-niveau. Vanaf €{SCENARIO_TEAM_PRIJS.basisMaandelijks} per maand + €{SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks} per gebruiker, vanaf 3 gebruikers. Bekijk de actuele prijs en vraag je team aan.
+              Voor meerdere gebruikers onder één deal. Iedereen in het team krijgt Pro-niveau. €{SCENARIO_TEAM_PRIJS.basisMaandelijks} per maand voor de manager + €{SCENARIO_TEAM_PRIJS.perGebruikerMaandelijks} per teamlid, vanaf 3 teamleden. Bekijk de actuele prijs en vraag je team aan.
             </p>
             <UpgradeButton
               href="/team"

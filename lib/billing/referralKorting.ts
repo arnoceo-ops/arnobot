@@ -17,9 +17,21 @@ export async function redenGeenZelfCorrectie(abonnementId: string): Promise<'ref
     .limit(1000)
     .returns<(PayRow & { plan?: Plan | null; cyclus?: Cyclus | null; klant_type?: KlantType | null })[]>()
   if (error) throw new Error(`betalingen opzoeken mislukt: ${error.message}`)
-  // De korting bestaat alleen bij jaarbetalingen en pas sinds de momentopname per betaling wordt vastgelegd.
+  const { data: sub, error: subFout } = await billingDb
+    .from('arnobot_subscriptions')
+    .select('plan, cyclus, klant_type, bedrag_cent')
+    .eq('id', abonnementId)
+    .maybeSingle<{ plan: Plan; cyclus: Cyclus; klant_type: KlantType; bedrag_cent: number }>()
+  if (subFout) throw new Error(`abonnement opzoeken mislukt: ${subFout.message}`)
+  // De korting bestaat alleen bij jaarbetalingen en pas sinds de momentopname per betaling wordt vastgelegd. Vergeleken
+  // wordt met wat voor dit abonnement is afgesproken: na een prijswijziging klopt de prijslijst niet meer voor oude
+  // betalingen. Past het abonnement niet meer bij de betaling (na een upgrade), dan blijft alleen de prijslijst over.
+  const volleCent = (b: { plan: Plan; klant_type: KlantType }) =>
+    sub && sub.plan === b.plan && sub.cyclus === 'jaarlijks' && sub.klant_type === b.klant_type
+      ? sub.bedrag_cent
+      : berekenBedrag(b.plan, 'jaarlijks', b.klant_type).brutoCent
   const metFee = (data ?? []).some(b => b.status === 'paid' && b.soort === 'eerste' && b.cyclus === 'jaarlijks' && !!b.plan && !!b.klant_type
-    && b.bedrag_cent < berekenBedrag(b.plan, 'jaarlijks', b.klant_type).brutoCent)
+    && b.bedrag_cent < volleCent({ plan: b.plan, klant_type: b.klant_type }))
   if (metFee) return 'referral_fee'
   // Ook een lopende bijbetaling telt: het abonnement staat dan al op Pro. Alleen een mislukte upgrade telt niet.
   return (data ?? []).some(b => b.soort === 'upgrade' && !['failed', 'canceled', 'expired'].includes(b.status)) ? 'upgrade' : null

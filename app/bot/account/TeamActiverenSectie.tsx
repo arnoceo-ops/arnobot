@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useIsNativeApp } from '@/hooks/useIsNativeApp'
 import type { ActivatieStand } from '@/lib/teamActivatie'
+import { TEAM_MIN_TEAMLEDEN, TEAM_MAX_TEAMLEDEN, TEAM_GROOT_TEKST } from '@/lib/teamPricing'
+import TeamKleinTekst from '../../components/TeamKleinTekst'
 
 // Teamproef omzetten naar een betaald Team, bovenaan de accountpagina van de manager (docs/TEAM_PROCES.md,
 // "Zelf activeren"). De server bepaalt wat er kan en wat het kost (GET /api/bot/team/activeren); deze
@@ -10,7 +12,7 @@ import type { ActivatieStand } from '@/lib/teamActivatie'
 // Opmaak volgt de kaders op de accountpagina ("Jouw data is van jou"): donkere kaart, oranje rand links.
 
 type Bedrag = { nettoCent: number; btwCent: number; brutoCent: number }
-type Antwoord = { stand: ActivatieStand | null; bedrag: Bedrag | null; betalenBeschikbaar: boolean }
+type Antwoord = { stand: ActivatieStand | null; bedrag: Bedrag | null; gefactureerdeTeamleden?: number | null; betalenBeschikbaar: boolean }
 
 const VELDEN = ['bedrijfsnaam', 'kvkNummer', 'btwNummer', 'straat', 'postcode', 'plaats'] as const
 type VeldNaam = typeof VELDEN[number]
@@ -50,17 +52,18 @@ export function useActivatieStand(): { stand: ActivatieStand | null; loaded: boo
 export default function TeamActiverenSectie({ stand, laad }: { stand: ActivatieStand | null; laad: () => void }) {
   const isNativeApp = useIsNativeApp()
   const [open, setOpen] = useState(false)
-  // Wat de manager zelf typt; zolang er niets is getypt gelden het aantal leden (minimaal 3) en de bekende bedrijfsgegevens.
+  // Wat de manager zelf typt; zolang er niets is getypt gelden het aantal teamleden zonder de manager (minimaal 3) en de bekende bedrijfsgegevens.
   const [seatsIngevuld, setSeats] = useState<string | null>(null)
   const [cyclus, setCyclus] = useState<'maandelijks' | 'jaarlijks'>('maandelijks')
   const [bewerkt, setBewerkt] = useState<Partial<Record<VeldNaam, string>>>({})
   const [akkoord, setAkkoord] = useState(false)
   const [bedrag, setBedrag] = useState<Bedrag | null>(null)
+  const [gefactureerd, setGefactureerd] = useState<number | null>(null)
   const [bezig, setBezig] = useState(false)
   const [fout, setFout] = useState<string | null>(null)
   const [klaar, setKlaar] = useState<{ bedragCent: number; betaalLink: string | null } | null>(null)
 
-  const seats = seatsIngevuld ?? String(Math.max(3, stand?.ledenAantal ?? 3))
+  const seats = seatsIngevuld ?? String(Math.min(TEAM_MAX_TEAMLEDEN, Math.max(TEAM_MIN_TEAMLEDEN, stand?.ledenAantal ?? TEAM_MIN_TEAMLEDEN)))
   const f = Object.fromEntries(VELDEN.map(n => [n, bewerkt[n] ?? stand?.voorinvulling?.[n] ?? ''])) as Record<VeldNaam, string>
 
   // Het bedrag komt van de server (dezelfde berekening als de factuur), pas als de keuze geldig is.
@@ -69,8 +72,8 @@ export default function TeamActiverenSectie({ stand, laad }: { stand: ActivatieS
     let geannuleerd = false
     fetch(`/api/bot/team/activeren?seats=${encodeURIComponent(seats)}&cyclus=${cyclus}`, { cache: 'no-store' })
       .then(r => (r.ok ? r.json() : null))
-      .then((d: Antwoord | null) => { if (!geannuleerd) setBedrag(d?.bedrag ?? null) })
-      .catch(() => { if (!geannuleerd) setBedrag(null) })
+      .then((d: Antwoord | null) => { if (!geannuleerd) { setBedrag(d?.bedrag ?? null); setGefactureerd(d?.gefactureerdeTeamleden ?? null) } })
+      .catch(() => { if (!geannuleerd) { setBedrag(null); setGefactureerd(null) } })
     return () => { geannuleerd = true }
   }, [open, seats, cyclus, stand?.kanActiveren])
 
@@ -149,8 +152,8 @@ export default function TeamActiverenSectie({ stand, laad }: { stand: ActivatieS
         <div>
           <div style={raster}>
             <div>
-              <label style={veldLabel} htmlFor="ta-seats">AANTAL GEBRUIKERS (MINIMAAL 3)</label>
-              <input id="ta-seats" className="ta-veld" type="number" min={3} style={{ ...veld, maxWidth: 160 }} value={seats} onChange={e => setSeats(e.target.value)} />
+              <label style={veldLabel} htmlFor="ta-seats">TEAMLEDEN, ZONDER JEZELF</label>
+              <input id="ta-seats" className="ta-veld" type="number" min={TEAM_MIN_TEAMLEDEN} max={TEAM_MAX_TEAMLEDEN} style={{ ...veld, maxWidth: 160 }} value={seats} onChange={e => setSeats(e.target.value)} />
             </div>
             <div>
               <span style={veldLabel}>BETALING</span>
@@ -181,10 +184,15 @@ export default function TeamActiverenSectie({ stand, laad }: { stand: ActivatieS
                 </p>
                 <p style={{ fontSize: 14, color: '#9ca3af', margin: 0 }}>
                   {euro(bedrag.brutoCent)} incl. btw, {cyclus === 'jaarlijks' ? 'per jaar' : 'per maand'}.
+                  {gefactureerd !== null ? ` Voor jou als manager en ${gefactureerd} teamleden.` : ''}
                 </p>
               </>
             ) : (
-              <p style={{ fontSize: 14, color: '#6b7280', margin: 0 }}>Kies minimaal 3 gebruikers om het bedrag te zien.</p>
+              <p style={{ fontSize: 14, color: '#6b7280', margin: 0 }}>
+                {Number(seats) < TEAM_MIN_TEAMLEDEN ? <TeamKleinTekst />
+                  : Number(seats) > TEAM_MAX_TEAMLEDEN ? TEAM_GROOT_TEKST
+                    : 'Het bedrag verschijnt hier zodra het is berekend.'}
+              </p>
             )}
           </div>
 
