@@ -4,7 +4,7 @@ import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { mollieBeschikbaarVoor } from '@/lib/billing/mollie'
 import { activatieBedrag, activeerTeam, leesActivatieStand, MAX_SEATS, valideerActivatie } from '@/lib/teamActivatie'
-import { TEAM_MIN_GEBRUIKERS } from '@/lib/teamPricing'
+import { TEAM_MIN_TEAMLEDEN } from '@/lib/teamPricing'
 
 // Een manager activeert zelf zijn team na de gratis agent-proef (docs/TEAM_PROCES.md).
 // GET: de teamstand (en met ?seats&cyclus het bedrag van de eerste factuur voor het voorbeeld).
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 
   const seats = Number(req.nextUrl.searchParams.get('seats'))
   const cyclus = req.nextUrl.searchParams.get('cyclus')
-  const bedrag = Number.isInteger(seats) && seats >= TEAM_MIN_GEBRUIKERS && seats <= MAX_SEATS && (cyclus === 'maandelijks' || cyclus === 'jaarlijks')
+  const bedrag = Number.isInteger(seats) && seats >= TEAM_MIN_TEAMLEDEN && seats <= MAX_SEATS && (cyclus === 'maandelijks' || cyclus === 'jaarlijks')
     ? activatieBedrag(seats, cyclus)
     : null
   return NextResponse.json({ stand, bedrag, betalenBeschikbaar: mollieBeschikbaarVoor(userId) })

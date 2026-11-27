@@ -39,6 +39,7 @@ function bouwer(tabel: string) {
   const b: Record<string, unknown> = {}
   b.select = (_k?: string, o?: { head?: boolean }) => { head = !!o?.head; return b }
   b.eq = (k: string, v: unknown) => { filters.push(r => r[k] === v); return b }
+  b.neq = (k: string, v: unknown) => { filters.push(r => r[k] !== v); return b }
   b.is = (k: string, v: null) => { filters.push(r => (r[k] ?? null) === v); return b }
   b.in = (k: string, v: unknown[]) => { filters.push(r => v.includes(r[k])); return b }
   b.order = (k: string) => { volgorde = k; return b }
@@ -96,7 +97,7 @@ describe('valideerActivatie', () => {
     if (r.ok) expect(r.waarde).toMatchObject({ seats: 5, cyclus: 'jaarlijks', zakelijk: { kvk: '12345678', postcode: '1234 AB' } })
   })
   it.each([
-    ['te weinig gebruikers', { seats: 2 }],
+    ['te weinig teamleden', { seats: 2 }],
     ['geen geheel getal', { seats: 3.5 }],
     ['te veel gebruikers', { seats: 501 }],
     ['onbekende betaalwijze', { cyclus: 'wekelijks' }],
@@ -123,7 +124,7 @@ describe('leesActivatieStand', () => {
   it('toont een lopende agent-proef als activeerbaar met de resterende dagen', async () => {
     zet()
     const s = await leesActivatieStand('m1')
-    expect(s).toMatchObject({ kanActiveren: true, geactiveerd: false, geblokkeerd: false, ledenAantal: 2 })
+    expect(s).toMatchObject({ kanActiveren: true, geactiveerd: false, geblokkeerd: false, ledenAantal: 1 })
     expect(s?.proef).toMatchObject({ staat: 'loopt', dagen: 20 })
   })
   it('toont een afgelopen proef als verlopen en geblokkeerd', async () => {

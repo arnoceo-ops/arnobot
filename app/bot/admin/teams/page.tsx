@@ -70,15 +70,17 @@ export default async function TeamsAdminPage() {
   const { data: ledenRijen } = teamIds.length
     ? await supabase.from('arnobot_team_members').select('team_id, user_id').in('team_id', teamIds)
     : { data: [] as { team_id: string; user_id: string }[] }
+  // Teamleden zonder de manager: die zit in het basistarief.
+  const managerPerTeam = new Map((teams ?? []).map(t => [t.id, t.manager_id]))
   const ledenPerTeam = new Map<string, number>()
   for (const l of ledenRijen ?? []) {
-    if (isFakeDemoUser(l.user_id) || isInternalTestUser(l.user_id)) continue
+    if (isFakeDemoUser(l.user_id) || isInternalTestUser(l.user_id) || managerPerTeam.get(l.team_id) === l.user_id) continue
     ledenPerTeam.set(l.team_id, (ledenPerTeam.get(l.team_id) ?? 0) + 1)
   }
   const vandaag = nlVandaag()
   function standVoor(team: { id: string; min_seats: number | null; cyclus: string | null; volgende_factuurdatum: string | null }) {
     const leden = ledenPerTeam.get(team.id) ?? 0
-    if (team.min_seats == null) return { tekst: `${leden} leden, nog niet geactiveerd voor facturatie`, kleur: '#6b7280' }
+    if (team.min_seats == null) return { tekst: `${leden} teamleden, nog niet geactiveerd voor facturatie`, kleur: '#6b7280' }
     const cyclus = team.cyclus === 'jaarlijks' ? 'jaarlijks' : 'maandelijks'
     const seats = Math.max(leden, team.min_seats)
     const perMaand = berekenTeamPrijsPerMaand(seats, cyclus)
@@ -90,7 +92,7 @@ export default async function TeamsAdminPage() {
       factuur = dagen < 0 ? `volgende factuur ${Math.abs(dagen)} dagen te laat (${team.volgende_factuurdatum.slice(0, 10)})` : `volgende factuur ${team.volgende_factuurdatum.slice(0, 10)}, over ${dagen} dag${dagen === 1 ? '' : 'en'}`
       kleur = dagen < 0 ? '#ef4444' : dagen < 7 ? '#f59e0b' : '#9ca3af'
     }
-    return { tekst: `${leden} leden${leden < team.min_seats ? ` (minimum ${team.min_seats})` : ''}, gefactureerd op ${seats} seats, ${bedrag}, ${factuur}`, kleur }
+    return { tekst: `${leden} teamleden${leden < team.min_seats ? ` (minimum ${team.min_seats})` : ''}, gefactureerd op manager plus ${seats}, ${bedrag}, ${factuur}`, kleur }
   }
 
   return (
@@ -99,9 +101,9 @@ export default async function TeamsAdminPage() {
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 24px' }}>
         <h1 style={h1}>TEAMS</h1>
         <p style={{ ...muted, marginBottom: 32 }}>
-          Seats, cyclus, eerstvolgende factuurdatum en bedrijfsgegevens per team. Leeg = nog niet geactiveerd voor
-          automatische facturatie (de cron slaat dat team over). Bron van waarheid voor seats bij facturatie: het
-          actuele aantal leden in het team, nooit onder het hier ingestelde minimum.
+          Teamleden, cyclus, eerstvolgende factuurdatum en bedrijfsgegevens per team. Leeg = nog niet geactiveerd voor
+          automatische facturatie (de cron slaat dat team over). Gefactureerd wordt het actuele aantal teamleden zonder de
+          manager, nooit onder het hier ingestelde minimum. De manager zit in het basistarief.
         </p>
 
         {(teams ?? []).map(team => {
@@ -190,7 +192,7 @@ export default async function TeamsAdminPage() {
                   <td style={{ padding: '4px 8px' }}>{new Date(a.created_at).toLocaleDateString('nl-NL')}</td>
                   <td style={{ padding: '4px 8px' }}>{a.bedrijfsnaam}</td>
                   <td style={{ padding: '4px 8px' }}>{a.aanvrager_naam} ({a.email})</td>
-                  <td style={{ padding: '4px 8px' }}>{a.aantal_seats} seats, {a.cyclus}</td>
+                  <td style={{ padding: '4px 8px' }}>aantal {a.aantal_seats}, {a.cyclus}</td>
                   <td style={{ padding: '4px 8px' }}>€{a.berekende_prijs_per_maand}/maand</td>
                 </tr>
               ))}

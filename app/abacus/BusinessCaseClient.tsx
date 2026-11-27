@@ -5,7 +5,7 @@ import {
   DEFAULT_PRIJZEN, computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
   type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit, type Inputs,
 } from '@/lib/kostenTarieven'
-import { TEAM_MIN_GEBRUIKERS } from '@/lib/teamPricing'
+import { TEAM_MIN_TEAMLEDEN } from '@/lib/teamPricing'
 import { cardStyle, cardHeadStyle, dotStyle, statLabel, statValue, headlineValueStyle, statCellStyle, fmtEUR } from './abacusShared'
 import VerloopKaart from './VerloopKaart'
 
@@ -293,7 +293,7 @@ export default function BusinessCaseClient({
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
               <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: clamp(v, 0, MAX_GEBRUIKERS_ZOEKGRENS) })} />
-              <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: clamp(v, TEAM_MIN_GEBRUIKERS, 10000) })} />
+              <TariefField label="# teamleden" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: clamp(v, TEAM_MIN_TEAMLEDEN, 10000) })} />
               <TariefDisplay label="% team van totaal" value={`${pctTeamVanTotaal.toFixed(0)}%`} />
             </div>
             {teamVolumeWaarschuwing && (

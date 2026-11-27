@@ -97,7 +97,7 @@ export async function soloStoptVoorTeam(userId: string, nu: Date = new Date()): 
  * wijzigt niets. Wordt ook door `voerSoloNaarTeamUit` gebruikt, zodat voorbeeld en uitvoering niet kunnen afwijken.
  */
 export async function bekijkSoloNaarTeam(teamId: string, invoer: SoloNaarTeamInvoer, nu: Date = new Date()): Promise<SoloNaarTeamUitkomst> {
-  if (!Number.isInteger(invoer.minSeats) || invoer.minSeats < 1) return weiger(400, 'Ongeldig aantal seats')
+  if (!Number.isInteger(invoer.minSeats) || invoer.minSeats < 1) return weiger(400, 'Ongeldig aantal teamleden')
   if (invoer.cyclus !== 'maandelijks' && invoer.cyclus !== 'jaarlijks') return weiger(400, 'Ongeldige cyclus')
 
   const { data: team } = await billingDb
@@ -285,6 +285,6 @@ export async function voerSoloNaarTeamUit(teamId: string, invoer: SoloNaarTeamIn
     bedragCent: v.teamNettoCent,
     perPeriode: v.cyclus === 'jaarlijks' ? 'per jaar' : 'per maand',
   })
-  await notifyTelegram(`Solo naar Team op arno.bot\n\nTeam: ${team.name}\nWie: ${await wieIs(v.managerId)}\nSolo: ${v.soloOmschrijving}, stopt op ${v.ingaatOp}\nTeam: ${v.seats} seats, ${v.cyclus}, eerste factuur op ${v.ingaatOp}, €${(v.teamNettoCent / 100).toFixed(2)} excl. BTW`).catch(() => {})
+  await notifyTelegram(`Solo naar Team op arno.bot\n\nTeam: ${team.name}\nWie: ${await wieIs(v.managerId)}\nSolo: ${v.soloOmschrijving}, stopt op ${v.ingaatOp}\nTeam: manager plus ${v.seats} teamleden, ${v.cyclus}, eerste factuur op ${v.ingaatOp}, €${(v.teamNettoCent / 100).toFixed(2)} excl. BTW`).catch(() => {})
   return { ...v, hervat: v.hervat }
 }

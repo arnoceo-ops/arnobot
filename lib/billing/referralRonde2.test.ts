@@ -13,6 +13,8 @@ const maakDb = vi.hoisted(() => () => ({
       select: (k: string) => { vraag.kolommen = k; return q },
       eq: (k: string, v: unknown) => { vraag.filters.push([k, v]); return q },
       order: () => q, limit: () => q, returns: () => q,
+      // Alleen huidigSeats vraagt een enkele rij op: de eigenaar van het team.
+      maybeSingle: () => Promise.resolve(h.antwoord.error ? { data: null, error: h.antwoord.error } : { data: { manager_id: 'user_manager' }, error: null }),
       then: (res: any, rej: any) => Promise.resolve(h.antwoord).then(res, rej),
     }
     return q

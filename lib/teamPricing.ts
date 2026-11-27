@@ -23,7 +23,13 @@ export const TEAM_BASISTARIEF_MAANDELIJKS = 97
 export const TEAM_BASISTARIEF_JAARLIJKS = 77
 export const TEAM_PRIJS_PER_GEBRUIKER_MAANDELIJKS = 49
 export const TEAM_PRIJS_PER_GEBRUIKER_JAARLIJKS = 39
-export const TEAM_MIN_GEBRUIKERS = 3
+/**
+ * Minimum om zelf aan te melden of te activeren: de manager plus dit aantal teamleden (besloten 2026-11-26). De manager zit in
+ * het basistarief en telt nergens mee als teamlid. De prijsberekening hieronder kent dit minimum bewust niet: Arno kan een
+ * kleiner team instellen, en dat krijgt gewoon de formule.
+ */
+export const TEAM_MIN_TEAMLEDEN = 3
+export const TEAM_KLEIN_TEKST = `Team is er vanaf een manager en ${TEAM_MIN_TEAMLEDEN} teamleden. Begin je kleiner, bijvoorbeeld als startup met 2 teamleden? Neem dan contact op via team@arno.bot.`
 
 // Elite-surplus binnen een Team-aanvraag (besloten 2026-08-11, zie
 // docs/PRICING_DECISIONS.md): Elite is geen publieke keuze meer, maar Arno
@@ -35,16 +41,24 @@ export const TEAM_MIN_GEBRUIKERS = 3
 // hetzelfde surplus geldt ongeacht de gekozen Team-facturatiecyclus.
 export const TEAM_ELITE_SURPLUS_PER_MAAND = 338
 
-export function berekenTeamPrijsPerMaand(gebruikers: number, cyclus: Cyclus = 'maandelijks'): number | null {
-  if (!Number.isFinite(gebruikers) || gebruikers < TEAM_MIN_GEBRUIKERS) return null
+/** Maandprijs voor de manager plus `teamleden` (zonder de manager). Null alleen bij een onmogelijk aantal. */
+export function berekenTeamPrijsPerMaand(teamleden: number, cyclus: Cyclus = 'maandelijks'): number | null {
+  if (!Number.isInteger(teamleden) || teamleden < 1) return null
   const basis = cyclus === 'jaarlijks' ? TEAM_BASISTARIEF_JAARLIJKS : TEAM_BASISTARIEF_MAANDELIJKS
   const perGebruiker = cyclus === 'jaarlijks' ? TEAM_PRIJS_PER_GEBRUIKER_JAARLIJKS : TEAM_PRIJS_PER_GEBRUIKER_MAANDELIJKS
-  return basis + gebruikers * perGebruiker
+  return basis + teamleden * perGebruiker
 }
 
-export function teamPrijsWeergave(gebruikers: number, cyclus: Cyclus = 'maandelijks'): string {
-  const prijs = berekenTeamPrijsPerMaand(gebruikers, cyclus)
-  if (prijs === null) return `Vanaf ${TEAM_MIN_GEBRUIKERS} gebruikers`
+/** Als hierboven, maar voor alles wat met geld rekent: een onmogelijk aantal is een fout, nooit stilletjes 0 euro. */
+export function teamPrijsPerMaandStrikt(teamleden: number, cyclus: Cyclus): number {
+  const prijs = berekenTeamPrijsPerMaand(teamleden, cyclus)
+  if (prijs === null) throw new Error(`geen teamprijs bij ${teamleden} teamleden`)
+  return prijs
+}
+
+export function teamPrijsWeergave(teamleden: number, cyclus: Cyclus = 'maandelijks'): string {
+  const prijs = berekenTeamPrijsPerMaand(teamleden, cyclus)
+  if (prijs === null) return `Vanaf ${TEAM_MIN_TEAMLEDEN} teamleden`
   return cyclus === 'jaarlijks'
     ? `€${prijs}/maand-equivalent, €${prijs * 12} per jaar vooruit (excl. BTW)`
     : `€${prijs} per maand (excl. BTW)`

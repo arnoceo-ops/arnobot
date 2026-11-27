@@ -19,7 +19,7 @@ import { notifyTelegram } from '@/lib/cron-notify'
 import { isFakeDemoUser, isInternalTestUser, TEST_TEAM_IDS } from '@/lib/internalTestAccounts'
 import { ontblokkeerNaBetaling } from '@/lib/teamOpzegging'
 import {
-  berekenTeamPrijsPerMaand,
+  teamPrijsPerMaandStrikt,
   TEAM_PRIJS_PER_GEBRUIKER_JAARLIJKS,
   type Cyclus,
 } from '@/lib/teamPricing'
@@ -82,8 +82,19 @@ export interface TeamFactuurRow {
   bezorgd_at?: string | null
 }
 
-/** Actueel ledenaantal van een team, nooit onder het afgesproken minimum. Nep-/testaccounts tellen nooit mee. */
+/**
+ * Actueel aantal teamleden zonder de manager (die zit in het basistarief), nooit onder het afgesproken minimum. Alleen de
+ * eigenaar van het team (manager_id) valt weg: een tweede account met de rol manager telt als teamlid. Nep-/testaccounts
+ * tellen nooit mee.
+ */
 export async function huidigSeats(teamId: string, minSeats: number): Promise<number> {
+  const { data: team, error: teamError } = await billingDb
+    .from('arnobot_teams')
+    .select('manager_id')
+    .eq('id', teamId)
+    .maybeSingle<{ manager_id: string }>()
+  // Zonder manager_id zou de manager als teamlid meetellen: dan liever geen factuur dan een te hoge.
+  if (teamError || !team) throw new Error(`teamleden tellen mislukt: ${teamError?.message ?? 'team niet gevonden'}`)
   const { data, error } = await billingDb
     .from('arnobot_team_members')
     .select('user_id')
@@ -91,7 +102,7 @@ export async function huidigSeats(teamId: string, minSeats: number): Promise<num
     .returns<{ user_id: string }[]>()
   // Stil het minimum teruggeven zou een te lage factuur (en te laag referraltegoed) geven.
   if (error) throw new Error(`teamleden tellen mislukt: ${error.message}`)
-  const echt = (data ?? []).filter(m => !isFakeDemoUser(m.user_id) && !isInternalTestUser(m.user_id))
+  const echt = (data ?? []).filter(m => m.user_id !== team.manager_id && !isFakeDemoUser(m.user_id) && !isInternalTestUser(m.user_id))
   return Math.max(echt.length, minSeats)
 }
 
@@ -101,7 +112,7 @@ function centen(euroBedrag: number): number {
 
 /** Reguliere factuur voor een volledige cyclus: platformtarief + seats × prijs/seat, altijd excl. btw (zakelijk). */
 export function berekenReguliereBedrag(seats: number, cyclus: Cyclus): { nettoCent: number; btwCent: number; brutoCent: number } {
-  const perMaand = berekenTeamPrijsPerMaand(seats, cyclus) ?? 0
+  const perMaand = teamPrijsPerMaandStrikt(seats, cyclus)
   const nettoEuro = cyclus === 'jaarlijks' ? perMaand * 12 : perMaand
   const nettoCent = centen(nettoEuro)
   const btwCent = Math.round(nettoCent * BTW_PCT)

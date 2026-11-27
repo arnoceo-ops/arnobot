@@ -12,7 +12,7 @@ import {
 import { TEAMBEGIN_ONZEKER, beoordeelReferral, type AanbrengerFeiten, type Beoordeling, type KlantFeiten } from './referralBeoordeling'
 import { isTeruggedraaid, vervalBedrag } from './referralSaldo'
 import { MEELOOP } from './referralStand'
-import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
+import { teamPrijsPerMaandStrikt, TEAM_MIN_TEAMLEDEN, type Cyclus } from '@/lib/teamPricing'
 import { TRIAL_DAGEN } from '@/lib/toegang'
 import { eersteProefStart } from '@/lib/referralKenmerken'
 import { isGratisAccount } from '@/lib/gratisAccount'
@@ -200,7 +200,7 @@ const teamFactuurStaat = (f: TeamFactuurRow) => f.status === 'paid' && !f.revers
 // Referralgeld dat op de factuur is teruggestort maakt haar geen minder betaalde maand.
 const teamFactuurTelt = (f: TeamFactuurRow) => teamFactuurStaat(f) && !heeftAndereTerugbetaling(f, f.terugbetaald_cent ?? 0)
 
-const teamMaandCent = (seats: number, cyclus: Cyclus) => (berekenTeamPrijsPerMaand(seats, cyclus) ?? 0) * 100
+const teamMaandCent = (seats: number, cyclus: Cyclus) => teamPrijsPerMaandStrikt(seats, cyclus) * 100
 
 /** Maandprijs exclusief btw van wat er echt is afgesproken of betaald, niet de huidige prijslijst. */
 function nettoPerMaand(r: { bedrag_cent: number; btw_cent: number }, cyclus: Cyclus): number {
@@ -347,7 +347,7 @@ export async function klantFeiten(d: Dossier, aangemeldAt: string | null, nu: Da
     if (teamFactuurStaat(f)) betaalMomenten.push({ at: tijdigMomentTeam(f.created_at, f.betaald_at!), team: true })
     // Akkoord Arno: bij een team telt het aantal gebruikers op het moment van toekennen.
     let seats = seatsPerTeam.get(team.id)
-    if (seats === undefined) seatsPerTeam.set(team.id, (seats = await huidigSeats(team.id, team.min_seats ?? TEAM_MIN_GEBRUIKERS)))
+    if (seats === undefined) seatsPerTeam.set(team.id, (seats = await huidigSeats(team.id, team.min_seats ?? TEAM_MIN_TEAMLEDEN)))
     periodes.push({
       plan: 'team', cyclus: f.cyclus, klantType: 'zakelijk', periodeStart: f.periode_start, periodeEinde: f.periode_einde,
       betaaldAt: f.betaald_at!, geldig: teamFactuurTelt(f), maandNettoCent: teamMaandCent(seats, f.cyclus), bronId: f.id,
@@ -412,7 +412,7 @@ export async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<Aanbrenger
     .filter(lopend)
     .sort((a, b) => Date.parse(b.periode_einde ?? '0') - Date.parse(a.periode_einde ?? '0'))[0]
 
-  const teamPrijs = async (t: Team) => teamMaandCent(await huidigSeats(t.id, t.min_seats ?? TEAM_MIN_GEBRUIKERS), t.cyclus ?? 'maandelijks')
+  const teamPrijs = async (t: Team) => teamMaandCent(await huidigSeats(t.id, t.min_seats ?? TEAM_MIN_TEAMLEDEN), t.cyclus ?? 'maandelijks')
 
   // Beëindigde abonnementen en teams, het laatste einde eerst.
   const eindes: { at: string; prijs: () => Promise<number> }[] = []

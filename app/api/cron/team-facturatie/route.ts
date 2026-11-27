@@ -19,6 +19,7 @@ import { controleerBetaaldeTeamFacturen } from '@/lib/billing/teamBetalingen'
 import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
 import { TEST_TEAM_IDS_IN } from '@/lib/internalTestAccounts'
 import { stopOpgezegdeTeams } from '@/lib/teamOpzegging'
+import { TEAM_MIN_TEAMLEDEN } from '@/lib/teamPricing'
 
 const DAG_MS = 24 * 60 * 60 * 1000
 const BETAALTERMIJN_DAGEN = 14
@@ -74,7 +75,7 @@ async function cronHandler(req: NextRequest) {
 
     for (const team of teams) {
       try {
-        const minSeats = team.min_seats ?? 3
+        const minSeats = team.min_seats ?? TEAM_MIN_TEAMLEDEN
         const seats = await huidigSeats(team.id, minSeats)
 
         // 1. Reguliere cyclusfactuur.

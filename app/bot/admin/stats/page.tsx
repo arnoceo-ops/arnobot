@@ -163,16 +163,18 @@ export default async function AdminStatsPage() {
   // die nu loopt, zonder de interne testteams (TEST_TEAM_IDS).
   const nuIso = new Date(now).toISOString()
   const [{ data: teamRijen }, { data: betaaldeFacturen }] = await Promise.all([
-    supabase.from('arnobot_teams').select('id, min_seats, cyclus, geblokkeerd_at').not('id', 'in', TEST_TEAM_IDS_IN),
+    supabase.from('arnobot_teams').select('id, manager_id, min_seats, cyclus, geblokkeerd_at').not('id', 'in', TEST_TEAM_IDS_IN),
     supabase.from('arnobot_team_facturen').select('team_id').eq('status', 'paid').eq('soort', 'regulier').lte('periode_start', nuIso).gt('periode_einde', nuIso),
   ])
   const teamIds = (teamRijen ?? []).map(t => t.id as string)
   const { data: teamLeden } = teamIds.length
     ? await supabase.from('arnobot_team_members').select('team_id, user_id').in('team_id', teamIds)
     : { data: [] as { team_id: string; user_id: string }[] }
+  // Teamleden zonder de manager: die zit in het basistarief.
+  const managerPerTeam = new Map((teamRijen ?? []).map(t => [t.id as string, t.manager_id as string]))
   const ledenPerTeam: Record<string, number> = {}
   for (const l of teamLeden ?? []) {
-    if (isFakeDemoUser(l.user_id) || isInternalTestUser(l.user_id)) continue
+    if (isFakeDemoUser(l.user_id) || isInternalTestUser(l.user_id) || managerPerTeam.get(l.team_id) === l.user_id) continue
     ledenPerTeam[l.team_id] = (ledenPerTeam[l.team_id] ?? 0) + 1
   }
   // Antwoordbeoordelingen (duimpje): alleen tellen. De negatieve antwoorden zelf staan op

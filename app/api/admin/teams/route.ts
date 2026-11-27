@@ -59,8 +59,8 @@ export async function POST(req: NextRequest) {
   if (cyclus !== undefined && cyclus !== null && cyclus !== 'maandelijks' && cyclus !== 'jaarlijks') {
     return NextResponse.json({ error: 'Ongeldige cyclus' }, { status: 400 })
   }
-  if (minSeats !== undefined && minSeats !== null && (!Number.isFinite(Number(minSeats)) || Number(minSeats) < 1)) {
-    return NextResponse.json({ error: 'Ongeldig aantal seats' }, { status: 400 })
+  if (minSeats !== undefined && minSeats !== null && (!Number.isInteger(Number(minSeats)) || Number(minSeats) < 1)) {
+    return NextResponse.json({ error: 'Ongeldig aantal teamleden' }, { status: 400 })
   }
 
   // Alles valideren vóór er iets wordt opgeslagen: eerder sloeg de route de teaminstellingen op

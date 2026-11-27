@@ -9,9 +9,9 @@
 //  - exclusief btw (bedrag_cent is bruto, btw_cent zit erin);
 //  - jaarlijks gedeeld door 12, een onbekende cyclus wordt overgeslagen in plaats van gegokt.
 // Team (berekenTeamMrrEuro hieronder) telt mee met dezelfde formule als de facturen
-// (lib/teamPricing.ts: platformtarief + seats x prijs per seat, excl. btw, jaarlijks als
+// (lib/teamPricing.ts: basistarief inclusief manager + teamleden x prijs per teamlid, excl. btw, jaarlijks als
 // maand-equivalent): een team met een betaalde reguliere factuur die de huidige periode dekt,
-// niet geblokkeerd, seats = actuele ledenaantal maar nooit onder het afgesproken minimum. Het
+// niet geblokkeerd, seats = actuele aantal teamleden zonder manager, nooit onder het afgesproken minimum. Het
 // demo-team (TEST_TEAM_ID) telt nooit mee. De Elite-surplus binnen een Team-offerte en de
 // naar-rato tussenfacturen zijn geen vaste maandwaarde en tellen niet mee.
 
@@ -47,7 +47,7 @@ export type TeamRij = {
 
 /**
  * MRR van Team in euro, excl. btw. `betaaldeTeamIds`: teams met een betaalde reguliere factuur
- * die de huidige periode dekt. `ledenPerTeam`: echte leden per team (zonder test- en demo-accounts).
+ * die de huidige periode dekt. `ledenPerTeam`: teamleden per team, zonder manager en zonder test- en demo-accounts.
  */
 export function berekenTeamMrrEuro(
   teams: TeamRij[],

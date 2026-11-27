@@ -6,7 +6,7 @@ import { Redis } from '@upstash/redis'
 import { limietVeilig } from '@/lib/limietVeilig'
 import { verstuurMailZacht } from '@/lib/mail'
 import { emailHtml } from '@/lib/email-templates'
-import { berekenTeamPrijsPerMaand, teamPrijsWeergave, TEAM_MIN_GEBRUIKERS, TEAM_ELITE_SURPLUS_PER_MAAND, type Cyclus } from '@/lib/teamPricing'
+import { berekenTeamPrijsPerMaand, teamPrijsWeergave, TEAM_MIN_TEAMLEDEN, TEAM_KLEIN_TEKST, TEAM_ELITE_SURPLUS_PER_MAAND, type Cyclus } from '@/lib/teamPricing'
 import { gaatAutomatisch } from '@/lib/billing/referralAutomatisch'
 import { NIET_MET_DE_HAND, VEILIG_TERUGSTORTEN } from '@/lib/billing/referralSignalen'
 
@@ -51,8 +51,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Vul de verplichte velden in' }, { status: 400 })
   }
   const seats = Number(aantalSeats)
-  if (!Number.isFinite(seats) || seats < TEAM_MIN_GEBRUIKERS) {
-    return NextResponse.json({ error: `Minimaal ${TEAM_MIN_GEBRUIKERS} gebruikers` }, { status: 400 })
+  if (!Number.isInteger(seats) || seats < TEAM_MIN_TEAMLEDEN) {
+    return NextResponse.json({ error: TEAM_KLEIN_TEKST }, { status: 400 })
   }
   if (cyclus !== 'maandelijks' && cyclus !== 'jaarlijks') {
     return NextResponse.json({ error: 'Ongeldige facturatiecyclus' }, { status: 400 })
@@ -122,7 +122,7 @@ export async function POST(req: Request) {
     subject: `Nieuwe Team-aanvraag: ${bedrijfsnaam}`,
     html: emailHtml(
       `<strong style="color:#f1f5f9;">${aanvragerNaam}</strong>${functie ? ` (${functie})` : ''} van <strong style="color:#f1f5f9;">${bedrijfsnaam}</strong> heeft een Team-abonnement aangevraagd.<br><br>` +
-      `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Aantal gebruikers: ${seats}<br>Berekende prijs: ${prijsTekst}<br>${eliteCount > 0 ? `Elite-teamleden: ${eliteCount} (+€${eliteSurplusTotaal}/maand surplus, €${TEAM_ELITE_SURPLUS_PER_MAAND}/lid)<br>` : ''}${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}${referralRegel ? `<strong style="color:#f59e0b;">${referralRegel}</strong><br>` : ''}` +
+      `E-mail: ${email}<br>Telefoon: ${telefoon || 'niet opgegeven'}<br>Teamleden (zonder manager): ${seats}<br>Berekende prijs: ${prijsTekst}<br>${eliteCount > 0 ? `Elite-teamleden: ${eliteCount} (+€${eliteSurplusTotaal}/maand surplus, €${TEAM_ELITE_SURPLUS_PER_MAAND}/lid)<br>` : ''}${bestelnummer ? `Bestelnummer: ${bestelnummer}<br>` : ''}${referralRegel ? `<strong style="color:#f59e0b;">${referralRegel}</strong><br>` : ''}` +
       `${kvkNummer ? `KvK: ${kvkNummer}<br>` : ''}${btwNummer ? `BTW-nummer: ${btwNummer}<br>` : ''}${factuuradres ? `Factuuradres: ${factuuradres}, ${postcode} ${plaats}<br>` : ''}`,
       'BEKIJK TEAMS →', 'https://www.arno.bot/bot/admin/teams'
     ),
@@ -136,7 +136,7 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: tgChat,
-        text: `Nieuwe Team-aanvraag op arno.bot\n\n${bedrijfsnaam} (${aanvragerNaam})\nE-mail: ${email}\nTelefoon: ${telefoon || 'niet opgegeven'}\nAantal gebruikers: ${seats}\nPrijs: ${prijsTekst}${referralRegel ? `\n\n${referralRegel}` : ''}`,
+        text: `Nieuwe Team-aanvraag op arno.bot\n\n${bedrijfsnaam} (${aanvragerNaam})\nE-mail: ${email}\nTelefoon: ${telefoon || 'niet opgegeven'}\nTeamleden (zonder manager): ${seats}\nPrijs: ${prijsTekst}${referralRegel ? `\n\n${referralRegel}` : ''}`,
       }),
     }).catch(() => {})
   }

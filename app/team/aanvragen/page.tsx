@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
-import { berekenTeamPrijsPerMaand, TEAM_MIN_GEBRUIKERS, TEAM_ELITE_SURPLUS_PER_MAAND, type Cyclus } from '@/lib/teamPricing'
+import { berekenTeamPrijsPerMaand, TEAM_MIN_TEAMLEDEN, TEAM_ELITE_SURPLUS_PER_MAAND, type Cyclus } from '@/lib/teamPricing'
 
 export default function TeamAanvraagPage() {
   const { isSignedIn, isLoaded } = useUser()
@@ -21,7 +21,7 @@ export default function TeamAanvraagPage() {
   const [email, setEmail] = useState('')
   const [telefoon, setTelefoon] = useState('')
   const [bestelnummer, setBestelnummer] = useState('')
-  const [aantalSeats, setAantalSeats] = useState(TEAM_MIN_GEBRUIKERS)
+  const [aantalSeats, setAantalSeats] = useState(TEAM_MIN_TEAMLEDEN)
   const [cyclus, setCyclus] = useState<Cyclus>('maandelijks')
   const [eliteInteresse, setEliteInteresse] = useState(false)
   const [eliteAantal, setEliteAantal] = useState(1)
@@ -210,7 +210,7 @@ export default function TeamAanvraagPage() {
                   <div className="ca-field">
                     <label>Aantal gebruikers (inclusief jijzelf) *</label>
                     <input
-                      required type="number" min={TEAM_MIN_GEBRUIKERS} value={aantalSeats}
+                      required type="number" min={TEAM_MIN_TEAMLEDEN} value={aantalSeats}
                       onChange={e => {
                         const val = Number(e.target.value)
                         setAantalSeats(val)
@@ -229,7 +229,7 @@ export default function TeamAanvraagPage() {
                   <button type="button" className={cyclus === 'jaarlijks' ? 'actief' : ''} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
                 </div>
                 <p style={{ fontSize: 13, color: '#6b7280', marginTop: -12, marginBottom: 20 }}>
-                  {cyclus === 'jaarlijks' ? 'Jaarlijks vooruitbetaald, ~20% korting.' : 'Opzegtermijn één maand.'} Vanaf {TEAM_MIN_GEBRUIKERS} gebruikers.
+                  {cyclus === 'jaarlijks' ? 'Jaarlijks vooruitbetaald, ~20% korting.' : 'Opzegtermijn één maand.'} Vanaf {TEAM_MIN_TEAMLEDEN} gebruikers.
                 </p>
 
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: eliteInteresse ? 12 : 20, cursor: 'pointer' }}>
@@ -259,7 +259,7 @@ export default function TeamAanvraagPage() {
                 <div className="ca-prijs-box">
                   {prijsMetElite === null ? (
                     <>
-                      <p className="ca-prijs-num">Vanaf {TEAM_MIN_GEBRUIKERS} gebruikers</p>
+                      <p className="ca-prijs-num">Vanaf {TEAM_MIN_TEAMLEDEN} gebruikers</p>
                       <p className="ca-prijs-sub">Vul het aantal gebruikers in voor een prijsberekening.</p>
                     </>
                   ) : cyclus === 'jaarlijks' ? (

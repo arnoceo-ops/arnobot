@@ -3,7 +3,7 @@ import { klantBestaat, maakKlant } from '@/lib/billing/mollie'
 import { valideerZakelijk, type ZakelijkeGegevens } from '@/lib/billing/zakelijk'
 import { berekenReguliereBedrag, huidigSeats, maakTeamFactuur, type TeamRow } from '@/lib/billing/teamFacturatie'
 import { voegMaandenToe } from '@/lib/billing/perioden'
-import { TEAM_MIN_GEBRUIKERS, type Cyclus } from '@/lib/teamPricing'
+import { TEAM_MIN_TEAMLEDEN, TEAM_KLEIN_TEKST, type Cyclus } from '@/lib/teamPricing'
 import { isAgentProef, proefEinde, proefStand, toegangTot, type ProefStaat } from '@/lib/teamProef'
 import { TEST_PROEF_TEAM_ID } from '@/lib/internalTestAccounts'
 import { logAdminActie } from '@/lib/adminLog'
@@ -26,8 +26,8 @@ export type ActivatieInvoer = { seats: number; cyclus: Cyclus; zakelijk: Zakelij
 export async function valideerActivatie(raw: Record<string, unknown> | null | undefined): Promise<{ ok: true; waarde: ActivatieInvoer } | { ok: false; fout: string }> {
   const r = raw ?? {}
   const seats = Number(r.seats)
-  if (!Number.isInteger(seats) || seats < TEAM_MIN_GEBRUIKERS) return { ok: false, fout: `Kies minimaal ${TEAM_MIN_GEBRUIKERS} gebruikers` }
-  if (seats > MAX_SEATS) return { ok: false, fout: `Voor meer dan ${MAX_SEATS} gebruikers nemen we contact met je op` }
+  if (!Number.isInteger(seats) || seats < TEAM_MIN_TEAMLEDEN) return { ok: false, fout: TEAM_KLEIN_TEKST }
+  if (seats > MAX_SEATS) return { ok: false, fout: `Voor meer dan ${MAX_SEATS} teamleden nemen we contact met je op` }
   if (r.cyclus !== 'maandelijks' && r.cyclus !== 'jaarlijks') return { ok: false, fout: 'Kies maandelijks of jaarlijks' }
   const zakelijk = await valideerZakelijk({ bedrijfsnaam: r.bedrijfsnaam, kvk: r.kvkNummer, btwNummer: r.btwNummer, straat: r.straat, postcode: r.postcode, plaats: r.plaats })
   if (!zakelijk.ok) return zakelijk
@@ -73,7 +73,8 @@ export async function leesActivatieStand(userId: string): Promise<ActivatieStand
   const [{ data: manager }, { count }, { data: facturen }, { data: klant }] = await Promise.all([
     supabase.from('approved_users').select('trial_start, expires_at, paid_at, sd_attribution_method').eq('user_id', userId)
       .maybeSingle<{ trial_start: string | null; expires_at: string | null; paid_at: string | null; sd_attribution_method: string | null }>(),
-    supabase.from('arnobot_team_members').select('*', { count: 'exact', head: true }).eq('team_id', team.id),
+    // Zonder de manager zelf: dit aantal vult het veld "teamleden" vooraf in.
+    supabase.from('arnobot_team_members').select('*', { count: 'exact', head: true }).eq('team_id', team.id).neq('user_id', userId),
     supabase.from('arnobot_team_facturen').select('bedrag_cent, status, mollie_payment_link_url').eq('team_id', team.id).in('status', ['open', 'overdue']).order('created_at', { ascending: false }).limit(1)
       .returns<{ bedrag_cent: number; status: string; mollie_payment_link_url: string | null }[]>(),
     supabase.from('arnobot_billing_customers').select('bedrijfsnaam, kvk_nummer, btw_nummer, straat, postcode, plaats').eq('user_id', userId)
@@ -214,7 +215,7 @@ export async function activeerTeam(userId: string, invoer: ActivatieInvoer): Pro
     // Kort gehouden voor het logboek op Status: cyclus, aantal gebruikers en bedrijf (het bedrag staat in Telegram en op de factuur).
     details: { nieuw: { cyclus: invoer.cyclus, gebruikers: invoer.seats, bedrijf: z.bedrijfsnaam } },
   })
-  await notifyTelegram(`Team geactiveerd door de manager zelf op arno.bot\n\nTeam: ${team.name}\nBedrijf: ${z.bedrijfsnaam}\nSeats: ${seats} (${invoer.cyclus})\nBedrag incl. btw: €${(brutoCent / 100).toFixed(2)}\n${gemaakt.ok ? 'De factuur en betaallink zijn verstuurd.' : 'LET OP: de factuur is NIET goed aangemaakt of verstuurd. Zie de melding hierboven en rond hem met de hand af.'}`)
+  await notifyTelegram(`Team geactiveerd door de manager zelf op arno.bot\n\nTeam: ${team.name}\nBedrijf: ${z.bedrijfsnaam}\nTeamleden: ${seats}, manager niet meegeteld (${invoer.cyclus})\nBedrag incl. btw: €${(brutoCent / 100).toFixed(2)}\n${gemaakt.ok ? 'De factuur en betaallink zijn verstuurd.' : 'LET OP: de factuur is NIET goed aangemaakt of verstuurd. Zie de melding hierboven en rond hem met de hand af.'}`)
   // Het team is al geactiveerd; zonder factuur geen succesmelding aan de manager.
   if (!gemaakt.ok) return { ok: false, status: 500, fout: 'Je team is actief, maar de factuur is niet gelukt. We sturen hem je na.' }
 
