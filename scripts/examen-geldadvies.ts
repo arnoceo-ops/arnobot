@@ -9,6 +9,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { execSync } from 'child_process'
 import Anthropic from '@anthropic-ai/sdk'
+import { INVUL_SYSTEEM, INVUL_SCHEMA, CONTROLE_SYSTEEM, CONTROLE_SCHEMA, toetsBlad, schrijfOpdracht, type Blad } from './geldstap-proef'
 
 for (const l of readFileSync('.env.local', 'utf8').split(/\r?\n/)) {
   const m = l.match(/^([^#=]+)=(.*)$/)
@@ -27,6 +28,8 @@ type Variant = {
   denken?: boolean
   effort?: 'low' | 'medium' | 'high'
   geldstap?: boolean
+  // Afgedwongen geldstap (scripts/geldstap-proef.ts): model en effort voor invullen en controleren.
+  stap?: { model: string; effort: 'low' | 'medium' | 'high' }
   weg?: ('geheugen' | 'kennisbank' | 'historie' | 'persona' | 'regels')[]
 }
 // Verdachte regels uit lib/systemPrompt.ts (hypotheses in docs/GELDADVIES_PLAN.md). Elk stuk wordt letterlijk uit de prompt geknipt.
@@ -48,6 +51,8 @@ export const VARIANTEN: Record<string, Variant> = {
   opusLaag: { model: 'claude-opus-5-5', denken: true, effort: 'low' },
   opusMiddenGeld: { model: 'claude-opus-5-5', denken: true, effort: 'medium', geldstap: true },
   opusLaagGeld: { model: 'claude-opus-5-5', denken: true, effort: 'low', geldstap: true },
+  stapOpus: { model: 'claude-opus-5-5', denken: true, effort: 'low', stap: { model: 'claude-opus-5-5', effort: 'low' } },
+  stapSnel: { model: 'claude-opus-5-5', denken: true, effort: 'low', stap: { model: 'claude-sonnet-5-5', effort: 'low' } },
 }
 
 // Proefversie van de geldstap (docs/GELDADVIES_PLAN.md), alleen in deze test. Gebaseerd op de vier salesoordelen van Arno. In deze proef een
@@ -64,7 +69,18 @@ Je zegt niet dat je deze stap doet. Je antwoord blijft kort. Heb je meer dan Ã©Ã
 
 type Geval = { code: string; sessie: string; beurt: number }
 type Rij = { session_id: string; question: string; answer: string; bron_context: string | null; verbruik: { lengte?: string } | null; created_at: string; user_id: string }
-type Uitslag = { code: string; variant: string; run: number; antwoord: string; verborgen: string[]; tools: string[]; stop: string; seconden: number; eersteTekstSeconden: number | null; kostenUsd: number; commit: string }
+type Uitslag = { code: string; variant: string; run: number; antwoord: string; verborgen: string[]; tools: string[]; stop: string; seconden: number; eersteTekstSeconden: number | null; kostenUsd: number; commit: string; stap?: Record<string, unknown> }
+
+// Harde kostengrens voor een testronde (Arno, 27-11): telt elke aanroep, ook invullen en controleren, en start niets meer zodra de lopende
+// en de nieuwe taak samen over de grens kunnen gaan. EXAMEN_MAX_USD = grens, EXAMEN_REEDS_USD = al uitgegeven in deze ronde.
+const MAX_USD = Number(process.env.EXAMEN_MAX_USD) || Infinity
+let uitgegeven = Number(process.env.EXAMEN_REEDS_USD) || 0
+function prijsVan(model: string, u: Anthropic.Usage): number {
+  const [pi, pu] = PRIJS[model]
+  const k = (u.input_tokens * pi + (u.cache_creation_input_tokens ?? 0) * pi * 1.25 + (u.cache_read_input_tokens ?? 0) * pi * 0.1 + u.output_tokens * pu) / 1e6
+  uitgegeven += k
+  return k
+}
 
 async function main() {
   const [gevallenPad, uitPad, runsArg, variantArg, codeArg] = process.argv.slice(2)
@@ -133,11 +149,36 @@ async function main() {
   async function speel(g: Geval, naam: string, run: number): Promise<Uitslag> {
     const v = VARIANTEN[naam]
     const p = await bereid(g, v)
-    const berichten: Anthropic.MessageParam[] = [...p.historie, { role: 'user', content: p.vraag }]
     const t0 = Date.now()
+    let kosten = 0
+    const stapInfo: Record<string, unknown> = {}
+    async function gestructureerd<T>(stap: { model: string; effort: string }, systeem: string, inhoud: string, schema: unknown): Promise<T> {
+      const res = await client.messages.stream({
+        model: stap.model, max_tokens: 12000, system: systeem, messages: [{ role: 'user', content: inhoud }],
+        thinking: { type: 'adaptive' }, output_config: { effort: stap.effort, format: { type: 'json_schema', schema } },
+      } as unknown as Anthropic.MessageStreamParams).finalMessage()
+      kosten += prijsVan(stap.model, res.usage)
+      if (res.stop_reason !== 'end_turn') throw new Error(`geldstap gaf stop_reason ${res.stop_reason}`)
+      return JSON.parse(res.content.map(b => (b.type === 'text' ? b.text : '')).join('')) as T
+    }
+    // Wat de gebruiker zelf zei: alleen daaruit mag een citaat komen. Eerdere antwoorden van de coach zijn geen bron.
+    const eigenTekst = [...p.historie.filter(h => h.role === 'user').map(h => h.content as string), p.vraag].join('\n\n')
+    const gesprek = [...p.historie, { role: 'user', content: p.vraag }]
+      .map(h => `${h.role === 'user' ? 'GEBRUIKER' : 'EERDER ANTWOORD COACH (geen feiten)'}:\n${h.content as string}`).join('\n\n')
+    let opdracht = ''
+    if (v.stap) {
+      const ingevuld = await gestructureerd<Blad>(v.stap, INVUL_SYSTEEM, gesprek, INVUL_SCHEMA)
+      const getoetst = toetsBlad(ingevuld, eigenTekst)
+      opdracht = schrijfOpdracht(getoetst.blad, getoetst.open)
+      Object.assign(stapInfo, { blad: getoetst.blad, open: getoetst.open, afgekeurdeCitaten: getoetst.afgekeurdeCitaten, invulSeconden: (Date.now() - t0) / 1000 })
+    }
+    const system = opdracht ? [...p.system, { type: 'text' as const, text: opdracht }] : p.system
+
+    async function genereer(correctie?: { concept: string; fouten: string[] }) {
+    const berichten: Anthropic.MessageParam[] = [...p.historie, { role: 'user', content: p.vraag }]
+    if (correctie) berichten.push({ role: 'assistant', content: correctie.concept }, { role: 'user', content: `(Interne controle van de app, niet van de gebruiker. De gebruiker heeft je concept niet gezien.) Schrijf je antwoord opnieuw zonder deze fouten, zonder de controle te noemen:\n- ${correctie.fouten.join('\n- ')}` })
     let eersteTekst: number | null = null
     let antwoord = ''
-    let kosten = 0
     const verborgen: string[] = []
     const gebruikt: string[] = []
     const tabelStaat = maakTabelStaat()
@@ -147,7 +188,7 @@ async function main() {
       // Denktokens tellen mee in max_tokens: met denkstap komt er ruimte bovenop de lengte van het antwoord.
       const extra: Record<string, unknown> = v.denken ? { thinking: { type: 'adaptive' }, output_config: { effort: v.effort ?? 'high' } } : {}
       const stream = client.messages.stream({
-        model: v.model, max_tokens: v.denken ? p.maxTokens + 12000 : p.maxTokens, system: p.system, messages: berichten,
+        model: v.model, max_tokens: v.denken ? p.maxTokens + 12000 : p.maxTokens, system, messages: berichten,
         ...(p.tools ? { tools: p.tools } : {}), ...extra,
       } as Anthropic.MessageStreamParams)
       let zichtbaar = ''
@@ -156,9 +197,7 @@ async function main() {
       } as unknown as ReadableStreamDefaultController<Uint8Array>
       const uit = await streamRonde(stream, controller, new TextEncoder(), Boolean(p.tools))
       const eind = await stream.finalMessage()
-      const u = eind.usage
-      const [pi, pu] = PRIJS[v.model]
-      kosten += (u.input_tokens * pi + (u.cache_creation_input_tokens ?? 0) * pi * 1.25 + (u.cache_read_input_tokens ?? 0) * pi * 0.1 + u.output_tokens * pu) / 1e6
+      kosten += prijsVan(v.model, eind.usage)
       if (uit.weggegooid) verborgen.push(uit.weggegooid)
       if (zichtbaar) antwoord += (antwoord ? '\n\n' : '') + zichtbaar
       stop = eind.stop_reason ?? ''
@@ -173,29 +212,52 @@ async function main() {
         }),
       })
     }
-    return { code: g.code, variant: naam, run, antwoord: haalWerkruisWeg(antwoord), verborgen, tools: gebruikt, stop, seconden: (Date.now() - t0) / 1000, eersteTekstSeconden: eersteTekst, kostenUsd: kosten, commit }
+    return { antwoord: haalWerkruisWeg(antwoord), verborgen, gebruikt, stop, eersteTekst }
+    }
+
+    let uit = await genereer()
+    if (v.stap) {
+      const controleInvoer = (concept: string) => `${gesprek}\n\nOPDRACHT AAN DE COACH:\n${opdracht}\n\nCONCEPT:\n${concept}`
+      const eerste = await gestructureerd<{ akkoord: boolean; fouten: string[] }>(v.stap, CONTROLE_SYSTEEM, controleInvoer(uit.antwoord), CONTROLE_SCHEMA)
+      stapInfo.controle1 = eerste
+      if (!eerste.akkoord && eerste.fouten.length > 0) {
+        stapInfo.concept1 = uit.antwoord
+        uit = await genereer({ concept: uit.antwoord, fouten: eerste.fouten })
+        stapInfo.controle2 = await gestructureerd<{ akkoord: boolean; fouten: string[] }>(v.stap, CONTROLE_SYSTEEM, controleInvoer(uit.antwoord), CONTROLE_SCHEMA)
+      }
+    }
+    // Met de geldstap ziet de gebruiker pas iets na de controle: de wachttijd is dan de hele doorlooptijd.
+    const klaarNa = (Date.now() - t0) / 1000
+    return { code: g.code, variant: naam, run, antwoord: uit.antwoord, verborgen: uit.verborgen, tools: uit.gebruikt, stop: uit.stop, seconden: klaarNa, eersteTekstSeconden: v.stap ? klaarNa : uit.eersteTekst, kostenUsd: kosten, commit, ...(v.stap ? { stap: stapInfo } : {}) }
   }
 
   const uitslagen: Uitslag[] = existsSync(uitPad) ? JSON.parse(readFileSync(uitPad, 'utf8')) : []
   const klaar = new Set(uitslagen.map(u => `${u.code}|${u.variant}|${u.run}`))
   const taken: (() => Promise<void>)[] = []
-  for (const naam of varianten) {
-    if (!VARIANTEN[naam]) throw new Error(`onbekende variant ${naam}`)
-    for (const g of gevallen) for (let run = 1; run <= runs; run++) {
-      if (klaar.has(`${g.code}|${naam}|${run}`)) continue
-      taken.push(async () => {
-        try {
-          uitslagen.push(await speel(g, naam, run))
-          writeFileSync(uitPad, JSON.stringify(uitslagen, null, 1))
-        } catch (e) {
-          console.log(`${g.code} ${naam} run ${run} mislukt: ${(e as Error).message.slice(0, 300)}`)
-        }
-      })
-    }
+  for (const naam of varianten) if (!VARIANTEN[naam]) throw new Error(`onbekende variant ${naam}`)
+  // Per run alle combinaties: stopt de kostengrens de ronde, dan is wat er is gelijk verdeeld.
+  let bezig = 0
+  let duurste = 0.6
+  let overgeslagen = 0
+  for (let run = 1; run <= runs; run++) for (const naam of varianten) for (const g of gevallen) {
+    if (klaar.has(`${g.code}|${naam}|${run}`)) continue
+    taken.push(async () => {
+      if (uitgegeven + duurste * (bezig + 1) > MAX_USD) { overgeslagen++; return }
+      bezig++
+      try {
+        const u = await speel(g, naam, run)
+        duurste = Math.max(duurste, u.kostenUsd)
+        uitslagen.push(u)
+        writeFileSync(uitPad, JSON.stringify(uitslagen, null, 1))
+      } catch (e) {
+        console.log(`${g.code} ${naam} run ${run} mislukt: ${(e as Error).message.slice(0, 300)}`)
+      } finally { bezig-- }
+    })
   }
   console.log(`${taken.length} antwoorden te maken, code ${commit}`)
   let volgende = 0
   await Promise.all(Array.from({ length: 3 }, async () => { while (volgende < taken.length) await taken[volgende++]() }))
+  console.log(`uitgegeven in deze ronde: $${uitgegeven.toFixed(2)} (grens ${MAX_USD}), overgeslagen door de grens: ${overgeslagen}`)
   console.log(`klaar: ${uitslagen.length} antwoorden, geschatte kosten totaal in dit bestand $${uitslagen.reduce((s, u) => s + u.kostenUsd, 0).toFixed(2)}`)
 }
 
