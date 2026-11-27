@@ -3,8 +3,8 @@
 ## Status
 
 **Laatst bijgewerkt:** 27 november 2026 (avond)
-**Waar we staan:** gebouwd op de tak `feat/geldfuncties` (werkmap `C:\Users\arno\arnobot-geldfuncties`), **niet op master en niet live**: vaste geldsommen, een geldcontrole vóór het antwoord en Sonnet 5.5 voor herkende geldvragen. Op nieuwe momenten beter dan de huidige chat; de herkenningslat is niet gehaald. Alleen via Claude Code getest, nog nooit via de echte API. Zie "Bouw en meting" onderaan.
-**Eerstvolgende stap:** gestopt voor 27 november (afspraak met Arno: zakt de laatste proef, dan niet meer bijschaven en testen). Stap 1 van die proef zakte op 1 van 20 pogingen, zie "Laatste proef". Niets live. In een nieuwe sessie eerst met Arno bepalen of en hoe verder.
+**Waar we staan:** op 27 november met akkoord van Arno naar master (samenvoegcommit "feat(geld): geldcontrole"), **live alleen voor het eigenaarsaccount**; voor alle anderen is de chat gelijk gebleven. Vercel-bouw geslaagd. In de app nog niet nagelopen, en niet nagekeken of ARNOBOT_OWNER_USER_ID in Vercel op het account staat waarmee Arno test. Volledige antwoorden met de huidige geldcontrole zijn niet via de API gemeten. Terugdraaien: git revert -m 1 op de samenvoegcommit; meteen uit: GELDCONTROLE_UIT=1. Zie "Bouw en meting" onderaan.
+**Eerstvolgende stap:** Arno stelt in de app drie verzonnen testvragen (prijsverlaging, korting met btw, gewone coachvraag), elk in een nieuw gesprek. Daarna in arnobot_rds_logs.verbruik (veld geld) nagaan welk model en welke berekening draaiden. Voor iedereen aanzetten (GELDCONTROLE_OPEN=true) pas na akkoord van Arno.
 
 - [x] Fase 0: nulmeting en kritische toets van het plan
 - [ ] Fase 1: examen goedkeuren (kernset gedaan) en uitbreiden
