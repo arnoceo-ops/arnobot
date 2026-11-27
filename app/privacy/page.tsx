@@ -77,7 +77,7 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Profielgegevens</td><td>Salesrol, markt, uitdagingen en doelstellingen die jij invult</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gesprekslogs</td><td>AI-coachingsgesprekken die jij voert met ArnoBot</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gedeelde gesprekken</td><td>Gesprekken die je deelt via een publieke link. Iedereen met de link kan ze lezen. Zoekmachines worden gevraagd ze niet te indexeren.</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Technische gegevens</td><td>IP-adres en sessiedata, uitsluitend voor beveiliging en foutopsporing</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Technische gegevens</td><td>IP-adres en sessiegegevens, voor beveiliging, foutopsporing en bezoekcijfers. Bij een chatbericht bewaren we ook het IP-adres.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens</td><td>Welke functies je gebruikt, pseudoniem gekoppeld aan je account-ID. Nooit de inhoud van je gesprekken.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geheugen</td><td>Samenvattingen en feiten uit je gesprekken, zodat ArnoBot je beter kan coachen</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Teams</td><td>Bij een teamabonnement ziet je manager je scores en het verloop. Je gesprekken met ArnoBot ziet hij alleen als jij er zelf een deelt</td></tr>
@@ -118,7 +118,7 @@ export default function PrivacyPage() {
               Grondslagen: overeenkomst, wettelijke plicht, gerechtvaardigd belang en toestemming (blogmails).
             </p>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
-              Jouw gegevens worden nooit verkocht aan derden, gebruikt voor marketing of gedeeld buiten de hieronder genoemde sub-verwerkers.
+              Jouw gegevens worden nooit verkocht aan derden, gebruikt voor marketing of gedeeld buiten de partijen die in artikel 5 staan.
             </p>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>
               Uitzondering: meld je je aan via iemands link, dan mailen we die persoon je naam, en het tegoed kan iets zeggen over je abonnement. Wie jouw link opent, kan je voornaam zien.
@@ -229,7 +229,7 @@ export default function PrivacyPage() {
                 </tr>
                 <tr>
                   <td style={{ color: '#f1f5f9' }}>Upstash</td>
-                  <td>Rate limiting (verwerkt IP-adressen)</td>
+                  <td>Beperken van het aantal verzoeken (verwerkt onder meer IP-adressen, account-ID&apos;s en e-mailadressen bij een blogaanmelding)</td>
                   <td><a href="https://upstash.com/trust/dpa.pdf" target="_blank" rel="noopener noreferrer">upstash.com/trust/dpa</a></td>
                 </tr>
                 <tr>
@@ -260,11 +260,11 @@ export default function PrivacyPage() {
                 <tr><td style={{ color: '#f1f5f9' }}>Persoonsgegevens en profiel</td><td>Zolang het account actief is. Na beëindiging verwijderd na 30 dagen. Op verzoek binnen 10 werkdagen.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Gesprekslogs</td><td>Worden 30 dagen na beëindiging van het account geanonimiseerd.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Technische logs</td><td>Maximaal 90 dagen</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Gebruiksgegevens (analyse)</td><td>Maximaal 12 maanden. Sessie-weergaven maximaal 30 dagen.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Gebruiksanalyse in PostHog</td><td>Maximaal 12 maanden. Sessieweergaven maximaal 30 dagen.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Geüploade bestanden</td><td>Bewaard tot jij ze verwijdert. Zet je het vinkje uit, dan uiterlijk 48 uur na je laatste bericht. Van een opname bewaren we alleen het transcript.</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Profiel uit een andere AI</td><td>Tot jij het verwijdert of vervangt</td></tr>
                 <tr><td style={{ color: '#f1f5f9' }}>Betaal- en factuurgegevens</td><td>7 jaar, ook nadat je account is verwijderd (wettelijke bewaarplicht)</td></tr>
-                <tr><td style={{ color: '#f1f5f9' }}>Referralgegevens</td><td>Zolang nodig voor voordeel of tegoed. Verwijderen we je account, dan halen we je naam eruit. De overige gegevens over aanmelding en tegoed blijven staan.</td></tr>
+                <tr><td style={{ color: '#f1f5f9' }}>Referralgegevens</td><td>Zolang nodig voor voordeel, tegoed of beheer. Verwijderen we je account, dan halen we je naam eruit. De overige gegevens over aanmelding en tegoed blijven staan.</td></tr>
               </tbody>
             </table>
           </div>
@@ -323,6 +323,9 @@ export default function PrivacyPage() {
             </div>
             <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
               Grondslag: gerechtvaardigd belang (artikel 6 lid 1 sub f AVG). Gezien de beperkte privacy-impact vragen we hiervoor geen aparte toestemming. Wil je hier bezwaar tegen maken, mail dan <a href="mailto:privacy@arno.bot">privacy@arno.bot</a>.
+            </p>
+            <p style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>
+              Wij en onze inlogdienst Clerk gebruiken daarnaast eigen cookies voor inloggen, bezoekcijfers en herkomst.
             </p>
           </div>
 

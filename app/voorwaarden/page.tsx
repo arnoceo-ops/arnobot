@@ -63,7 +63,7 @@ export default function VoorwaardenPage() {
               num: 'ARTIKEL 3', title: 'Proefperiode',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Nieuwe gebruikers ontvangen een gratis proefperiode van 30 dagen na activering van hun account. Gedurende deze periode is volledige functionaliteit beschikbaar.</p>,
-                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Na afloop van de proefperiode wordt de toegang geblokkeerd totdat een betaald abonnement is afgesloten. Er vindt geen automatische afschrijving plaats.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Na afloop van de proefperiode blijft de toegang bestaan met een betaald abonnement. Er vindt geen automatische afschrijving plaats.</p>,
                 <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>ArnoBot behoudt zich het recht voor de proefperiode zonder opgave van reden te beëindigen of aan te passen.</p>,
               ],
             },
@@ -76,8 +76,9 @@ export default function VoorwaardenPage() {
                 <p key="d" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Als particulier betaal je het getoonde bedrag inclusief BTW. Als zakelijke klant betaal je het getoonde bedrag plus btw, die bij het afrekenen wordt getoond.</p>,
                 <p key="e" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Een maandabonnement als particulier wordt maandelijks automatisch afgeschreven en loopt door tot je opzegt, net als een zakelijk abonnement. Een jaarabonnement als particulier eindigt na een jaar; dan ontvang je een e-mail met de vraag of je wilt verlengen. Reageer je niet, dan eindigt het abonnement.</p>,
                 <p key="f" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Zakelijke abonnementen, ook Team, lopen automatisch door voor dezelfde periode, tot je opzegt.</p>,
-                <p key="f1" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Je kunt een maandabonnement per einde van je betaalperiode omzetten naar een jaarabonnement, en Pro naar Basic. Upgraden van Basic naar Pro kan direct: je betaalt het prijsverschil naar rato van de rest van je periode. Van jaar naar maand overstappen kan niet: zeg aan het einde van je jaar op en kies daarna een maandabonnement.</p>,
+                <p key="f1" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Je kunt een maandabonnement per einde van je betaalperiode omzetten naar een jaarabonnement. Wil je van Pro naar Basic, mail dan <a href="mailto:admin@arno.bot">admin@arno.bot</a>. Upgraden van Basic naar Pro kan direct: je betaalt het prijsverschil naar rato van de rest van je periode. Van jaar naar maand overstappen kan niet: zeg aan het einde van je jaar op en kies daarna een maandabonnement.</p>,
                 <p key="f2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Bij Team kan het aantal gebruikers tussentijds alleen omhoog, niet omlaag; een vermindering gaat pas in bij de eerstvolgende verlenging, zonder terugbetaling. Een nieuwe gebruiker wordt bij een jaarabonnement eenmalig en naar rato bijgefactureerd over de resterende looptijd; bij een maandabonnement op de eerstvolgende factuur.</p>,
+                <p key="e2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Bij Team betaal je minimaal het afgesproken aantal gebruikers. Een teamfactuur betaal je binnen 14 dagen. Is die 30 dagen na de vervaldatum niet betaald, dan blokkeren we de toegang.</p>,
                 <p key="g" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>ArnoBot kan haar prijzen wijzigen. Dat kondigen we minimaal drie maanden vooraf per e-mail aan, en hooguit één keer per jaar. Ga je niet akkoord, dan kun je binnen 30 dagen na de aankondiging opzeggen met ingang van de datum waarop de nieuwe prijs ingaat.</p>,
               ],
             },
@@ -86,7 +87,8 @@ export default function VoorwaardenPage() {
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>ArnoBot verleent de Gebruiker een niet-exclusieve, niet-overdraagbare licentie voor het gebruik van ArnoBot gedurende de looptijd van het abonnement of de proefperiode.</p>,
                 <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Het is niet toegestaan ArnoBot te gebruiken voor onrechtmatige doeleinden, de werking te verstoren, of toegang te verlenen aan derden buiten het afgesproken aantal gebruikers.</p>,
-                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Je bent zelf verantwoordelijk voor de gegevens die je invoert. Je zorgt dat je die gegevens mag invoeren en dat je daarmee geen rechten van anderen schendt, bijvoorbeeld een geheimhoudingsplicht jegens een klant of werkgever.</p>,
+                <p key="c" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Je bent zelf verantwoordelijk voor de gegevens die je invoert. Je zorgt dat je die gegevens mag invoeren en dat je daarmee geen rechten van anderen schendt, bijvoorbeeld een geheimhoudingsplicht jegens een klant of werkgever.</p>,
+                <p key="lim" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9 }}>Per abonnement gelden limieten voor eerlijk gebruik. Die kunnen we aanpassen.</p>,
               ],
             },
             {
@@ -103,7 +105,7 @@ export default function VoorwaardenPage() {
               num: 'ARTIKEL 7', title: 'Opzegging',
               content: [
                 <p key="a" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>De Gebruiker kan het abonnement opzeggen via de accountpagina of per e-mail aan <a href="mailto:cancel@arno.bot">cancel@arno.bot</a>.</p>,
-                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Als particulier kun je op elk moment opzeggen. Het abonnement eindigt dan aan het einde van de lopende betaalperiode. Je krijgt geen geld terug voor de periode die al betaald is, behalve bij de bedenktijd in artikel 8.</p>,
+                <p key="b" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Als particulier kun je op elk moment opzeggen. Het abonnement eindigt dan aan het einde van de lopende betaalperiode. Je krijgt geen geld terug voor de periode die al betaald is, behalve bij de bedenktijd in artikel 8 en bij terugstorting volgens de referralspelregels.</p>,
                 <p key="b2" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Voor zakelijke klanten geldt een opzegtermijn van één maand vóór het einde van de lopende betaalperiode. Zonder tijdige opzegging verlengt het abonnement met dezelfde periode.</p>,
                 <p key="b3" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Na elke opzegging ontvang je per e-mail een bevestiging.</p>,
                 <p key="b4" style={{ fontSize: 15, color: '#9ca3af', lineHeight: 1.9, marginBottom: 12 }}>Zeg je op terwijl een overstap gepland staat, dan vervalt de overstap en eindigt je abonnement aan het einde van je betaalde periode.</p>,

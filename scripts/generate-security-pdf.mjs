@@ -140,7 +140,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       el(Text, { style: s.coverLabel }, 'ARNOBOT'),
       el(Text, { style: s.coverTitle }, 'Hoe wij jouw\ngegevens beschermen'),
       el(Text, { style: s.coverSub }, 'Een overzicht van de technische maatregelen die ArnoBot heeft getroffen\nom jouw privacy en de veiligheid van jouw data te waarborgen.'),
-      el(Text, { style: s.coverMeta }, `Versie 2.1  ·  ${DATE}  ·  privacy@arno.bot`)
+      el(Text, { style: s.coverMeta }, `Versie 2.2  ·  ${DATE}  ·  privacy@arno.bot`)
     ),
 
     el(View, { style: s.intro },
@@ -172,7 +172,7 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
     HR(),
 
     SecNewPage('WIE ER BIJ KAN', 'Authenticatie en toegangsbeheer',
-      el(Text, { style: s.p }, 'Toegang tot jouw data is strikt beperkt tot jou. Wij hebben het volgende ingericht:'),
+      el(Text, { style: s.p }, 'Andere gebruikers zien je gesprekken alleen als je ze deelt. De beheerder kan ze inzien voor kwaliteit, support en tegen misbruik. Wij hebben het volgende ingericht:'),
       Item('Inloggen via LinkedIn OAuth', 'Wij slaan nooit een wachtwoord op. Authenticatie verloopt via Clerk met kortlevende JWT-tokens.'),
       Item('Sessiecontrole op elke route', 'Elke API-aanroep verifieert eerst de actieve sessie. Routes zonder geldig token geven een 401-fout en stoppen direct.'),
       Item('Databasetoegang afgeschermd', 'De sleutel met volledige databaserechten is uitsluitend beschikbaar op de server en nooit zichtbaar in de browser.'),
@@ -202,9 +202,9 @@ const doc = el(Document, { title: 'ArnoBot: Hoe wij jouw gegevens beschermen', a
       TR('API-misbruik', 'Het aantal chatberichten per gebruiker per uur is beperkt; de admin-login wordt tijdelijk geblokkeerd na te veel mislukte pogingen'),
       TR('Prompt injection', 'Detectiepatronen onderscheppen pogingen om het AI-model te manipuleren of data te ontfutselen'),
       TR('Bots en scanners', 'Middleware blokkeert automatisch bekende scannerpaden: .env, .git, wp-admin, phpMyAdmin en vergelijkbare paden'),
-      TR('SQL-injectie', 'Supabase gebruikt geparametriseerde queries; Row Level Security begrenst bovendien wat elke gebruiker mag opvragen'),
+      TR('SQL-injectie', 'We gebruiken geparametriseerde queries. Row Level Security schermt de database af tegen rechtstreeks lezen vanuit de browser.'),
       TR('Cross-site scripting', 'Content-Security-Policy headers beperken welke scripts de browser mag uitvoeren'),
-      TR('Credential stuffing', 'Inloggen zonder wachtwoord via LinkedIn OAuth. Er valt niets te raden of te stelen.'),
+      TR('Credential stuffing', 'Op de website log je in via LinkedIn. Het wachtwoord voor de Android-app telt minimaal 8 tekens en wordt beheerd door Clerk.'),
       TR('Informatielekken', 'Technische foutdetails worden nooit aan de gebruiker getoond, alleen server-side gelogd'),
       TR('IDOR', 'Gebruikers-ID altijd uit de geverifieerde sessie, nooit uit URL of requestbody'),
     ),
