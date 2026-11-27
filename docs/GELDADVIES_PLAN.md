@@ -163,4 +163,20 @@ Geldstap met Opus 5.5 (laag) voor invullen, schrijven en controleren, 7 pogingen
 
 **Los van het model:** bij het eerste bericht na meer dan 48 uur stilte stuurt de chat geen geschiedenis mee (`app/api/chat/route.ts`, `effectieveHistory`; `lib/geheugenContext.ts`, `verouderd`). Alleen het onderwerp van toen gaat mee, en in het ontlede geval meldde ArnoBot niet dat het de eerdere berichten niet zag. Bewuste keuze van 31 oktober (oude berichten kwamen over als "nu"), dus niet zomaar terugdraaien. Nog geen oplossing gekozen.
 
-**Teststand:** 8 gevallen klaar (6 mislukt, 2 goed; 2 onder voorbehoud). Geschat $3,64, ongunstig $7,40. Wacht op akkoord op gevallen en lat.
+**Teststand:** 8 gevallen klaar (6 mislukt, 2 goed; 2 onder voorbehoud). Geschat $3,64, ongunstig $7,40. Akkoord van Arno gegeven.
+
+### Uitslag modeltest op coachgesprekken (27 november 2026)
+
+32 antwoorden, huidig tegen Opus 5.5 laag, beide met de huidige instructies, geschat $3,35. Twee juryleden (Claude, onafhankelijk, modelnaam verborgen; lengte kan het model verraden). **De vooraf afgesproken lat is niet gehaald.**
+
+| | Lat | Jury 1 | Jury 2 |
+|---|---|---|---|
+| Mislukte momenten met hoofdfout in beide pogingen weg (Opus) | minstens 4 van 6 | 0 | 1 |
+| Ernstige fouten in 16 antwoorden, Opus (huidig) | geen nieuwe | 23 (22) | 20 (19) |
+| Antwoorden met minstens een ernstige fout, Opus (huidig) | | 14 (10) | 13 (8) |
+| Twee goede momenten blijven goed (Opus) | 2 van 2 | 1 | 1 |
+| Eerst geplaatst in rangorde, Opus (huidig) | geen onderdeel van de lat | 7 (1) | 7 (1) |
+
+Mediaan eerste tekst 7,4 s (huidig 2,7 s), mediaan 322 woorden (128), 2 van 16 Opus-antwoorden boven 450. Beide juryleden vonden meerdere sleutels te streng of gestapeld; niet achteraf versoepeld. Een korte wedervraag zonder fouten is niet vanzelf goed.
+
+**Besluit:** niet overstappen op grond van deze test. Niets live. Bestanden: `C:\Users\arno\arnobot-prive\coach-ontleding\blind\`.
