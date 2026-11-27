@@ -2,13 +2,13 @@
 
 ## Status
 
-- **Laatst bijgewerkt:** 2026-11-26
-- **Waar we staan:** alle besluiten zijn genomen (zie "Besluiten"). De inventaris is klaar. Er is nog niets aan code, Abacus of website gewijzigd. Live gaan kan zodra de bouw klaar en gecontroleerd is.
-- **Eerstvolgende stap:** fase 1 (rekenlogica Team), pas live samen met fase 2 tot en met 5. Vooraf nagaan dat geen andere sessie in de billingcode werkt.
+- **Laatst bijgewerkt:** 2026-11-27
+- **Waar we staan:** de lijst is op 27-11 bijgewerkt na het referral- en betaalwerk (zie "Bijwerking 27-11", die gaat voor bij verschillen in plekken en regelnummers). Gebouwd wordt op de tak `prijswijziging` in de werkmap `C:Usersarnoarnobot-prijs`. Live is niets gewijzigd.
+- **Eerstvolgende stap:** fase 1 (rekenlogica Team) op de tak, pas live samen met fase 2 tot en met 5.
 
 ### Afvinklijst
 
-- [ ] Fase 0: besluiten en voorbereiding
+- [ ] Fase 0: besluiten en voorbereiding (besluiten klaar; ElevenLabs open)
 - [ ] Fase 1: rekenlogica Team
 - [ ] Fase 2: prijsconstanten
 - [ ] Fase 3: zichtbare teksten en voorwaarden
@@ -38,10 +38,33 @@ Mollie, Moneybird en Vercel zijn niet bekeken.
 
 **Vlak voor de uitrol opnieuw meten.** Sluit iemand vóór de uitrol Pro af voor €59 of €468, dan gelden de risico's onder "Oude bedragen" wel.
 
+## Bijwerking 27-11 (gaat voor op de regelnummers hieronder)
+
+**Database opnieuw gemeten (27-11, alleen gelezen):** 1 lopend abonnement (Basic, jaar, €228); geen betaling of upgrade op de oude Pro-prijs; geen gefactureerd team; open betalingen alleen van testaccounts; referralgrootboek en klanttypecorrecties leeg; 1 referral (aanmelding zonder betaling, aangebracht door de betalende klant). **Geen datamigratie en geen nieuwe SQL nodig.**
+
+**Referrals staan live** (volgens `docs/REFERRAL_AUTOMATISERING.md`; Vercel niet nagekeken). Nieuw of verschoven:
+
+| Plek | Wat | Fase |
+|---|---|---|
+| `lib/billing/referralGrootboek.ts:203, 350, 415` | Teamwaarde = huidige formule maal huidige telling. Met alleen nieuwe bedragen: tegoed tot €49 netto te hoog, automatisch teruggestort. Klein team: waarde 0 en dagelijks een fout. Lost op met `huidigSeats` zonder manager (in de functie zelf) en een formule vanaf 1 teamlid | 1 |
+| `lib/billing/referralKorting.ts:21-22` | Fee herkennen door te vergelijken met het eigen abonnementsbedrag (zelfde plan en cyclus), niet met de prijslijst | 2 |
+| `lib/billing/referralGrootboek.ts:232-253` | Zelfde voor de maandwaarde van een jaarbetaling met fee; terugval op de prijslijst na een upgrade is bij vandaag geen getroffen klant | 2 |
+| `app/voorwaarden/page.tsx` artikel 4 | Twee teamalinea's: `f2` en de nieuwe `e2`. Prijswijzigingsalinea `g` is nog de oude | 3 |
+| `lib/email-templates.ts:426-428` | "gebruiker" wordt "teamlid" (niet regel 384) | 3 |
+| `lib/teamActivatie.ts` en `lib/billing/soloNaarTeam.ts` | "Seats" en "gebruikers" in Telegram en adminlog | 1 |
+| `app/admin/teams` route (`:74`) | Minimum controleren (min. teamleden vanaf 1) | 1 |
+| Nieuwe referraltests die `huidigSeats` nadoen | Meenemen | 5 |
+
+**Verschoven regels:** `team-aanvraag/route.ts` :54-65, :125, :139; `teamActivatie.ts` :29, :63-100, :150-225; `soloNaarTeam.ts` :141-157, :241; `MAX_LEDEN` in `join/route.ts:12`; `kostenTarieven.ts` `prijsPremiumEur` :208, `SCENARIO_PRIJZEN` :621, team :638-641, standaard teamscenario :642, teamomzet :684-687; `QAClient.tsx:98`.
+
+**"Oude bedragen" hieronder is deels achterhaald:** de zakelijk-correctie rekent nu met het eigen bedrag en past het Mollie-abonnement aan. "Meeloopstand" geldt niet meer.
+
+**Bij een prijsverlaging het verschil terugbetalen (besluit 2): niet via een gedeeltelijke Mollie-terugbetaling en nooit via de refundknop in de admin.** De live referralcode ziet de eerste als "andere terugbetaling" (de betaling telt dan niet meer mee) en de knop beëindigt het abonnement. Werkwijze: per bank overmaken, creditnota in Moneybird, inboeken met de databasefunctie `referral_handmatig_betaling` (volgens de controle door de agent; niet beproefd).
+
 ## Fase 0: besluiten en voorbereiding
 
 - [x] Besluiten (2026-11-26).
-- [ ] **NIET draaien voordat N5 uit docs/REFERRAL_CONTROLE_2026-11-26.md is hersteld (26-11): met de tabel gaat zelf omzetten werken, terwijl het Mollie-abonnement en een geplande overstap dan het particuliere bedrag houden.** SQL `docs/sql/2026-11-26-klanttype-correctie-omzetten.sql` draaien in Supabase (vervangt `docs/sql/2026-10-13-klanttype-correctie.sql`, dat niet los draaien). De tabel `arnobot_klanttype_correcties` ontbreekt in productie. Gevolg nu: particulier zelf omzetten naar zakelijk kan niet slagen. Overstappen werkt wel, omdat daar de fout wordt genegeerd. Dit staat los van de prijswijziging.
+- [x] Zelf omzetten naar zakelijk (N5) is door een andere sessie gebouwd en de SQL is uitgevoerd (`docs/REFERRAL_CONTROLE_2026-11-26.md`). Open daar: de stand van `KLANTTYPE_OPEN`. Geen onderdeel van deze wijziging.
 - [ ] ElevenLabs controleren (zie onderaan).
 
 ## Fase 1: rekenlogica Team (eerst, anders wordt verkeerd gefactureerd)
