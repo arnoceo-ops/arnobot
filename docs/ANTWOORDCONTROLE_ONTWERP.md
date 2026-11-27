@@ -4,7 +4,9 @@
 
 **Laatst bijgewerkt:** 27 november 2026
 **Waar we staan:** eerste versie aangevallen door een agent zonder voorgeschiedenis en daarop herzien. Niets gebouwd, de chat is niet aangepast, geen nieuwe testkosten.
-**Eerstvolgende stap:** stap 1 staat gebouwd op de tak `fix/hervatten-48u` (werkmap `C:\Users\arno\arnobot-48u`), niet op master en niet live. Tests, typecontrole en lint geslaagd. Wacht op akkoord voor de gedragstest (naspelen, geschat $1,50, harde grens $2) en daarna op akkoord om live te zetten. Keurt Arno ook de nieuwe instructietekst in `lib/hervatGesprek.ts` goed.
+**Gedragstest stap 1 (27 november, 15 antwoorden, Sonnet 4.6, geschat $1,15, `scripts/test-hervat.ts` op de tak): lat niet gehaald.** Later bericht dat uitdrukkelijk naar het oude deel verwijst: 5 van 5 zegt dat niet te zien en vraagt ernaar. Vraag die het oude deel niet nodig heeft: 5 van 5 gewoon antwoord. Het echte eerste bericht na de stilte (verwijst alleen zijdelings, met geplakte mail): 0 van 5 meldt dat het eerdere deel ontbreekt, alle geven meteen een oordeel. Beoordeeld door de bouwsessie zelf, niet blind. Het script bouwt de ingekorte geschiedenis zelf op en test dus alleen het gedrag; het inkorten is met unit-tests getest. Criterium niet achteraf versoepeld.
+**Open:** de reparatie neemt vanaf het tweede bericht ook informatie weg die ArnoBot nu wel krijgt. Voorstel: alleen live samen met een vaste melding op het scherm (in code, niet via het model), tekst vooraf door Arno goed te keuren. Nog niet besloten.
+**Eerdere stap:** stap 1 staat gebouwd op de tak `fix/hervatten-48u` (werkmap `C:\Users\arno\arnobot-48u`), niet op master en niet live. Tests, typecontrole en lint geslaagd. Wacht op akkoord voor de gedragstest (naspelen, geschat $1,50, harde grens $2) en daarna op akkoord om live te zetten. Keurt Arno ook de nieuwe instructietekst in `lib/hervatGesprek.ts` goed.
 
 - [ ] Stap 1: gesprek hervatten na 48 uur, smalle reparatie
 - [ ] Stap 2: een controlerun op bestaande antwoorden (apart akkoord, harde grens)
