@@ -166,7 +166,7 @@ export default async function TeamsAdminPage() {
                     <tr key={f.id} style={{ borderBottom: '1px solid #1f2937' }}>
                       <td style={{ padding: '4px 8px' }}>{new Date(f.created_at).toLocaleDateString('nl-NL')}</td>
                       <td style={{ padding: '4px 8px' }}>{f.soort}</td>
-                      <td style={{ padding: '4px 8px' }}>{f.seats_aantal} seats</td>
+                      <td style={{ padding: '4px 8px' }}>manager plus {f.seats_aantal}</td>
                       <td style={{ padding: '4px 8px' }}>€{(f.bedrag_cent / 100).toFixed(2)}</td>
                       <td style={{ padding: '4px 8px', color: f.status === 'paid' ? '#22c55e' : f.status === 'open' ? '#f59e0b' : '#6b7280' }}>{f.status}{f.paid_via === 'bank' ? ' (bank)' : ''}{(f.terugbetaald_cent ?? 0) > 0 ? `, terugbetaald €${(f.terugbetaald_cent / 100).toFixed(2)}` : ''}</td>
                       <td style={{ padding: '4px 8px', textAlign: 'right' }}>

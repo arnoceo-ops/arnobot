@@ -5,6 +5,7 @@ import { Redis } from '@upstash/redis'
 import { mollieBeschikbaarVoor } from '@/lib/billing/mollie'
 import { activatieBedrag, activeerTeam, leesActivatieStand, MAX_SEATS, valideerActivatie } from '@/lib/teamActivatie'
 import { TEAM_MIN_TEAMLEDEN } from '@/lib/teamPricing'
+import { huidigSeats } from '@/lib/billing/teamFacturatie'
 
 // Een manager activeert zelf zijn team na de gratis agent-proef (docs/TEAM_PROCES.md).
 // GET: de teamstand (en met ?seats&cyclus het bedrag van de eerste factuur voor het voorbeeld).
@@ -26,10 +27,12 @@ export async function GET(req: NextRequest) {
 
   const seats = Number(req.nextUrl.searchParams.get('seats'))
   const cyclus = req.nextUrl.searchParams.get('cyclus')
-  const bedrag = Number.isInteger(seats) && seats >= TEAM_MIN_TEAMLEDEN && seats <= MAX_SEATS && (cyclus === 'maandelijks' || cyclus === 'jaarlijks')
-    ? activatieBedrag(seats, cyclus)
-    : null
-  return NextResponse.json({ stand, bedrag, betalenBeschikbaar: mollieBeschikbaarVoor(userId) })
+  const geldig = Number.isInteger(seats) && seats >= TEAM_MIN_TEAMLEDEN && seats <= MAX_SEATS && (cyclus === 'maandelijks' || cyclus === 'jaarlijks')
+  // Het voorbeeld telt hetzelfde als de factuur: het werkelijke aantal teamleden als dat hoger is dan het ingevulde.
+  // Lukt tellen niet, dan geen bedrag in plaats van een te laag bedrag.
+  const gefactureerd = geldig ? await huidigSeats(stand.teamId, seats).catch(() => null) : null
+  const bedrag = gefactureerd !== null ? activatieBedrag(gefactureerd, cyclus as 'maandelijks' | 'jaarlijks') : null
+  return NextResponse.json({ stand, bedrag, gefactureerdeTeamleden: gefactureerd, betalenBeschikbaar: mollieBeschikbaarVoor(userId) })
 }
 
 export async function POST(req: NextRequest) {

@@ -26,6 +26,7 @@ function bouwer(tabel: 'arnobot_teams' | 'arnobot_team_members' | 'approved_user
   }
   b.select = (_k?: string, o?: { head?: boolean }) => { head = !!o?.head; return b }
   b.eq = (k: string, v: unknown) => { filters.push(r => r[k] === v); return b }
+  b.neq = (k: string, v: unknown) => { filters.push(r => r[k] !== v); return b }
   b.insert = (w: Rij) => { op = 'insert'; waarden = w; return b }
   b.update = (w: Rij) => { op = 'update'; waarden = w; return b }
   b.single = () => { const r = (uitvoer().data as Rij[] | null) ?? []; return Promise.resolve(r.length ? { data: r[0], error: null } : { data: null, error: { message: 'geen rij' } }) }
@@ -45,7 +46,7 @@ const { TEST_TEAM_ID } = await import('@/lib/internalTestAccounts')
 
 const aanroep = (code = 'abc') => POST(new Request('https://www.arno.bot/api/bot/team/join', { method: 'POST', body: JSON.stringify({ invite_code: code }) }))
 const vulTeam = (aantal: number, id = 't1', extra: Rij = {}) => {
-  db.arnobot_teams = [{ id, name: 'Team Een', niveau: 'premium', invite_code: 'abc', ...extra }]
+  db.arnobot_teams = [{ id, name: 'Team Een', niveau: 'premium', invite_code: 'abc', manager_id: 'u0', ...extra }]
   db.arnobot_team_members = Array.from({ length: aantal }, (_, i) => ({ team_id: id, user_id: `u${i}`, role: i === 0 ? 'manager' : 'member' }))
 }
 
@@ -74,7 +75,7 @@ describe('team joinen', () => {
   })
 
   it('stopt niets als joinen niet lukt (team vol, ongeldige code of al lid)', async () => {
-    vulTeam(25)
+    vulTeam(26)
     await aanroep()
     vulTeam(3)
     await aanroep('fout')
@@ -108,13 +109,13 @@ describe('team joinen', () => {
   })
 
   it('geeft geen melding onder de 20 leden', async () => {
-    vulTeam(18) // met het nieuwe lid 19
+    vulTeam(19) // manager plus 18, met het nieuwe lid 19 teamleden
     await aanroep()
     expect(notify).not.toHaveBeenCalled()
   })
 
   it('meldt Arno wanneer het team 20 leden bereikt', async () => {
-    vulTeam(19) // met het nieuwe lid 20
+    vulTeam(20) // manager plus 19, met het nieuwe lid 20 teamleden
     await aanroep()
     expect(notify).toHaveBeenCalledOnce()
     expect(notify.mock.calls[0][0]).toContain('20 van maximaal 25')
@@ -128,12 +129,18 @@ describe('team joinen', () => {
     expect(notify).not.toHaveBeenCalled()
   })
 
-  it('weigert het 26e lid, meldt Arno en laat het team ongemoeid', async () => {
-    vulTeam(25)
+  it('de manager telt niet mee: het 25e teamlid kan er nog bij', async () => {
+    vulTeam(25) // manager plus 24
+    expect((await aanroep()).status).toBe(200)
+    expect(db.arnobot_team_members).toHaveLength(26)
+  })
+
+  it('weigert het 26e teamlid, meldt Arno en laat het team ongemoeid', async () => {
+    vulTeam(26)
     const res = await aanroep()
     expect(res.status).toBe(400)
     expect((await res.json()).error).toContain('maximaal 25')
-    expect(db.arnobot_team_members).toHaveLength(25)
+    expect(db.arnobot_team_members).toHaveLength(26)
     expect(notify).toHaveBeenCalledOnce()
     expect(notify.mock.calls[0][0]).toContain('is vol')
     expect(nieuwMelden).toHaveBeenCalledWith('teamgrens:vol:t1', 'waarschuwing')
@@ -142,7 +149,7 @@ describe('team joinen', () => {
   it('geeft voor een testteam nooit een melding', async () => {
     vulTeam(19, TEST_TEAM_ID)
     await aanroep()
-    vulTeam(25, TEST_TEAM_ID)
+    vulTeam(26, TEST_TEAM_ID)
     await aanroep()
     expect(notify).not.toHaveBeenCalled()
   })

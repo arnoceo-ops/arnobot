@@ -7,9 +7,9 @@ import { stopSoloBijJoin } from '@/lib/billing/teamlidSolo'
 import { bewaarOoitTeamlid } from '@/lib/referralKenmerken'
 import { notifyTelegram } from '@/lib/cron-notify'
 import { TEST_TEAM_IDS } from '@/lib/internalTestAccounts'
+import { TEAM_MAX_TEAMLEDEN } from '@/lib/teamPricing'
 
-// Maximaal aantal leden per team, en vanaf hoeveel leden Arno een melding krijgt (een groter team vraagt een aanpassing, zie docs/TEAM_PROCES.md).
-const MAX_LEDEN = 25
+// Vanaf hoeveel teamleden (zonder manager) Arno een melding krijgt. Het maximum staat in lib/teamPricing.ts.
 const MELD_VANAF_LEDEN = 20
 
 // Een team dat geblokkeerd is of is opgezegd (stopt binnenkort) kan niet meer worden gejoind. Anders verliest het nieuwe lid zijn
@@ -32,8 +32,8 @@ async function meldTeamGrens(team: { id: string; name: string }, soort: 'bijna' 
     const sleutel = soort === 'bijna' ? `teamgrens:bijna:${team.id}` : `teamgrens:vol:${team.id}`
     if (!(await nieuwMelden(sleutel, soort === 'bijna' ? 'mijlpaal' : 'waarschuwing'))) return
     await notifyTelegram(soort === 'bijna'
-      ? `Team "${team.name}" heeft nu ${leden} van maximaal ${MAX_LEDEN} leden. Een groter team vraagt een aanpassing van de grens.`
-      : `Iemand kon niet joinen: team "${team.name}" is vol (${MAX_LEDEN} leden). Pas de grens aan als dit team door moet groeien.`)
+      ? `Team "${team.name}" heeft nu ${leden} van maximaal ${TEAM_MAX_TEAMLEDEN} teamleden. Een groter team vraagt een aanpassing van de grens.`
+      : `Iemand kon niet joinen: team "${team.name}" is vol (${TEAM_MAX_TEAMLEDEN} teamleden). Pas de grens aan als dit team door moet groeien.`)
   } catch {
     // melding is bijzaak
   }
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
 
   const { data: team } = await supabase
     .from('arnobot_teams')
-    .select('id, name, niveau, geblokkeerd_at, stopt_op')
+    .select('id, name, manager_id, niveau, geblokkeerd_at, stopt_op')
     .eq('invite_code', invite_code)
     .single()
 
@@ -67,10 +67,12 @@ export async function POST(req: Request) {
     .from('arnobot_team_members')
     .select('*', { count: 'exact', head: true })
     .eq('team_id', team.id)
+    // De manager telt niet mee: die zit in het basistarief.
+    .neq('user_id', team.manager_id)
 
-  if ((memberCount ?? 0) >= MAX_LEDEN) {
-    await meldTeamGrens(team, 'vol', memberCount ?? MAX_LEDEN)
-    return NextResponse.json({ error: `Team is vol (maximaal ${MAX_LEDEN} leden)` }, { status: 400 })
+  if ((memberCount ?? 0) >= TEAM_MAX_TEAMLEDEN) {
+    await meldTeamGrens(team, 'vol', memberCount ?? TEAM_MAX_TEAMLEDEN)
+    return NextResponse.json({ error: `Team is vol (maximaal ${TEAM_MAX_TEAMLEDEN} teamleden)` }, { status: 400 })
   }
 
   const { error } = await supabase

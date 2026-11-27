@@ -3,7 +3,7 @@ import { klantBestaat, maakKlant } from '@/lib/billing/mollie'
 import { valideerZakelijk, type ZakelijkeGegevens } from '@/lib/billing/zakelijk'
 import { berekenReguliereBedrag, huidigSeats, maakTeamFactuur, type TeamRow } from '@/lib/billing/teamFacturatie'
 import { voegMaandenToe } from '@/lib/billing/perioden'
-import { TEAM_MIN_TEAMLEDEN, TEAM_KLEIN_TEKST, type Cyclus } from '@/lib/teamPricing'
+import { TEAM_MIN_TEAMLEDEN, TEAM_MAX_TEAMLEDEN, TEAM_KLEIN_TEKST, type Cyclus } from '@/lib/teamPricing'
 import { isAgentProef, proefEinde, proefStand, toegangTot, type ProefStaat } from '@/lib/teamProef'
 import { TEST_PROEF_TEAM_ID } from '@/lib/internalTestAccounts'
 import { logAdminActie } from '@/lib/adminLog'
@@ -18,7 +18,7 @@ import { gaatAutomatisch } from '@/lib/billing/referralAutomatisch'
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
-export const MAX_SEATS = 500
+export const MAX_SEATS = TEAM_MAX_TEAMLEDEN
 
 export type ActivatieInvoer = { seats: number; cyclus: Cyclus; zakelijk: ZakelijkeGegevens }
 
@@ -65,23 +65,24 @@ export async function leesActivatieStand(userId: string): Promise<ActivatieStand
   if (!lid) return null
   const { data: team } = await supabase
     .from('arnobot_teams')
-    .select('id, name, min_seats, cyclus, geblokkeerd_at')
+    .select('id, name, manager_id, min_seats, cyclus, geblokkeerd_at')
     .eq('id', lid.team_id)
-    .maybeSingle<{ id: string; name: string; min_seats: number | null; cyclus: Cyclus | null; geblokkeerd_at: string | null }>()
+    .maybeSingle<{ id: string; name: string; manager_id: string; min_seats: number | null; cyclus: Cyclus | null; geblokkeerd_at: string | null }>()
   if (!team) return null
 
   const [{ data: manager }, { count }, { data: facturen }, { data: klant }] = await Promise.all([
     supabase.from('approved_users').select('trial_start, expires_at, paid_at, sd_attribution_method').eq('user_id', userId)
       .maybeSingle<{ trial_start: string | null; expires_at: string | null; paid_at: string | null; sd_attribution_method: string | null }>(),
     // Zonder de manager zelf: dit aantal vult het veld "teamleden" vooraf in.
-    supabase.from('arnobot_team_members').select('*', { count: 'exact', head: true }).eq('team_id', team.id).neq('user_id', userId),
+    supabase.from('arnobot_team_members').select('*', { count: 'exact', head: true }).eq('team_id', team.id).neq('user_id', team.manager_id),
     supabase.from('arnobot_team_facturen').select('bedrag_cent, status, mollie_payment_link_url').eq('team_id', team.id).in('status', ['open', 'overdue']).order('created_at', { ascending: false }).limit(1)
       .returns<{ bedrag_cent: number; status: string; mollie_payment_link_url: string | null }[]>(),
     supabase.from('arnobot_billing_customers').select('bedrijfsnaam, kvk_nummer, btw_nummer, straat, postcode, plaats').eq('user_id', userId)
       .maybeSingle<{ bedrijfsnaam: string | null; kvk_nummer: string | null; btw_nummer: string | null; straat: string | null; postcode: string | null; plaats: string | null }>(),
   ])
 
-  const kanActiveren = !!manager && isAgentProef(manager, team.min_seats)
+  // De factuur en de bedrijfsgegevens horen bij de eigenaar: een tweede account met de rol manager activeert niet.
+  const kanActiveren = team.manager_id === userId && !!manager && isAgentProef(manager, team.min_seats)
   const einde = manager && kanActiveren ? proefEinde(manager) : null
   const stand = einde ? proefStand(einde) : null
   const open = facturen?.[0]
@@ -212,8 +213,8 @@ export async function activeerTeam(userId: string, invoer: ActivatieInvoer): Pro
 
   await logAdminActie({
     actie: 'team_geactiveerd', doelUserId: userId, doelTeamId: team.id,
-    // Kort gehouden voor het logboek op Status: cyclus, aantal gebruikers en bedrijf (het bedrag staat in Telegram en op de factuur).
-    details: { nieuw: { cyclus: invoer.cyclus, gebruikers: invoer.seats, bedrijf: z.bedrijfsnaam } },
+    // Kort gehouden voor het logboek op Status: cyclus, gefactureerde teamleden (zonder manager) en bedrijf (het bedrag staat in Telegram en op de factuur).
+    details: { nieuw: { cyclus: invoer.cyclus, teamleden: seats, bedrijf: z.bedrijfsnaam } },
   })
   await notifyTelegram(`Team geactiveerd door de manager zelf op arno.bot\n\nTeam: ${team.name}\nBedrijf: ${z.bedrijfsnaam}\nTeamleden: ${seats}, manager niet meegeteld (${invoer.cyclus})\nBedrag incl. btw: €${(brutoCent / 100).toFixed(2)}\n${gemaakt.ok ? 'De factuur en betaallink zijn verstuurd.' : 'LET OP: de factuur is NIET goed aangemaakt of verstuurd. Zie de melding hierboven en rond hem met de hand af.'}`)
   // Het team is al geactiveerd; zonder factuur geen succesmelding aan de manager.

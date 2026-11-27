@@ -268,6 +268,21 @@ const factuur = (extra: Rij = {}): Rij => ({
 })
 const uitkomst = (run: Awaited<ReturnType<typeof draai>>) => (run.referrals[0] as any).beoordeling
 
+describe('teamwaarde bij een leeggemaakt minimum', () => {
+  it('telt met wat het laatst regulier is gefactureerd, niet met drie teamleden', async () => {
+    const { huidigSeats } = await import('./teamFacturatie')
+    vi.mocked(huidigSeats).mockClear()
+    zet({
+      arnobot_subscriptions: [sub('klant', { plan: 'basis', cyclus: 'jaarlijks', klant_type: 'zakelijk' })],
+      arnobot_teams: [team({ min_seats: null, volgende_factuurdatum: null })],
+      arnobot_team_facturen: [factuur({ seats_aantal: 1 })],
+    })
+    await draai(new Date('2027-02-10T06:00:00.000Z'))
+    expect(vi.mocked(huidigSeats).mock.calls.length).toBeGreaterThan(0)
+    for (const call of vi.mocked(huidigSeats).mock.calls) expect(call[1]).toBe(1)
+  })
+})
+
 describe('B1 solo naar Team', () => {
   const open = () => factuur({ status: 'open', betaald_at: null, created_at: '2027-02-01T06:00:00.000Z' })
   it('openstaande eerste teamfactuur: niets afwijzen, ook lang na het einde van solo', async () => {

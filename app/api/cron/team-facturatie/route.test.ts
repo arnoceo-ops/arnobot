@@ -50,6 +50,7 @@ vi.mock('@/lib/billing/db', () => ({
 }))
 
 import { GET } from './route'
+import { berekenReguliereBedrag, berekenTussentijdsBedrag, huidigSeats, maakTeamFactuur } from '@/lib/billing/teamFacturatie'
 
 const oud = () => new Date(Date.now() - 60 * 86_400_000).toISOString()
 const factuur = (id: string, extra: Rij = {}): Rij => ({ id, team_id: 't1', status: 'open', bedrag_cent: 100, seats_aantal: 3, created_at: oud(), herinnering_at: null, mollie_payment_link_url: 'https://pay.test/x', bezorgd_at: oud(), ...extra })
@@ -110,5 +111,42 @@ describe('cron team-facturatie: herinnering en blokkade', () => {
     h.tabellen.arnobot_team_facturen = [factuur('f1', { herinnering_at: oud() }), factuur('f2', { herinnering_at: oud() })]
     await draai()
     expect(h.mail).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('cron team-facturatie: tellen en factureren', () => {
+  const jaarteam = () => {
+    Object.assign(team(), { cyclus: 'jaarlijks' })
+    h.tabellen.arnobot_team_facturen = [factuur('f1', { status: 'paid', seats_aantal: 3 })]
+    vi.mocked(berekenTussentijdsBedrag).mockReturnValue({ nettoCent: 100, btwCent: 21, brutoCent: 121 })
+  }
+  it('een telfout houdt de blokkade van een onbetaalde factuur niet tegen', async () => {
+    team().volgende_factuurdatum = '2020-01-01'
+    vi.mocked(huidigSeats).mockRejectedValueOnce(new Error('teamleden tellen mislukt'))
+    await draai()
+    expect(maakTeamFactuur).not.toHaveBeenCalled()
+    expect(team().geblokkeerd_at).toBeTruthy()
+    expect(h.tg.mock.calls.some(c => c[0].includes('fout'))).toBe(true)
+  })
+  it('een fout bij het rekenen voor team A laat team B gewoon factureren', async () => {
+    h.tabellen.arnobot_teams = [1, 2].map(n => ({ id: `t${n}`, name: `Team ${n}`, manager_id: 'm1', min_seats: 3, cyclus: 'maandelijks', volgende_factuurdatum: '2020-01-01', geblokkeerd_at: null }))
+    h.tabellen.arnobot_team_facturen = []
+    vi.mocked(berekenReguliereBedrag).mockReturnValue({ nettoCent: 100, btwCent: 21, brutoCent: 121 })
+    vi.mocked(berekenReguliereBedrag).mockImplementationOnce(() => { throw new Error('geen teamprijs') })
+    await draai()
+    expect(vi.mocked(maakTeamFactuur).mock.calls.map(c => (c[0] as { id: string }).id)).toEqual(['t2'])
+  })
+  it('jaarteam zonder extra teamlid krijgt geen tussenfactuur', async () => {
+    jaarteam()
+    vi.mocked(huidigSeats).mockResolvedValueOnce(3)
+    await draai()
+    expect(maakTeamFactuur).not.toHaveBeenCalled()
+  })
+  it('jaarteam met een extra teamlid krijgt precies een extra teamlid in rekening', async () => {
+    jaarteam()
+    vi.mocked(huidigSeats).mockResolvedValueOnce(4)
+    await draai()
+    expect(vi.mocked(berekenTussentijdsBedrag).mock.calls[0][0]).toBe(1)
+    expect(maakTeamFactuur).toHaveBeenCalledTimes(1)
   })
 })

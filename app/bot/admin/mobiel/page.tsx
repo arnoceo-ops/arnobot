@@ -283,13 +283,13 @@ export default async function AdminMobielPage() {
         >
           {teams.data.teams.length === 0 ? <Leeg tekst="Geen teams" /> : teams.data.teams.map((t, i) => (
             <div key={i} style={{ padding: '8px 0', borderBottom: '1px solid #374151' }}>
-              <Rij links={t.naam} rechts={`${t.leden} ${t.leden === 1 ? 'lid' : 'leden'}`} niveau={t.niveau} />
+              <Rij links={t.naam} rechts={`${t.leden} ${t.leden === 1 ? 'teamlid' : 'teamleden'}`} niveau={t.niveau} />
               <p style={{ margin: '0 0 2px 18px', color: '#9ca3af', fontSize: 13 }}>{t.manager} · {t.stand}</p>
             </div>
           ))}
           <Kop tekst="TEAMAANVRAGEN, LAATSTE 30 DAGEN" />
           {teams.data.aanvragen.length === 0 ? <Leeg tekst="Geen" />
-            : teams.data.aanvragen.map((a, i) => <Rij key={i} links={`${a.bedrijf} (${a.aanvrager})`} rechts={`${a.seats ?? '?'} seats · ${datum(a.datum)}`} />)}
+            : teams.data.aanvragen.map((a, i) => <Rij key={i} links={`${a.bedrijf} (${a.aanvrager})`} rechts={`aantal ${a.seats ?? '?'} · ${datum(a.datum)}`} />)}
           <p style={{ margin: '14px 0 0', color: '#6b7280', fontSize: 13 }}>Een proef verlengen kan alleen op de pc.</p>
         </Kaart>
       ) : <Mislukt titel="TEAMS" />}

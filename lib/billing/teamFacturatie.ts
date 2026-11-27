@@ -94,7 +94,7 @@ export async function huidigSeats(teamId: string, minSeats: number): Promise<num
     .eq('id', teamId)
     .maybeSingle<{ manager_id: string }>()
   // Zonder manager_id zou de manager als teamlid meetellen: dan liever geen factuur dan een te hoge.
-  if (teamError || !team) throw new Error(`teamleden tellen mislukt: ${teamError?.message ?? 'team niet gevonden'}`)
+  if (teamError || !team?.manager_id) throw new Error(`teamleden tellen mislukt: ${teamError?.message ?? 'team niet gevonden'}`)
   const { data, error } = await billingDb
     .from('arnobot_team_members')
     .select('user_id')
@@ -334,7 +334,7 @@ export async function maakTeamFactuur(team: TeamRow, input: {
       await markeerBezorgd(rij.id)
     }
     await notifyTelegram(
-      `Team-factuur aangemaakt op arno.bot\n\nTeam: ${team.name}\nSoort: ${input.soort}\nSeats: ${input.seats}\nBedrag: €${(brutoCent / 100).toFixed(2)}\nLink: ${link.url}${eigenMail ? '' : '\nLET OP: onze eigen mail is niet verstuurd, de factuur uit Moneybird wel.'}`,
+      `Team-factuur aangemaakt op arno.bot\n\nTeam: ${team.name}\nSoort: ${input.soort}\nTeamleden (zonder manager): ${input.seats}\nBedrag: €${(brutoCent / 100).toFixed(2)}\nLink: ${link.url}${eigenMail ? '' : '\nLET OP: onze eigen mail is niet verstuurd, de factuur uit Moneybird wel.'}`,
     )
   } catch (e) {
     Sentry.captureException(e, { tags: { onderdeel: 'team-facturatie' } })

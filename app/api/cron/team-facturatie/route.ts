@@ -74,12 +74,18 @@ async function cronHandler(req: NextRequest) {
     const teams = teamsRaw ?? []
 
     for (const team of teams) {
+      const meldTeamFout = (e: unknown) => {
+        samenvatting.fouten++
+        Sentry.captureException(e, { tags: { onderdeel: 'team-facturatie' }, extra: { teamId: team.id } })
+        console.error('[cron/team-facturatie] team', team.id, e instanceof Error ? e.message : e)
+      }
+      // Eigen vangnet voor het factureren: mislukt tellen of rekenen, dan lopen herinnering en blokkade hieronder door.
       try {
         const minSeats = team.min_seats ?? TEAM_MIN_TEAMLEDEN
-        const seats = await huidigSeats(team.id, minSeats)
 
         // 1. Reguliere cyclusfactuur.
         if (team.volgende_factuurdatum && team.volgende_factuurdatum <= vandaag) {
+          const seats = await huidigSeats(team.id, minSeats)
           const periodeStart = new Date(team.volgende_factuurdatum)
           const periodeEinde = voegMaandenToe(periodeStart, team.cyclus === 'jaarlijks' ? 12 : 1)
           const { nettoCent, btwCent } = berekenReguliereBedrag(seats, team.cyclus!)
@@ -96,6 +102,7 @@ async function cronHandler(req: NextRequest) {
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle<Pick<TeamFactuurRow, 'seats_aantal' | 'periode_einde'>>()
+          const seats = laatste ? await huidigSeats(team.id, minSeats) : 0
           if (laatste && seats > laatste.seats_aantal && team.volgende_factuurdatum) {
             const periodeEinde = new Date(team.volgende_factuurdatum)
             const periodeStartVanJaar = voegMaandenToe(periodeEinde, -12)
@@ -109,7 +116,11 @@ async function cronHandler(req: NextRequest) {
             }
           }
         }
+      } catch (e) {
+        meldTeamFout(e)
+      }
 
+      try {
         // 3 + 4. Herinnering en blokkade op openstaande facturen van dit team.
         const { data: openFacturen, error: openFout } = await billingDb
           .from('arnobot_team_facturen')
@@ -163,9 +174,7 @@ async function cronHandler(req: NextRequest) {
           }
         }
       } catch (e) {
-        samenvatting.fouten++
-        Sentry.captureException(e, { tags: { onderdeel: 'team-facturatie' }, extra: { teamId: team.id } })
-        console.error('[cron/team-facturatie] team', team.id, e instanceof Error ? e.message : e)
+        meldTeamFout(e)
       }
     }
 

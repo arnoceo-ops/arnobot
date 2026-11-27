@@ -359,7 +359,8 @@ export async function haalTeams(nu: Date): Promise<TeamsKaart> {
   const managerPerId = new Map(((managers.data ?? []) as ManagerRij[]).map(m => [m.user_id, m]))
   const ledenPerTeam = new Map<string, number>()
   for (const l of (leden.data ?? []) as { team_id: string; user_id: string }[]) {
-    if (isFakeDemoUser(l.user_id) || isInternalTestUser(l.user_id)) continue
+    // Zonder de manager: die zit in het basistarief.
+    if (isFakeDemoUser(l.user_id) || isInternalTestUser(l.user_id) || lijst.some(t => t.id === l.team_id && t.manager_id === l.user_id)) continue
     ledenPerTeam.set(l.team_id, (ledenPerTeam.get(l.team_id) ?? 0) + 1)
   }
 

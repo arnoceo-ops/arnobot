@@ -99,7 +99,7 @@ describe('valideerActivatie', () => {
   it.each([
     ['te weinig teamleden', { seats: 2 }],
     ['geen geheel getal', { seats: 3.5 }],
-    ['te veel gebruikers', { seats: 501 }],
+    ['te veel teamleden', { seats: 26 }],
     ['onbekende betaalwijze', { cyclus: 'wekelijks' }],
     ['ongeldig KvK', { kvkNummer: '123' }],
   ])('weigert %s', async (_n, afwijking) => {
@@ -171,7 +171,7 @@ describe('activeerTeam', () => {
     expect(factuur).toMatchObject({ soort: 'regulier', seats: 5, zonderBoekhouding: false })
     // jaarlijks: de periode loopt een jaar
     expect(Math.round((factuur.periodeEinde.getTime() - factuur.periodeStart.getTime()) / 86_400_000)).toBeGreaterThanOrEqual(365)
-    expect(logActie).toHaveBeenCalledWith(expect.objectContaining({ actie: 'team_geactiveerd', doelTeamId: 't1', details: { nieuw: { cyclus: 'jaarlijks', gebruikers: 5, bedrijf: 'Voorbeeld BV' } } }))
+    expect(logActie).toHaveBeenCalledWith(expect.objectContaining({ actie: 'team_geactiveerd', doelTeamId: 't1', details: { nieuw: { cyclus: 'jaarlijks', teamleden: 5, bedrijf: 'Voorbeeld BV' } } }))
     expect(notify).toHaveBeenCalledOnce()
   })
 
@@ -213,6 +213,15 @@ describe('activeerTeam', () => {
     expect([a.ok, b.ok].filter(Boolean)).toHaveLength(1)
     expect([a, b].find(r => !r.ok)).toMatchObject({ ok: false, status: 409 })
     expect(maakFactuur).toHaveBeenCalledOnce()
+  })
+
+  it('een tweede account met de rol manager kan het team niet activeren', async () => {
+    zet()
+    db.arnobot_team_members.push({ team_id: 't1', user_id: 'm2', role: 'manager' })
+    db.approved_users.push({ user_id: 'm2', email: 'm2@x.nl', trial_start: dagenGeleden(10), expires_at: null, paid_at: null, sd_attribution_method: 'link' })
+    expect(await leesActivatieStand('m2')).toMatchObject({ kanActiveren: false })
+    expect(await activeerTeam('m2', await invoer())).toMatchObject({ ok: false, status: 409 })
+    expect(maakFactuur).not.toHaveBeenCalled()
   })
 
   it('weigert iemand die geen team beheert', async () => {

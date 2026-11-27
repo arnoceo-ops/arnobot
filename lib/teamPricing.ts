@@ -29,6 +29,11 @@ export const TEAM_PRIJS_PER_GEBRUIKER_JAARLIJKS = 39
  * kleiner team instellen, en dat krijgt gewoon de formule.
  */
 export const TEAM_MIN_TEAMLEDEN = 3
+/**
+ * Meer teamleden dan dit kunnen niet aansluiten (uitnodiging) en dus ook niet zelf activeren: niemand betaalt voor een
+ * teamlid dat er niet bij kan. Een groter team vraagt een aanpassing, zie docs/TEAM_PROCES.md.
+ */
+export const TEAM_MAX_TEAMLEDEN = 25
 export const TEAM_KLEIN_TEKST = `Team is er vanaf een manager en ${TEAM_MIN_TEAMLEDEN} teamleden. Begin je kleiner, bijvoorbeeld als startup met 2 teamleden? Neem dan contact op via team@arno.bot.`
 
 // Elite-surplus binnen een Team-aanvraag (besloten 2026-08-11, zie

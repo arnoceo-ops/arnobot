@@ -202,6 +202,18 @@ const teamFactuurTelt = (f: TeamFactuurRow) => teamFactuurStaat(f) && !heeftAnde
 
 const teamMaandCent = (seats: number, cyclus: Cyclus) => teamPrijsPerMaandStrikt(seats, cyclus) * 100
 
+/**
+ * Ondergrens voor de teamtelling. Is het minimum leeggemaakt, dan telt wat er het laatst regulier is gefactureerd: anders
+ * zou een klein team dat Arno instelde als 3 teamleden worden gewaardeerd, en het tegoed te hoog uitvallen.
+ */
+function teamOndergrens(t: Team, facturen: TeamFactuurRow[]): number {
+  if (t.min_seats !== null) return t.min_seats
+  const laatste = facturen
+    .filter(f => f.team_id === t.id && f.soort === 'regulier' && f.seats_aantal > 0)
+    .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0]
+  return laatste?.seats_aantal ?? TEAM_MIN_TEAMLEDEN
+}
+
 /** Maandprijs exclusief btw van wat er echt is afgesproken of betaald, niet de huidige prijslijst. */
 function nettoPerMaand(r: { bedrag_cent: number; btw_cent: number }, cyclus: Cyclus): number {
   const cent = Math.round((r.bedrag_cent - r.btw_cent) / (cyclus === 'jaarlijks' ? 12 : 1))
@@ -347,7 +359,7 @@ export async function klantFeiten(d: Dossier, aangemeldAt: string | null, nu: Da
     if (teamFactuurStaat(f)) betaalMomenten.push({ at: tijdigMomentTeam(f.created_at, f.betaald_at!), team: true })
     // Akkoord Arno: bij een team telt het aantal gebruikers op het moment van toekennen.
     let seats = seatsPerTeam.get(team.id)
-    if (seats === undefined) seatsPerTeam.set(team.id, (seats = await huidigSeats(team.id, team.min_seats ?? TEAM_MIN_TEAMLEDEN)))
+    if (seats === undefined) seatsPerTeam.set(team.id, (seats = await huidigSeats(team.id, teamOndergrens(team, d.facturen))))
     periodes.push({
       plan: 'team', cyclus: f.cyclus, klantType: 'zakelijk', periodeStart: f.periode_start, periodeEinde: f.periode_einde,
       betaaldAt: f.betaald_at!, geldig: teamFactuurTelt(f), maandNettoCent: teamMaandCent(seats, f.cyclus), bronId: f.id,
@@ -412,7 +424,7 @@ export async function aanbrengerFeiten(d: Dossier, nu: Date): Promise<Aanbrenger
     .filter(lopend)
     .sort((a, b) => Date.parse(b.periode_einde ?? '0') - Date.parse(a.periode_einde ?? '0'))[0]
 
-  const teamPrijs = async (t: Team) => teamMaandCent(await huidigSeats(t.id, t.min_seats ?? TEAM_MIN_TEAMLEDEN), t.cyclus ?? 'maandelijks')
+  const teamPrijs = async (t: Team) => teamMaandCent(await huidigSeats(t.id, teamOndergrens(t, d.facturen)), t.cyclus ?? 'maandelijks')
 
   // Beëindigde abonnementen en teams, het laatste einde eerst.
   const eindes: { at: string; prijs: () => Promise<number> }[] = []
