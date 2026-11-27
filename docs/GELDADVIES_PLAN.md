@@ -4,7 +4,7 @@
 
 **Laatst bijgewerkt:** 27 november 2026
 **Waar we staan:** ronde 4 klaar: de afgedwongen geldstap is kansrijk (eerste geslaagde antwoorden op de prijsverlaging, geen omdraaiing meer), maar traag, duur en niet foutloos (zie fase 2). Alles zit alleen in testscripts; aan de chat, de prompt en de database is niets aangepast.
-**Eerstvolgende stap:** akkoord van Arno op de verbeteringen onder ronde 4; Arno beoordeelt de toon en of het uitstellen van een oordeel past.
+**Eerstvolgende stap:** de geldstap staat stil. Er ligt een voorstel (nog niet goedgekeurd) om eerst model en instructies samen te vergelijken op coachgesprekken, zie "Overdracht" onderaan.
 
 - [x] Fase 0: nulmeting en kritische toets van het plan
 - [ ] Fase 1: examen goedkeuren (kernset gedaan) en uitbreiden
@@ -132,3 +132,16 @@ Geldstap met Opus 5.5 (laag) voor invullen, schrijven en controleren, 7 pogingen
 - Herstel: een fout advies werkt door in samenvatting, uitdaging, geheugen en sparadvies.
 - Sparren en voice apart nalopen.
 - `scripts/eval-cijfers.ts` wijkt af van de echte chat (telt weggefilterde tekst mee, zonder geheugen); het examen gebruikt de logica van de route.
+
+## Overdracht (27 november 2026)
+
+**Bestanden met gebruikersgegevens** (gevallen, sleutels, uitslagen, herkenningssets) staan buiten de repo in `C:\Users\arno\arnobot-prive\examen-geldadvies\`. Het is een kopie van de tijdelijke map van de bouwsessie. Hulpscripts daarin kunnen nog naar het oude pad verwijzen.
+
+**Aanleiding voor een breder voorstel:** ook een coachgesprek zonder geldvraag bevatte leesfouten en toeschrijvingen die niet in de stukken stonden. Een verzonnen versie in ChatGPT (een ronde) gaf vergelijkbare leesfouten, en was als coaching op enkele punten breder.
+
+**Voorstel, nog niet goedgekeurd:**
+- 2 bij 2: huidig model (Sonnet 4.6) en Opus 5.5 met denkstap, elk met de huidige instructies en met korte instructies zonder tegenstrijdigheden. Ongeveer tien lastige coachgesprekken, geldgevallen meegenomen, blind beoordeeld, lat vooraf. Geschat $20 tot $30 bij drie pogingen op een beslissend antwoord per gesprek, stoppen bij $30.
+- Eerst een agent zonder voorgeschiedenis de aannames laten aanvallen.
+- Gezien in `lib/systemPrompt.ts`: "vraag en lever tegelijk" (altijd eerst een antwoord op een aanname) botst met "een richting" (eerst een vraag, nog geen advies). Dat dit fouten veroorzaakt is niet bewezen; ronde 2 bevestigde het voor de geldgevallen niet.
+
+**Geparkeerd tot na die vergelijking:** de drie verbeteringen onder ronde 4 en het grote examen (apart akkoord op het bedrag).
