@@ -4,7 +4,7 @@
 
 **Laatst bijgewerkt:** 27 november 2026 (avond)
 **Waar we staan:** gebouwd op de tak `feat/geldfuncties` (werkmap `C:\Users\arno\arnobot-geldfuncties`), **niet op master en niet live**: vaste geldsommen, een geldcontrole vóór het antwoord en Sonnet 5.5 voor herkende geldvragen. Op nieuwe momenten beter dan de huidige chat; de herkenningslat is niet gehaald. Alleen via Claude Code getest, nog nooit via de echte API. Zie "Bouw en meting" onderaan.
-**Eerstvolgende stap:** besluit Arno over een proef met de echte API (kost tegoed, bedrag en grens vooraf) en daarna over live. Een betalende gebruiker wacht nog op antwoord (27 november: nog niet gegeven; Arno stuurt geen tussenbericht).
+**Eerstvolgende stap:** de proef met de echte API (akkoord Arno, harde grens 2 dollar) is op 27 november niet gelukt: de testsleutel uit .env.local geeft "workspace API usage limits" tot 1 december 00:00 UTC, 0 dollar uitgegeven. Eerst de limiet van die werkruimte verhogen in de Console of wachten; daarna het script apiproef.mts in de testmap opnieuw draaien. Daarna besluit over live. Een betalende gebruiker wacht nog op antwoord (27 november: nog niet gegeven; Arno stuurt geen tussenbericht).
 
 - [x] Fase 0: nulmeting en kritische toets van het plan
 - [ ] Fase 1: examen goedkeuren (kernset gedaan) en uitbreiden
