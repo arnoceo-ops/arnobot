@@ -18,6 +18,8 @@ export type ChatVerbruik = {
   lengte?: 'kort' | 'normaal' | 'uitgebreid'
   /** Alleen gezet als de gebruiker iets anders vroeg dan de server toepaste (UITGEBREID aangeklikt zonder Pro). */
   gevraagd?: string
+  /** Geldcontrole van deze beurt (lib/geldCheck.ts): of het een geldvraag was, welk model antwoordde en welke berekeningen meegingen. Geen bedragen. */
+  geld?: { geldvraag: boolean; model: string; uitgevoerd: string[]; afgekeurd: number }
   /** Toolaanroepen van deze beurt (naam en ingekorte invoer), om een verkeerde kolomkeuze of een overgeslagen tool terug te zien (2026-11-21). */
   tools?: { naam: string; invoer: string; fout?: true }[]
   /** Rondes waarvan de tekst vóór een toolaanroep niet is getoond (werkruis zoals "laat me de tabel overschrijven"), met een kort voorbeeld. Toegevoegd 2026-11-23. */

@@ -74,6 +74,7 @@ import { Redis } from '@upstash/redis'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
 import { CHAT_REKENTOOLS, voerToolUit } from '@/lib/rekenTool'
+import { doeGeldCheck, moetGeldCheck, metGeldBlok, GELD_ANTWOORD_MODEL, GELD_DENKRUIMTE, type GeldUitkomst } from '@/lib/geldCheck'
 import { streamRonde, haalWerkruisWeg } from '@/lib/chatStreamRonde'
 import { vindOnjuisteSuperlatieven } from '@/lib/tabelClaims'
 import { maakVerbruik, telOp, telOpLezer, telTool, telWeggegooid } from '@/lib/chatVerbruik'
@@ -555,6 +556,22 @@ export async function POST(req: NextRequest) {
       },
     ]
 
+    // Geldcontrole (lib/geldCheck.ts): een klein model haalt de gegevens uit het gesprek, de code rekent, en de uitkomst gaat bij de vraag mee.
+    // Mislukt of duurt het te lang, dan loopt de beurt zoals zonder controle. Uitzetten zonder codewijziging: GELDCONTROLE_UIT=1.
+    let geld: GeldUitkomst | null = null
+    if (process.env.GELDCONTROLE_UIT !== '1' && moetGeldCheck(questionWithDocument, effectieveHistory)) {
+      try {
+        geld = await Sentry.startSpan({ name: 'chat.geldcontrole', op: 'ai.claude' }, () =>
+          doeGeldCheck(client, effectieveHistory, questionWithDocument, aiContext(userId, 'chat-geldcontrole')))
+      } catch (e) {
+        Sentry.captureException(e, { tags: { onderdeel: 'geldcontrole' }, level: 'warning' })
+      }
+    }
+    if (geld?.blok) {
+      const laatste = messages[messages.length - 1]
+      messages[messages.length - 1] = { role: 'user' as const, content: metGeldBlok(laatste.content, geld.blok) }
+    }
+
     const profielContext = bouwProfielContext(profiel, voornaamGebruiker)
 
     // Link lezen (lib/webFetchTool.ts): alleen als de gebruiker zelf een link in het gesprek zette
@@ -600,9 +617,14 @@ export async function POST(req: NextRequest) {
     if (linkInGesprek) toolLijst.push(WEB_FETCH_TOOL)
     if (lezerBron) toolLijst.push(LEES_DOCUMENT_TOOL)
     const chatTools: Anthropic.ToolUnion[] | undefined = toolLijst.length > 0 ? toolLijst : undefined
+    // Een herkende geldvraag gaat naar het nieuwere model met denkstap. Niet bij een link of de documentlezer: dat model weigert een verplicht
+    // hulpmiddel, en het ophalen van links is er niet mee getest.
+    const geldModel = Boolean(geld?.geldvraag) && !lezerBron && !linkInGesprek
+    const antwoordOpties = geldModel
+      ? { model: GELD_ANTWOORD_MODEL, max_tokens: chatMaxTokens + GELD_DENKRUIMTE, thinking: { type: 'adaptive' as const }, output_config: { effort: 'low' as const } }
+      : { model: 'claude-sonnet-4-6', max_tokens: chatMaxTokens }
     const anthropicStream = client.messages.stream({
-      model: 'claude-sonnet-4-6',
-      max_tokens: chatMaxTokens,
+      ...antwoordOpties,
       system: systemPrompt,
       messages,
       ...(chatTools ? { tools: chatTools } : {}),
@@ -630,6 +652,7 @@ export async function POST(req: NextRequest) {
           telOp(verbruik, finalMessage.usage)
           // Welke lengte de gebruiker koos, zodat in de admin te zien is of UITGEBREID echt gebruikt wordt (geen aparte kolom nodig).
           verbruik.lengte = antwoordLengte
+          if (geld) verbruik.geld = { geldvraag: geld.geldvraag, model: antwoordOpties.model, uitgevoerd: geld.uitgevoerd, afgekeurd: geld.afgekeurd.length }
           if (rawLengte !== antwoordLengte) verbruik.gevraagd = typeof rawLengte === 'string' ? rawLengte.slice(0, 20) : 'onbekend'
           // Het hulpmiddel lees_document: één aparte, goedkopere aanroep (Haiku) over de documenten van dit gesprek, met de eerdere
           // vragen van de gebruiker erbij. Een fout kost nooit de beurt: het model hoort dat het lezen niet lukte en zegt dat eerlijk.
@@ -687,8 +710,7 @@ export async function POST(req: NextRequest) {
               eerdereTekst += '\n\n'
             }
             const rondeStream = client.messages.stream({
-              model: 'claude-sonnet-4-6',
-              max_tokens: chatMaxTokens,
+              ...antwoordOpties,
               system: systemPrompt,
               messages: werkBerichten,
               tools: chatTools,

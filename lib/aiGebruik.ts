@@ -30,7 +30,11 @@ export type AiGebruikRij = AiTokens & {
 
 // Dollars per miljoen tokens (invoer, uitvoer). Sonnet 4.6 en Haiku 4.5 staan in lib/kostenTarieven.ts en lib/maandKosten.ts; Fable 5.1 in
 // lib/kostenTarieven.ts (geverifieerd 2026-09-29). Een model dat hier ontbreekt krijgt kosten_usd null en valt zo op in het overzicht.
-const PRIJZEN_PER_MILJOEN: Record<string, { invoer: number; uitvoer: number }> = {
+// Sonnet 5.5 en Haiku 5.5: tarieven uit de Claude API-documentatie (claude-api skill, tabel van 2026-11-03). Haiku 5.5 boven 100K invoer is
+// duurder; zulke aanroepen komen hier niet voor. cacheLezen alleen waar die afwijkt van 0,1 keer de invoerprijs.
+const PRIJZEN_PER_MILJOEN: Record<string, { invoer: number; uitvoer: number; cacheLezen?: number }> = {
+  'claude-sonnet-5-5': { invoer: 2, uitvoer: 10, cacheLezen: 0.1 },
+  'claude-haiku-5-5': { invoer: 0.1, uitvoer: 0.5 },
   'claude-sonnet-4-6': { invoer: 3, uitvoer: 15 },
   'claude-haiku-4-5-20251001': { invoer: 1, uitvoer: 5 },
   'claude-fable-5-1': { invoer: 10, uitvoer: 50 },
@@ -40,7 +44,7 @@ const PRIJZEN_PER_MILJOEN: Record<string, { invoer: number; uitvoer: number }> =
 export function aiKostenUsd(model: string | null, t: AiTokens): number | null {
   const p = model ? PRIJZEN_PER_MILJOEN[model] : undefined
   if (!p) return null
-  return (t.invoer * p.invoer + t.cache_schrijven * p.invoer * 1.25 + t.cache_lezen * p.invoer * 0.1 + t.uitvoer * p.uitvoer) / 1_000_000
+  return (t.invoer * p.invoer + t.cache_schrijven * p.invoer * 1.25 + t.cache_lezen * (p.cacheLezen ?? p.invoer * 0.1) + t.uitvoer * p.uitvoer) / 1_000_000
 }
 
 /** Opties voor een aanroep (tweede argument van messages.create of messages.stream): zo weet de meting van wie en waarvoor het is. */
