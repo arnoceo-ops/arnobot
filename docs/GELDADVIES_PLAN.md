@@ -3,12 +3,12 @@
 ## Status
 
 **Laatst bijgewerkt:** 27 november 2026
-**Waar we staan:** nulmeting en voorstel voor de kernset van het examen zijn klaar, de vier salesoordelen zijn gegeven. Er is niets aan de chat, de prompt of de database aangepast. Arno moet de kernset als geheel nog goedkeuren.
-**Eerstvolgende stap:** na akkoord op de kernset het oorzaakonderzoek (zie fase 2). Modellen en betaalde testruns pas na dat akkoord.
+**Waar we staan:** kernset goedgekeurd. Oorzaakonderzoek ronde 1 en 2 klaar: het model maakt het grootste verschil, maar geen opstelling haalt de volledige toets (zie fase 2). Er is niets aan de chat, de prompt of de database aangepast.
+**Eerstvolgende stap:** akkoord van Arno op ronde 3: Opus 5.5 met lagere effort, met en zonder gestructureerde geldstap.
 
 - [x] Fase 0: nulmeting en kritische toets van het plan
-- [ ] Fase 1: examen goedkeuren en uitbreiden
-- [ ] Fase 2: oorzaak aantonen
+- [ ] Fase 1: examen goedkeuren (kernset gedaan) en uitbreiden
+- [ ] Fase 2: oorzaak aantonen (ronde 1 en 2 gedaan)
 - [ ] Fase 3: oplossingen bouwen en meten
 - [ ] Fase 4: bewaking en herstel
 
@@ -49,6 +49,35 @@ Hypotheses (niet bewezen):
 - De chat draait op `claude-sonnet-4-6` zonder thinking-parameter. Denktokens tellen mee in `max_tokens`, dus een denkstap vraagt meer ruimte.
 - De zoekherschrijving voor de kennisbank ziet alleen de laatste vraag.
 - Tekst vóór een hulpmiddel wordt niet getoond maar blijft in de context van het model (`lib/chatStreamRonde.ts`). In het gesprek van 26 november waren het alleen korte aankondigingen.
+
+### Uitkomst oorzaakonderzoek, ronde 1 en 2 (27 november 2026)
+
+Goedgekeurd door Arno: de kernset en dit onderzoek. Script: `scripts/examen-geldadvies.ts`. Naspeelkosten samen ongeveer $24.
+
+Ronde 1: huidige opzet, 7 beurten met bewaarde context, 5 pogingen per beurt: 0 van 35 haalde de strenge toets (door de hoofdsessie beoordeeld).
+
+Ronde 2: drie gevallen (prijsverlaging "omgedraaid", btw-vergelijking, inclusief tegenover exclusief btw bij een verlies), 9 opstellingen, 8 pogingen (één mislukt), blind beoordeeld door drie agents, steekproef van 8 nagelezen.
+
+| Opstelling | Prijs: richting omgedraaid | Btw goed vergeleken | Verlies goed berekend |
+|---|---|---|---|
+| huidig (Sonnet 4.6) | 8/8 | 0/8 | 1/8 |
+| zonder geheugen | 7/8 | 0/8 | 1/8 |
+| zonder kennisbank | 7/8 | 0/8 | 0/8 |
+| zonder gespreksgeschiedenis | 6/8 | 0/7 | 1/8 |
+| zonder verdachte promptregels | 8/8 | 0/8 | 3/8 |
+| kaal (alleen korte instructie) | 7/8 | 0/8 | 3/8 |
+| Sonnet 4.6 met denkstap | 7/8 | 2/8 | 1/8 |
+| Sonnet 5.5 met denkstap | 8/8 | 7/8 | 2/8 |
+| Opus 5.5 met denkstap | 2/8 | 8/8 | 6/8 |
+
+Conclusies:
+- Geheugen, kennisbank, geschiedenis en de verdachte promptregels zijn niet de hoofdoorzaak: ook zonder ArnoBot-prompt komen dezelfde fouten. De hypothese over "vraag en lever tegelijk" is voor deze gevallen niet bevestigd. Bij het verliesgeval gaf "zonder regels" vaker de goede richting (7/8 tegen 2/8), bij de andere twee niet.
+- Een denkstap op hetzelfde model helpt weinig. Het model maakt het grootste verschil; Opus 5.5 is duidelijk het beste, niet foutloos.
+- Geen enkel antwoord van 72 op de prijsverlaging vroeg of de gebruiker met de klant door wil. Arno's salestoets komt niet vanzelf uit een sterker model.
+- Mediane tijd tot de eerste tekst (effort high, drie tegelijk): huidig 5 s, Opus 5.5 38 s, Sonnet 5.5 27 s, Sonnet 4.6 met denkstap 66 s. Woorden per antwoord: huidig 189, Opus 466. Geschatte kosten per antwoord: huidig $0,084, Opus $0,28.
+- Beperkingen: 3 gevallen, 8 pogingen (verschillen van 1 à 3 zeggen weinig), beoordelaars zijn ook Claude, lagere effort niet getest, toon niet beoordeeld.
+
+**Niet gekozen (nog niet):** direct overstappen op Opus 5.5. Wachttijd, lengte, toon en lagere effort zijn niet getest.
 
 ## Fase 3 en 4: kandidaten
 
