@@ -77,6 +77,9 @@ export default function TeamActiverenSectie({ stand, laad }: { stand: ActivatieS
     return () => { geannuleerd = true }
   }, [open, seats, cyclus, stand?.kanActiveren])
 
+  // Bij een andere keuze meteen weg met het vorige bedrag: anders staat er even een zin die bij het oude aantal hoort.
+  const wisBedrag = () => { setBedrag(null); setGefactureerd(null) }
+
   if (isNativeApp || !stand) return null
 
   async function bevestig() {
@@ -153,13 +156,13 @@ export default function TeamActiverenSectie({ stand, laad }: { stand: ActivatieS
           <div style={raster}>
             <div>
               <label style={veldLabel} htmlFor="ta-seats">TEAMLEDEN, ZONDER JEZELF</label>
-              <input id="ta-seats" className="ta-veld" type="number" min={TEAM_MIN_TEAMLEDEN} max={TEAM_MAX_TEAMLEDEN} style={{ ...veld, maxWidth: 160 }} value={seats} onChange={e => setSeats(e.target.value)} />
+              <input id="ta-seats" className="ta-veld" type="number" min={TEAM_MIN_TEAMLEDEN} max={TEAM_MAX_TEAMLEDEN} style={{ ...veld, maxWidth: 160 }} value={seats} onChange={e => { wisBedrag(); setSeats(e.target.value) }} />
             </div>
             <div>
               <span style={veldLabel}>BETALING</span>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button style={keuze(cyclus === 'maandelijks')} onClick={() => setCyclus('maandelijks')}>MAANDELIJKS</button>
-                <button style={keuze(cyclus === 'jaarlijks')} onClick={() => setCyclus('jaarlijks')}>JAARLIJKS</button>
+                <button style={keuze(cyclus === 'maandelijks')} onClick={() => { if (cyclus !== 'maandelijks') { wisBedrag(); setCyclus('maandelijks') } }}>MAANDELIJKS</button>
+                <button style={keuze(cyclus === 'jaarlijks')} onClick={() => { if (cyclus !== 'jaarlijks') { wisBedrag(); setCyclus('jaarlijks') } }}>JAARLIJKS</button>
               </div>
             </div>
           </div>
