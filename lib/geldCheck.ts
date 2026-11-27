@@ -107,14 +107,11 @@ export function voerGeldCheckUit(gevonden: unknown, gebruikersTekst: string): Ge
 }
 
 /**
- * Wie de geldcontrole, de geldfuncties en het nieuwere model krijgt. Nu alleen de eigenaar (ARNOBOT_OWNER_USER_ID); voor alle anderen
- * werkt de chat zoals hiervoor. Voor iedereen aanzetten: GELDCONTROLE_OPEN=true. Meteen uit, ook voor de eigenaar: GELDCONTROLE_UIT=1.
+ * Wie de geldcontrole, de geldfuncties en het nieuwere model krijgt: iedere ingelogde gebruiker (besluit Arno 27-11, na een test op het
+ * eigen account). Meteen uit voor iedereen: GELDCONTROLE_UIT=1.
  */
 export function geldBeschikbaarVoor(userId: string | null | undefined): boolean {
-  if (!userId || process.env.GELDCONTROLE_UIT === '1') return false
-  if (process.env.GELDCONTROLE_OPEN === 'true') return true
-  const eigenaar = process.env.ARNOBOT_OWNER_USER_ID
-  return !!eigenaar && eigenaar === userId
+  return !!userId && process.env.GELDCONTROLE_UIT !== '1'
 }
 
 export const GELDCHECK_MODEL = 'claude-haiku-5-5'

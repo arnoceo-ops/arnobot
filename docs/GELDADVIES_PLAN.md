@@ -3,8 +3,8 @@
 ## Status
 
 **Laatst bijgewerkt:** 27 november 2026 (avond)
-**Waar we staan:** op 27 november met akkoord van Arno naar master (samenvoegcommit "feat(geld): geldcontrole"), **live alleen voor het eigenaarsaccount**; voor alle anderen is de chat gelijk gebleven. Vercel-bouw geslaagd. In de app nog niet nagelopen, en niet nagekeken of ARNOBOT_OWNER_USER_ID in Vercel op het account staat waarmee Arno test. Volledige antwoorden met de huidige geldcontrole zijn niet via de API gemeten. Terugdraaien: git revert -m 1 op de samenvoegcommit; meteen uit: GELDCONTROLE_UIT=1. Zie "Bouw en meting" onderaan.
-**Eerstvolgende stap:** Arno stelt in de app drie verzonnen testvragen (prijsverlaging, korting met btw, gewone coachvraag), elk in een nieuw gesprek. Daarna in arnobot_rds_logs.verbruik (veld geld) nagaan welk model en welke berekening draaiden. Voor iedereen aanzetten (GELDCONTROLE_OPEN=true) pas na akkoord van Arno.
+**Waar we staan:** op 27 november met akkoord van Arno **live voor alle ingelogde gebruikers**, na een test op het eigenaarsaccount met drie verzonnen vragen: model en berekening klopten volgens de chatmeting, de hoofdsommen waren goed, twee antwoorden hadden een onnauwkeurige zin en bij de korting ontbrak de vraag naar een tegenprestatie. Volledige historie hieronder. Meteen uit: GELDCONTROLE_UIT=1 in Vercel en opnieuw uitrollen; terugdraaien: git revert van de commits "feat(geld)".
+**Eerstvolgende stap:** de eerste geldberichten van gebruikers nalezen (arnobot_rds_logs.verbruik, veld geld: model, uitgevoerde en afgekeurde berekeningen; wachttijd en kosten). Daarna de open punten hieronder.
 
 - [x] Fase 0: nulmeting en kritische toets van het plan
 - [ ] Fase 1: examen goedkeuren (kernset gedaan) en uitbreiden
@@ -191,7 +191,7 @@ De uitslag van de afgedwongen geldstap was te gunstig. Alle prijsformulieren rek
 Ook de uitleg die de bouwsessie hier eerst over gaf, haalde deze twee vergelijkingen door elkaar.
 
 ### Gekozen en verworpen
-- **Gekozen:** vaste code rekent (`lib/geldTool.ts`: prijswijziging, prijzen op dezelfde btw-basis, deel van een totaal). Een klein model (Haiku 5.5) haalt alleen de gegevens uit het gesprek en herkent een geldvraag; een berekening met een getal dat niet in de tekst van de gebruiker staat vervalt (`lib/geldCheck.ts`). Herkende geldvragen gaan naar Sonnet 5.5 (denkstap, lage inzet, eigen denkruimte), de rest blijft op Sonnet 4.6. Niet bij een link of de documentlezer. Wie dit krijgt: `geldBeschikbaarVoor` (nu alleen `ARNOBOT_OWNER_USER_ID`; iedereen met `GELDCONTROLE_OPEN=true`; meteen uit met `GELDCONTROLE_UIT=1`). Voor alle anderen zijn model, rekenfuncties en berichten gelijk aan hiervoor.
+- **Gekozen:** vaste code rekent (`lib/geldTool.ts`: prijswijziging, prijzen op dezelfde btw-basis, deel van een totaal). Een klein model (Haiku 5.5) haalt alleen de gegevens uit het gesprek en herkent een geldvraag; een berekening met een getal dat niet in de tekst van de gebruiker staat vervalt (`lib/geldCheck.ts`). Herkende geldvragen gaan naar Sonnet 5.5 (denkstap, lage inzet, eigen denkruimte), de rest blijft op Sonnet 4.6. Niet bij een link of de documentlezer. Wie dit krijgt: `geldBeschikbaarVoor` (eerst alleen het eigenaarsaccount, sinds de avond van 27 november iedere ingelogde gebruiker; meteen uit met `GELDCONTROLE_UIT=1`).
 - **Verworpen: alleen tools aanbieden.** Het chatmodel koos bij de prijswijziging 0 van 4 keer de nieuwe tool.
 - **Verworpen: rekenstap met het huidige chatmodel.** Prijsverlaging nog 3 van 4 fout met de juiste uitkomst bij de vraag (kleine ronde).
 - **Verworpen: voorfilter op cijfers en geldwoorden.** Hield 3 van 10 duidelijke geldvragen tegen. De controle draait nu bij elk bericht.
@@ -226,6 +226,7 @@ Huidig 10 van 30 geslaagd, alleen Sonnet 5.5 22 van 30, voorstel 30 van 30. Te g
 - Verzonnen superlatieven, tegenspraak en oordelen zonder gegevens: geen vaste oplossing, alleen mogelijk minder door het model.
 - Nooit via de echte API gedraaid: de instellingen van beide nieuwe modellen, de doorgifte van de denkstap bij toolrondes, de wachttijd van de geldcontrole (bij elk bericht) en de kosten per antwoord. De naspeeltest zette eerdere berichten als tekst in de vraag.
 - Geldt niet voor spraak (`lib/voice.ts`) en sparren.
+- **Samenvattingen (open, 27 november):** bij het testgesprek schreef de samenvatting na afsluiten "omzetpercentage" waar "margepercentage" moest staan, en in de actie een dt-fout. De samenvatting is niet gewijzigd door deze aanpak (volgens de modelinventaris Haiku 4.5) en gaat mee in het geheugen, dus een goed geldantwoord kan verkeerd onthouden worden. Hoe vaak is niet gemeten. Te doen: bedragen en geldbegrippen in samenvattingen controleren.
 - Het kostenoverzicht per maand (`lib/maandKosten.ts`) rekent chatbeurten nog met het tarief van Sonnet 4.6.
 - Bij live: `docs/ARNOBOT_OVERZICHT.md` bijwerken.
 

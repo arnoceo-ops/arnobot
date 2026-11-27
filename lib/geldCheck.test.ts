@@ -70,22 +70,14 @@ describe('doeGeldCheck', () => {
 describe('geldBeschikbaarVoor', () => {
   afterEach(() => vi.unstubAllEnvs())
 
-  it('alleen de eigenaar, tot de schakelaar open staat', () => {
-    vi.stubEnv('ARNOBOT_OWNER_USER_ID', 'user_eigenaar')
-    vi.stubEnv('GELDCONTROLE_OPEN', '')
+  it('iedere ingelogde gebruiker, niemand zonder account', () => {
     vi.stubEnv('GELDCONTROLE_UIT', '')
-    expect(geldBeschikbaarVoor('user_eigenaar')).toBe(true)
-    expect(geldBeschikbaarVoor('user_ander')).toBe(false)
+    expect(geldBeschikbaarVoor('user_a')).toBe(true)
     expect(geldBeschikbaarVoor(null)).toBe(false)
-    vi.stubEnv('GELDCONTROLE_OPEN', 'true')
-    expect(geldBeschikbaarVoor('user_ander')).toBe(true)
-    vi.stubEnv('GELDCONTROLE_UIT', '1')
-    expect(geldBeschikbaarVoor('user_eigenaar')).toBe(false)
   })
 
-  it('zonder ingestelde eigenaar niemand', () => {
-    vi.stubEnv('ARNOBOT_OWNER_USER_ID', '')
-    vi.stubEnv('GELDCONTROLE_OPEN', '')
-    expect(geldBeschikbaarVoor('user_ander')).toBe(false)
+  it('de noodschakelaar zet het voor iedereen uit', () => {
+    vi.stubEnv('GELDCONTROLE_UIT', '1')
+    expect(geldBeschikbaarVoor('user_a')).toBe(false)
   })
 })

@@ -40,7 +40,7 @@ De samenvatting is maximaal 5 korte zinnen: wat is er veranderd en wat moet jij 
 ${STIJLREGELS}`
 
 const SYSTEEM_DEPRECATIONS = `Je krijgt het verschil tussen twee versies van een deprecations-, modellen- of prijzenpagina van een leverancier van ArnoBot.
-ArnoBot gebruikt deze modellen: claude-sonnet-4-6, claude-haiku-4-5, claude-fable-5-1, claude-sonnet-5 (Anthropic), gpt-transcribe, gpt-live-transcribe (OpenAI), universal-3-5-pro (AssemblyAI), voyage-3-large, voyage-multilingual-2, rerank-2.5 (Voyage).
+ArnoBot gebruikt deze modellen: claude-sonnet-4-6, claude-sonnet-5-5, claude-haiku-4-5, claude-haiku-5-5, claude-fable-5-1, claude-sonnet-5 (Anthropic), gpt-transcribe, gpt-live-transcribe (OpenAI), universal-3-5-pro (AssemblyAI), voyage-3-large, voyage-multilingual-2, rerank-2.5 (Voyage).
 whisper-1 en gpt-4o-transcribe gebruikt ArnoBot niet meer: meld daar niets over.
 Meld alleen als een van die modellen of hun API een nieuwe of gewijzigde deprecation, pensioendatum, einddatum of prijswijziging krijgt, of als er een duidelijk nieuwere generatie van dezelfde soort bijkomt. Andere modellen, opmaak, navigatie en tellers tellen niet.
 Antwoord met alleen JSON: {"melden":true,"samenvatting":"..."} of {"melden":false,"samenvatting":""}.
