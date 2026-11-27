@@ -10,7 +10,7 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 
 **Laatst bijgewerkt:** 2026-11-27
 **Waar we staan:** de structuur Basic, Pro en Team staat en wordt via Mollie en Moneybird betaald (live sinds 2026-11-04, zie `docs/MOLLIE_PLAN.md`). Prijzen en onderbouwing: `docs/PRICING_DECISIONS.md`. Overstappen tussen abonnementen is live sinds 2026-11-12 (zie hieronder en `docs/OVERSTAP_PLAN.md`). Teams kunnen als agent-proef zichzelf activeren (`docs/TEAM_PROCES.md`). Elite als solo-plan is verwijderd (2026-08-25); alleen de Team-Elite-surplusoptie bestaat nog. Voice-uit staat tijdelijk uit voor iedereen buiten Arno's accounts (`lib/voice.ts`). Het gesprek met Arno is Pro-only en niet aan betaling gebonden (besluit 2026-08-25, zie "Gesprek met Arno").
-**Prijswijziging (besloten 2026-11-26):** de bedragen en teamregels in dit document zijn de nieuwe (Pro €49 of €396, Team inclusief manager). Gebouwd op de tak `prijswijziging`, op 2026-11-27 nog niet live; uitrol en restpunten in `docs/PRIJSWIJZIGING_PLAN.md`.
+**Prijswijziging (besloten 2026-11-26):** de bedragen en teamregels in dit document zijn de nieuwe (Pro €49 of €396, Team inclusief manager). Live sinds 2026-11-27; restpunten in `docs/PRIJSWIJZIGING_PLAN.md`.
 **Eerstvolgende stap:**
 - `[ ]` Overwegen of `arnobot_command_requests` en de vestigiale `niveau`-kolom ooit een echte schema-opschoning verdienen (geen migratie nu, zie "Team-aanvraagflow"). Puur interne naamgeving.
 - `[ ]` Supabase PITR: bij 150 actieve gebruikers, zie de mijlpalen in `CLAUDE.md` (niet eerder).

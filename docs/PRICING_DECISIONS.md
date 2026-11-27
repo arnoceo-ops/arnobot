@@ -4,7 +4,7 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 
 ## Tiers en bedragen
 
-**Geldende tarieven sinds het besluit van 2026-11-26** (Pro en Team gewijzigd, Basic niet). Gebouwd op de tak `prijswijziging`, op 2026-11-27 nog niet live: tot de uitrol rekent de live site met de vorige tarieven. Stand en uitrol: `docs/PRIJSWIJZIGING_PLAN.md`. Onderbouwing en verworpen varianten: "Besluitrecord nieuwe tarieven Pro en Team" hieronder.
+**Geldende tarieven sinds het besluit van 2026-11-26** (Pro en Team gewijzigd, Basic niet). Live sinds 2026-11-27. Stand: `docs/PRIJSWIJZIGING_PLAN.md`. Onderbouwing en verworpen varianten: "Besluitrecord nieuwe tarieven Pro en Team" hieronder.
 
 ### Basic
 - €19/maand bij jaarbetaling (€228/jaar totaal)
@@ -89,7 +89,7 @@ Elite (zie de tabel in "Tiers en bedragen" hierboven, €397/maand solo) is geen
 
 ## Besluitrecord nieuwe tarieven Pro en Team (2026-11-26)
 
-**Status:** Arno heeft op 2026-11-26 besloten deze tarieven in te voeren. Ze staan als geldende tarieven onder "Tiers en bedragen". Gebouwd op de tak `prijswijziging`, op 2026-11-27 nog niet live. Stand, inventaris en openstaande punten: `docs/PRIJSWIJZIGING_PLAN.md`. De kolommen "Oud" en "Nieuw" en de berekeningen hieronder zijn van het moment van het besluit.
+**Status:** Arno heeft op 2026-11-26 besloten deze tarieven in te voeren. Ze staan als geldende tarieven onder "Tiers en bedragen". Live sinds 2026-11-27. Stand, inventaris en openstaande punten: `docs/PRIJSWIJZIGING_PLAN.md`. De kolommen "Oud" en "Nieuw" en de berekeningen hieronder zijn van het moment van het besluit.
 
 ### Tarieven
 

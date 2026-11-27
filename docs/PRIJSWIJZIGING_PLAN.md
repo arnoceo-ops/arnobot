@@ -3,8 +3,8 @@
 ## Status
 
 - **Laatst bijgewerkt:** 2026-11-27
-- **Waar we staan:** fase 1 tot en met 6 zijn gebouwd op de tak `prijswijziging` (werkmap `C:\Users\arno\arnobot-prijs`): 2120 tests groen, nagekeken door onafhankelijke agents. **NIET live.** De regels onder "Uitgangspunt" tot en met "Fase 6" beschrijven het plan van vóór de bouw; regelnummers en de kolom "Nu" zijn van toen. De PDF-versies van de documenten zijn nog niet opnieuw gerenderd (`npm run docs:pdf`). Bekende restpunten staan in de sectie "Bekende restpunten".
-- **Eerstvolgende stap:** Arno bekijkt de testversie van de tak (teksten en voorwaarden versie 3.2 zijn op 2026-11-27 door Arno goedgekeurd). Na zijn uitdrukkelijke akkoord voor livegang: fase 7.
+- **Waar we staan:** LIVE sinds 2026-11-27 (commit edbad599, gepusht om 07:58 UTC op uitdrukkelijk akkoord van Arno). Vlak vóór de push gemeten: alleen het Basic-abonnement van €228, geen Pro tegen de oude prijs, geen gefactureerd team. Na de uitrol op arno.bot nagekeken: /prijzen (jaarstand €19, €33, €77, teamregel), /team, /team/aanvragen en /voorwaarden (versie 3.2); het klantabonnement staat nog op 22800.
+- **Eerstvolgende stap:** de controles na livegang die een login vragen (afrekenscherm Pro €49,00 en €396,00, zakelijk €59,29 en €479,16; manager plus 3 is €244 en €2.112; Abacus), morgenochtend geen meldingen van bedragcontrole, referral-uitvoeren en team-facturatie, en bij de eerste echte Pro-betaling Mollie en Moneybird nakijken. Daarna "Bekende restpunten". Terugdraaien is niet veilig zodra er na 27-11 een team is geactiveerd.
 
 ### Afvinklijst
 

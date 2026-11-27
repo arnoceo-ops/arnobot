@@ -2,7 +2,7 @@
 
 ## Statusblok
 
-- **Laatst bijgewerkt:** 2026-11-27 (bedragen en teamtelling bij de prijswijziging van 2026-11-26, nog niet live; de werkwijze is niet gewijzigd)
+- **Laatst bijgewerkt:** 2026-11-27 (bedragen en teamtelling bij de prijswijziging van 2026-11-26, live sinds 2026-11-27; de werkwijze is niet gewijzigd)
 - **Waar we staan:** bewust niet gebouwd (besluit Arno, 2026-11-12: hij verwacht dit niet snel). Dit document is de handmatige werkwijze voor het eerste echte geval, plus de vier vragen die dan beantwoord moeten worden. Context en het bouwplan voor de andere overstappen: `docs/OVERSTAP_PLAN.md`.
 - **Eerstvolgende stap:** geen. Pas oppakken als een zakelijke solo-jaarklant Team wil.
 - **Gekozen:** handmatig volgens deze checklist. **Verworpen:** nu bouwen (deelterugbetaling, deel-creditnota, voorbeeldscherm), want het geval is niet te verwachten. **Verworpen:** het jaar laten uitlopen (Arno: Team gaat meteen in). **Terugvaloptie als terugbetalen niet lukt:** het restant verrekenen op de eerste Team-factuur.

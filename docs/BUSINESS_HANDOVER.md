@@ -49,7 +49,7 @@ Managers kunnen een teammodule gebruiken: ze zien de voortgang van hun verkopers
 
 ## Verdienmodel
 
-Drie publieke abonnementen op https://arno.bot/prijzen, plus één niet-publieke tier. De tarieven van Pro en Team hieronder zijn besloten op 2026-11-26 en gebouwd, maar op 2026-11-27 nog niet live (`docs/PRIJSWIJZIGING_PLAN.md`). Volledige onderbouwing en beslissingsgeschiedenis: `docs/PRICING_DECISIONS.md`.
+Drie publieke abonnementen op https://arno.bot/prijzen, plus één niet-publieke tier. De tarieven van Pro en Team hieronder zijn besloten op 2026-11-26 en live sinds 2026-11-27 (`docs/PRIJSWIJZIGING_PLAN.md`). Volledige onderbouwing en beslissingsgeschiedenis: `docs/PRICING_DECISIONS.md`.
 
 **Basic:**
 - Maandelijks: €29/maand

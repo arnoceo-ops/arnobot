@@ -115,7 +115,7 @@ ArnoBot heeft een eigen publieke blog op arno.bot/blog, voor iedereen leesbaar z
 
 ## 4. Abonnementsstructuur, volledig en actueel (2026-11-27)
 
-De tarieven van Pro en Team hieronder zijn besloten op 2026-11-26 en gebouwd, maar op 2026-11-27 nog niet live (`docs/PRIJSWIJZIGING_PLAN.md`). Haal deze opmerking weg na de uitrol.
+De tarieven van Pro en Team hieronder zijn besloten op 2026-11-26 en live sinds 2026-11-27 (`docs/PRIJSWIJZIGING_PLAN.md`).
 
 | | **Basic** | **Pro** | **Team** |
 |---|---|---|---|
