@@ -13,6 +13,7 @@
  * Uitvoeren: node scripts/test-opus5-vs-fable5.mjs
  */
 
+import './testSleutel.mjs'
 import { readFileSync, writeFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'

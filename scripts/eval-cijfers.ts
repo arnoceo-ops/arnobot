@@ -13,6 +13,7 @@
  * Uitvoeren: npx --yes tsx scripts/eval-cijfers.ts <label> [herhalingen]
  * Schrijft data/eval-cijfers-<label>.json. Roept alleen de Anthropic-API aan, schrijft niets naar Supabase.
  */
+import './testSleutel.mjs'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 
 for (const line of readFileSync('.env.local', 'utf-8').split(/\r?\n/)) {

@@ -11,6 +11,7 @@
  * Uitvoeren: npx tsx scripts/eval-chat-fragmenten.ts [aantal vragen, standaard 30] [uitvoerbestand.json]
  * Weggeschreven resultaat bevat per vraag alleen een nummer, de scores en de korte redenen van de beoordelaar, geen vraagtekst.
  */
+import './testSleutel.mjs'
 import { readFileSync, writeFileSync } from 'fs'
 import Anthropic from '@anthropic-ai/sdk'
 

@@ -4,6 +4,7 @@
  * Gebruik: npx tsx scripts/examen-herkenning.ts <set.json> <uitvoer.json> [model]
  * set.json: [{ "tekst": "", "vorige": "", "verwacht": true | false | null, "groep": "" }]  (null = twijfelgeval, telt niet mee)
  */
+import './testSleutel.mjs'
 import { readFileSync, writeFileSync } from 'fs'
 import Anthropic from '@anthropic-ai/sdk'
 import { HERKEN_SYSTEEM, HERKEN_SCHEMA } from './geldstap-proef'

@@ -6,6 +6,7 @@
  *
  * Uitvoeren: npx --yes tsx scripts/test-meta-fable52-vs-opus55.ts
  */
+import './testSleutel.mjs'
 import { readFileSync, writeFileSync } from 'fs'
 
 for (const line of readFileSync('.env.local', 'utf-8').split('\n')) {

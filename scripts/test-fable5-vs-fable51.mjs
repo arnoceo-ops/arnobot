@@ -15,6 +15,7 @@
  * Output: data/fable5-vs-fable51-blind.md (ongelabeld A/B) + data/fable5-vs-fable51-sleutel.md
  */
 
+import './testSleutel.mjs'
 import { readFileSync, writeFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'

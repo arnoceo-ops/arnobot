@@ -11,6 +11,7 @@
  * Uitvoeren: node scripts/translate-knowledge-base.mjs
  */
 
+import './testSleutel.mjs'
 import { readFileSync, writeFileSync, appendFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'

@@ -6,6 +6,7 @@
  * gevallen.json: [{ "code": "A4", "sessie": "<begin session_id>", "beurt": 4 }]
  * Schrijft niets in de database (VITEST=1 zet de kostenmeting uit). Draait op de sleutel uit .env.local.
  */
+import './testSleutel.mjs'
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { execSync } from 'child_process'
 import Anthropic from '@anthropic-ai/sdk'

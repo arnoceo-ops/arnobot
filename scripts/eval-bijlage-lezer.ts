@@ -16,6 +16,7 @@
  * Env: ALINEAS=1100 (groter document), ALLEEN_LEZER=1 (alleen de lezer, geen duur vergelijk met het hele document).
  * Roept alleen de Anthropic-API aan, schrijft niets naar Supabase.
  */
+import './testSleutel.mjs'
 import type AnthropicSdk from '@anthropic-ai/sdk'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 

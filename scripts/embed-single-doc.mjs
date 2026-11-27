@@ -7,6 +7,7 @@
  * Uitvoeren: node scripts/embed-single-doc.mjs <pad-naar-markdown-bestand> "<source-label>"
  */
 
+import './testSleutel.mjs'
 import { readFileSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'

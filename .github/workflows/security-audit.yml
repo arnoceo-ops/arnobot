@@ -294,6 +294,9 @@ jobs:
 
       - name: Controleer dat geen client buiten maakAnthropic() om wordt gemaakt
         run: node scripts/check-ai-meter.mjs
+
+      - name: Controleer dat testscripts alleen de sleutel uit .env.local gebruiken
+        run: node scripts/check-test-sleutel.mjs
         # Blokkeert wel: letterlijke tekstzoekopdracht, dus geen false positives. Toegevoegd
         # 2026-11-19 bij de centrale kostenmeting per gebruiker (lib/aiGebruik.ts).
 

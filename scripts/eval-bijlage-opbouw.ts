@@ -16,6 +16,7 @@
  * Uitvoeren: npx --yes tsx scripts/eval-bijlage-opbouw.ts <label> [herhalingen] [uitvoermap]
  * Roept alleen de Anthropic-API aan (ongeveer 20 aanroepen bij 2 herhalingen, orde 50 cent), schrijft niets naar Supabase.
  */
+import './testSleutel.mjs'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 
 for (const line of readFileSync('.env.local', 'utf-8').split(/\r?\n/)) {

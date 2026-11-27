@@ -10,6 +10,7 @@
  * Uitvoeren: npx --yes tsx scripts/eval-bijlage-lezer-pdf.ts <uitvoermap> <grafiek.pdf> [herhalingen]
  * Roept alleen de Anthropic-API aan, schrijft niets naar Supabase.
  */
+import './testSleutel.mjs'
 import type AnthropicSdk from '@anthropic-ai/sdk'
 import { readFileSync, writeFileSync, mkdirSync } from 'fs'
 
