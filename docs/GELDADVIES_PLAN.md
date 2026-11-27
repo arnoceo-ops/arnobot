@@ -3,8 +3,8 @@
 ## Status
 
 **Laatst bijgewerkt:** 27 november 2026
-**Waar we staan:** kernset goedgekeurd. Ronde 1 tot en met 3 klaar: Opus 5.5 leest bedragen veel beter; de geldstap als instructie helpt deels, maar dwingt niets af (zie fase 2). Er is niets aan de chat, de prompt of de database aangepast.
-**Eerstvolgende stap:** akkoord van Arno op het bouwen en testen van de afgedwongen geldstap; Arno beoordeelt de toonproef.
+**Waar we staan:** ronde 4 klaar: de afgedwongen geldstap is kansrijk (eerste geslaagde antwoorden op de prijsverlaging, geen omdraaiing meer), maar traag, duur en niet foutloos (zie fase 2). Alles zit alleen in testscripts; aan de chat, de prompt en de database is niets aangepast.
+**Eerstvolgende stap:** akkoord van Arno op de verbeteringen onder ronde 4; Arno beoordeelt de toon en of het uitstellen van een oordeel past.
 
 - [x] Fase 0: nulmeting en kritische toets van het plan
 - [ ] Fase 1: examen goedkeuren (kernset gedaan) en uitbreiden
@@ -100,6 +100,29 @@ Conclusies:
 - Testkosten ronde 1 tot en met 3: ongeveer $47.
 
 **Voorstel (nog niet goedgekeurd): afgedwongen geldstap, alleen in de test.** Stap 1: het model vult verplichte velden (per bedrag wat het is, gegeven of aanname, effect per keuze, doorgaan met de klant bekend of onbekend, kosten, tegenprestatie) via structured outputs (geforceerde tool_choice werkt niet op Opus 5.5 en Sonnet 5.5 volgens de API-documentatie in de claude-api skill, 27-11). Stap 2: code controleert; ontbreekt een beslissend veld, dan moet het antwoord een vraag zijn. Stap 3: schrijven en controleren of richting en argumenten kloppen met de velden. Verworpen als eindoplossing: alleen de instructie.
+
+### Ronde 4: afgedwongen geldstap (27 november 2026)
+
+Harde grens $20 (Arno), in het script afgedwongen; uitgegeven ongeveer $18,90 plus $0,01 voor de herkenning, 4 antwoorden niet gedraaid. Vier gevallen laten zien of de aanpak kansrijk is, niet of hij veilig is.
+
+Herkenning van een geldvraag (`claude-haiku-5-5`, verwachting vooraf vastgelegd): 0 van 24 geldvragen gemist (waaronder 20 verzonnen vragen zonder geldtaal), 4 van 46 vals alarm, 5 twijfelgevallen niet geteld, mediaan 1 s. De 20 verzonnen vragen zijn door de bouwer zelf geschreven.
+
+Geldstap met Opus 5.5 (laag) voor invullen, schrijven en controleren, 7 pogingen per geval, blind beoordeeld:
+
+| Geval | Geslaagd | Opmerking |
+|---|---|---|
+| Prijsverlaging, eerste oordeel (zonder foute voorgeschiedenis) | 4/7 (Opus zonder geldstap en met alleen de instructie: 0/6 en 0/6) | 0 omgedraaid, 0 verzonnen (zonder geldstap 5/6), rekenfout 3/7 |
+| Prijsverlaging, slot | 5/7 (eerdere opstellingen: 0) | 0 omgedraaid, 0 verzonnen, rekenfout 2/7 |
+| Korting | 7/7 | de code dwong de vraag naar de tegenprestatie niet af (blad zei 6/7 "bekend"); streng geteld vragen 3/7 echt iets terug; Arno's punt over gesprekspartner en relatie in 0/7 |
+| Verlies | 5/7, bedrag 7/7 | geen duidelijk verschil met zonder geldstap |
+
+- Alle 14 prijsantwoorden stelden het oordeel uit en vroegen naar doorgaan en kosten (instructie alleen: 0/32 vroeg naar doorgaan). Streng geteld vallen twee geslaagde prijsantwoorden af op een wankele kostenredenering.
+- Resterende fout bij de prijs: voorwaardelijke kostenscenario's in de uitleg bij de vragen.
+- Mediaan 59 s wachten, 343 woorden, ongeveer $0,52 per antwoord (huidige chat $0,084).
+- De controle vooraf is streng (bij de prijs en het verlies keurde hij bijna elk eerste concept af, een deel ook het tweede). Of hij de uitkomst verbetert is niet gemeten.
+- Sonnet 5.5 als invulmodel na een proefrit van 2 antwoorden niet verder getest: vulde 21% btw in en het schrijfmodel nam dat over; niet sneller. Weinig bewijs. 9% op frisdrank nagegaan via zoekresultaten (belastingdienst.nl, khn.nl, 27-11), niet in de officiële tabel.
+
+**Volgende verbeteringen (nog niet gebouwd):** bij korting vraagt de code altijd naar de tegenprestatie (Arno: "altijd"), los van wat het model invult; geen rekenscenario's zolang er vragen openstaan; meten wat de controle oplevert. **Afspraak (Arno):** voor het grote examen (40 tot 60 gevallen) eerst het bedrag noemen en akkoord vragen.
 
 ## Fase 3 en 4: kandidaten
 
