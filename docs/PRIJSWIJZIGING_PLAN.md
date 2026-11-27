@@ -3,8 +3,8 @@
 ## Status
 
 - **Laatst bijgewerkt:** 2026-11-27
-- **Waar we staan:** de lijst is op 27-11 bijgewerkt na het referral- en betaalwerk (zie "Bijwerking 27-11", die gaat voor bij verschillen in plekken en regelnummers). Gebouwd wordt op de tak `prijswijziging` in de werkmap `C:Usersarnoarnobot-prijs`. Live is niets gewijzigd.
-- **Eerstvolgende stap:** fase 1 (rekenlogica Team) op de tak, pas live samen met fase 2 tot en met 5.
+- **Waar we staan:** fase 1 is gebouwd op de tak `prijswijziging` (werkmap `C:Usersarnoarnobot-prijs`, niet gepusht): commit 1c870b0a plus de herstellingen uit de eerste onafhankelijke controle; 2109 tests groen. De herstellingen worden nog nagekeken. Live is niets gewijzigd. Plekken en regelnummers: "Bijwerking 27-11" gaat voor.
+- **Eerstvolgende stap:** uitslag van de controle op de herstellingen verwerken, daarna fase 2 tot en met 6. Vóór livegang twee onafhankelijke controles over de hele wijziging en een nieuwe databasemeting.
 
 ### Afvinklijst
 
@@ -180,3 +180,4 @@ Deze code rekent met de huidige prijslijst waar een opgeslagen bedrag had moeten
 4. **Een klein team betaalt de gewone formule** (uitzondering op het minimum, niet op de prijs). Verworpen: een aparte prijs.
 5. **Niet 14 dagen wachten voor livegang (besluit Arno):** de aankondigingstermijn uit artikel 11 is volgens Arno niet van toepassing.
 6. **Spraakkostengrenzen** (`lib/maandKosten.ts`, `lib/voiceLimiet.ts`) nu niet wijzigen, bekijken na de ElevenLabs-controle.
+7. **Grens op teamgrootte (keuze van de bouwsessie 27-11, aan Arno voorgelegd):** 25 teamleden naast de manager, voor uitnodigen en voor zelf activeren. Reden: zelf activeren stond tot 500 terwijl er maar 25 rijen konden aansluiten, dus een klant kon betalen voor leden zonder toegang. Een teamaanvraag via het formulier en de beheerpagina hebben geen grens. Verworpen: zelf activeren op 500 laten staan.
