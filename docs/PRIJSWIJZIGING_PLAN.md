@@ -4,7 +4,7 @@
 
 - **Laatst bijgewerkt:** 2026-11-27
 - **Waar we staan:** fase 1 tot en met 6 zijn gebouwd op de tak `prijswijziging` (werkmap `C:\Users\arno\arnobot-prijs`): 2120 tests groen, nagekeken door onafhankelijke agents. **NIET live.** De regels onder "Uitgangspunt" tot en met "Fase 6" beschrijven het plan van vóór de bouw; regelnummers en de kolom "Nu" zijn van toen. De PDF-versies van de documenten zijn nog niet opnieuw gerenderd (`npm run docs:pdf`). Bekende restpunten staan in de sectie "Bekende restpunten".
-- **Eerstvolgende stap:** Arno keurt de teksten goed, de database opnieuw meten, mergen naar master en daarna de controles na de deploy (fase 7).
+- **Eerstvolgende stap:** Arno bekijkt de testversie van de tak (teksten en voorwaarden versie 3.2 zijn op 2026-11-27 door Arno goedgekeurd). Na zijn uitdrukkelijke akkoord voor livegang: fase 7.
 
 ### Afvinklijst
 
