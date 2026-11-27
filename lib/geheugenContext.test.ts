@@ -5,7 +5,7 @@ vi.mock('@/lib/memoryEntities', () => ({ findRecurringEntitiesInQuestion: vi.fn(
 
 const {
   geheugenDatum, isOudGeheugen, geheugenOnderwerp, detectSparringReference,
-  haalGeheugenContext, bouwProfielContext,
+  haalGeheugenContext, bouwProfielContext, haalGesprekPeriodes,
 } = await import('./geheugenContext')
 
 const NU = new Date('2026-10-31T10:00:00Z')
@@ -69,7 +69,7 @@ function nepSupabase(tabellen: Record<string, Rij[]>) {
   const bouwer = (tabel: string) => {
     const b: Record<string, unknown> = {}
     let rijen = tabellen[tabel] ?? []
-    for (const m of ['select', 'neq', 'is', 'in', 'gte', 'lte', 'order', 'limit']) b[m] = () => b
+    for (const m of ['select', 'neq', 'is', 'in', 'gte', 'lte', 'order', 'limit', 'range']) b[m] = () => b
     b.eq = (kolom: string, waarde: unknown) => {
       if (kolom === 'session_id') rijen = rijen.filter(r => r.session_id === undefined || r.session_id === waarde)
       return b
@@ -187,6 +187,51 @@ describe('haalGeheugenContext', () => {
     }
   })
 
+
+  const berichten = (sessie: string, ...dagen: number[]) => dagen.map(n => ({ session_id: sessie, created_at: dagenGeleden(n) }))
+  const metBerichten = (sessie: Rij, ...dagen: number[]) => haalGeheugenContext(
+    nepSupabase({ arnobot_blog_sessions: [sessie], arnobot_rds_logs: berichten(String(sessie.session_id), ...dagen) }),
+    basis,
+  )
+
+  it('telt de leeftijd vanaf het laatste bericht en noemt het begin, bij een gesprek van hooguit 30 dagen', async () => {
+    // Rij van 50 dagen oud (eerste opslag), daarna voortgezet tot 25 dagen geleden.
+    const r = await metBerichten({ ...RECENT, created_at: dagenGeleden(50) }, 50, 25)
+    expect(r.geheugentekst).toContain('SAMENVATTING_RECENT')
+    expect(r.geheugentekst).toContain('FEIT_RECENT')
+    expect(r.geheugentekst).toContain('4 weken geleden, gesprek begonnen op 11 september 2026')
+    expect(r.geheugentekst).not.toContain('OUDE ONDERWERPEN')
+  })
+
+  it('houdt bij een gesprek dat meer dan 30 dagen overspant de begindatum aan, zodat oud niet recent wordt', async () => {
+    const r = await metBerichten(OUD, 115, 3)
+    expect(r.geheugentekst).toContain('OUDE ONDERWERPEN')
+    expect(r.geheugentekst).not.toContain('SAMENVATTING_OUD_TRAJECT_LOOPT')
+    expect(r.geheugentekst).not.toContain('FEIT_OUD_DEAL_STAAT_OPEN')
+    expect(r.geheugentekst).not.toContain('3 dagen geleden')
+  })
+
+  it('noemt geen begin als het gesprek op een dag is gevoerd, en valt zonder berichten terug op de rij', async () => {
+    const eenDag = await metBerichten(RECENT, 10, 10)
+    expect(eenDag.geheugentekst).toContain('10 dagen geleden')
+    expect(eenDag.geheugentekst).not.toContain('gesprek begonnen op')
+    const zonder = await haalGeheugenContext(nepSupabase({ arnobot_blog_sessions: [RECENT] }), basis)
+    expect(zonder.geheugentekst).toContain('10 dagen geleden')
+  })
+
+  it('haalt alle berichtdata op, ook boven de 1000 rijen, en niets bij een fout', async () => {
+    const paginas = (fout: boolean) => ({ from: () => {
+      const b: Record<string, unknown> = {}
+      for (const m of ['select', 'eq', 'in', 'order']) b[m] = () => b
+      b.range = async (van: number) => fout && van > 0
+        ? { data: null, error: { message: 'stuk' } }
+        : { data: Array.from({ length: van === 0 ? 1000 : 1 }, () => ({ session_id: 'a', created_at: dagenGeleden(van === 0 ? 9 : 2) })), error: null }
+      return b
+    } }) as never
+    expect((await haalGesprekPeriodes(paginas(false), 'u1', ['a'])).get('a')).toEqual({ eerste: dagenGeleden(9), laatste: dagenGeleden(2) })
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect((await haalGesprekPeriodes(paginas(true), 'u1', ['a'])).size).toBe(0)
+  })
 
   it('zet het mailpatroon in de prompt vanaf 3 gesprekken met een mailverzoek, niet eerder', async () => {
     const mail = (n: number) => Array.from({ length: n }, (_, i) => ({ ...RECENT, session_id: 'm' + i, mail_verzoek: true }))

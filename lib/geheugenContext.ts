@@ -39,10 +39,61 @@ export const SEMANTIC_MEMORY_TOP_N = { basis: 3, overig: 8 } as const
 export function geheugenDatum(iso: string): string {
   const d = new Date(iso)
   const dagen = Math.max(0, Math.floor((Date.now() - d.getTime()) / 86_400_000))
-  const datum = d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+  const datum = kalenderdag(iso)
   if (dagen >= 70) return datum
   const geleden = dagen < 14 ? `${dagen} dag${dagen === 1 ? '' : 'en'} geleden` : `${Math.round(dagen / 7)} weken geleden`
   return `${datum}, ${geleden}`
+}
+
+const kalenderdag = (iso: string) => new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })
+
+// De rij in arnobot_blog_sessions houdt de datum van de eerste opslag, ook als het gesprek later is
+// voortgezet en opnieuw samengevat. Daarom komt de datering uit de berichten zelf (27 november 2026).
+// Samenvatting en feiten zijn niet per regel te dateren. Bij een gesprek dat hooguit 30 dagen
+// overspant telt de leeftijd vanaf het laatste bericht en staat het begin erbij. Is de spreiding
+// groter, dan blijft de begindatum gelden: anders gaat oude inhoud ineens als recent mee.
+const MAX_SPREIDING_MS = 30 * 24 * 60 * 60 * 1000
+
+export type GesprekPeriode = { eerste: string; laatste: string }
+
+export async function haalGesprekPeriodes(supabase: SupabaseClient, userId: string, sessieIds: string[]): Promise<Map<string, GesprekPeriode>> {
+  const periodes = new Map<string, GesprekPeriode>()
+  if (sessieIds.length === 0) return periodes
+  try {
+    for (let van = 0; ; van += 1000) {
+      const { data, error } = await supabase
+        .from('arnobot_rds_logs')
+        .select('session_id, created_at')
+        .eq('user_id', userId)
+        .in('session_id', sessieIds)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .range(van, van + 999)
+      if (error) throw new Error(error.message)
+      for (const rij of (data ?? []) as { session_id: string; created_at: string }[]) {
+        const p = periodes.get(rij.session_id)
+        if (!p) periodes.set(rij.session_id, { eerste: rij.created_at, laatste: rij.created_at })
+        else p.laatste = rij.created_at
+      }
+      if (!data || data.length < 1000) return periodes
+    }
+  } catch (e) {
+    // Zonder berichtdata geldt de datum van de rij. Een halve uitkomst zou verkeerd dateren.
+    console.error('[chat] berichtdata voor geheugen ophalen mislukt:', e)
+    return new Map()
+  }
+}
+
+export function dateerOpBerichten<T extends { session_id: string; created_at: string }>(sessie: T, periodes: Map<string, GesprekPeriode>): T & { begonnen?: string } {
+  const p = periodes.get(sessie.session_id)
+  if (!p || Date.parse(p.laatste) - Date.parse(p.eerste) > MAX_SPREIDING_MS) return sessie
+  return { ...sessie, created_at: p.laatste, begonnen: p.eerste }
+}
+
+export function sessieDatum(s: { created_at: string; begonnen?: string }): string {
+  const label = geheugenDatum(s.created_at)
+  if (!s.begonnen || kalenderdag(s.begonnen) === kalenderdag(s.created_at)) return label
+  return `${label}, gesprek begonnen op ${kalenderdag(s.begonnen)}`
 }
 
 // Herinneringen ouder dan 6 weken komen niet meer als situatiefeiten de prompt in, alleen als
@@ -170,7 +221,7 @@ export async function haalGeheugenContext(
                 .maybeSingle()
             : Promise.resolve({ data: null as { created_at: string } | null }),
         ])
-          .then(async ([{ data: andereSessies }, { data: sparringSessions }, oudereKandidaten, terugkerendeEntiteiten, { data: laatsteCoaching }, { data: laatsteBericht }]) => {
+          .then(async ([{ data: andereSessies }, { data: sparringSessions }, kandidatenOpRij, terugkerendeEntiteiten, { data: laatsteCoaching }, { data: laatsteBericht }]) => {
             let geheugentekst = ''
             let prevSessionCount = 0
             const verouderd = !!laatsteBericht && Array.isArray(history) && history.length > 0
@@ -192,6 +243,11 @@ export async function haalGeheugenContext(
                   .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
               }
             }
+            const periodes = await haalGesprekPeriodes(supabase, userId, [...new Set([...(prevSessions ?? []), ...kandidatenOpRij].map(s => s.session_id as string))])
+            prevSessions = (prevSessions ?? [])
+              .map(s => dateerOpBerichten(s, periodes))
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            const oudereKandidaten = kandidatenOpRij.map(s => dateerOpBerichten(s, periodes))
             if (prevSessions && prevSessions.length > 0) {
               prevSessionCount = prevSessions.length
               // Herinneringen ouder dan 6 weken staan in een eigen blok dat zichzelf als vaak
@@ -199,14 +255,14 @@ export async function haalGeheugenContext(
               // als de huidige stand van zaken (replay testgebruikersincident, 2026-10-31).
               const recenteSessies = prevSessions.filter(s => !isOudGeheugen(s.created_at))
               const oudeSessies = prevSessions.filter(s => isOudGeheugen(s.created_at))
-              const feitenBlokken = recenteSessies.filter(s => s.feiten).map(s => `[${geheugenDatum(s.created_at)}]\n${s.feiten}`).join('\n\n')
+              const feitenBlokken = recenteSessies.filter(s => s.feiten).map(s => `[${sessieDatum(s)}]\n${s.feiten}`).join('\n\n')
               const samenvattingen = recenteSessies.filter(s => s.summary).map(s => {
-                const datum = geheugenDatum(s.created_at)
+                const datum = sessieDatum(s)
                 return `- ${datum}: ${s.summary}`
               }).join('\n')
               const blijvendeFeiten = [...new Set(oudeSessies.flatMap(s => feitenRegels(s.feiten_blijvend)))]
               const oudeOnderwerpen = oudeSessies
-                .map(s => `- ${geheugenDatum(s.created_at)}: ${geheugenOnderwerp(s)}`)
+                .map(s => `- ${sessieDatum(s)}: ${geheugenOnderwerp(s)}`)
                 .join('\n')
               const uitdagingSessies = prevSessions.filter(s => s.uitdaging)
               const recentSessieMetUitdaging = uitdagingSessies[0] ?? null
@@ -238,7 +294,7 @@ export async function haalGeheugenContext(
                 const extraOpen = openActies.filter(s => s.session_id !== recentSessieMetUitdaging?.session_id)
                 if (extraOpen.length > 0) {
                   const lijst = extraOpen.map(s => {
-                    const datum = geheugenDatum(s.created_at)
+                    const datum = sessieDatum(s)
                     const st = s.actie_status === 'deels' ? 'deels gedaan' : s.actie_status === 'nee' ? 'nog niet gedaan' : 'geen antwoord gegeven'
                     return `- ${datum}: ${s.uitdaging} (${st})`
                   }).join('\n')
@@ -261,7 +317,7 @@ export async function haalGeheugenContext(
               .slice(0, semantischeTopN)
             if (relevanteOudereSessies.length > 0) {
               const oudereTekst = relevanteOudereSessies.map(s => {
-                const datum = geheugenDatum(s.created_at)
+                const datum = sessieDatum(s)
                 // Oud: alleen het onderwerp (de stand van zaken is onbekend), recent: volledige inhoud.
                 const inhoud = isOudGeheugen(s.created_at)
                   ? `${geheugenOnderwerp(s)} (stand van zaken onbekend, alleen als vraag gebruiken)`
