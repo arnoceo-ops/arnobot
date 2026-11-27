@@ -5,7 +5,7 @@
 - **Laatst bijgewerkt:** 2026-11-27
 - **Waar we staan:** LIVE sinds 2026-11-27 (commit edbad599, gepusht om 07:58 UTC op uitdrukkelijk akkoord van Arno). Vlak vóór de push gemeten: alleen het Basic-abonnement van €228, geen Pro tegen de oude prijs, geen gefactureerd team. Na de uitrol op arno.bot nagekeken: /prijzen (jaarstand €19, €33, €77, teamregel), /team, /team/aanvragen en /voorwaarden (versie 3.2); het klantabonnement staat nog op 22800.
 - **Afrekenscherm gecontroleerd (Arno, 2026-11-27, via `/bot/doorgaan?preview=idle`):** pakketkaarten jaarlijks en maandelijks kloppen; totalen particulier per maand €49,00 en zakelijk €59,29 en €479,16 gezien. Particulier per jaar is alleen op de kaart gezien (€396), niet als totaal. Jaarkorting via referral (€363,00) toont dit voorbeeld niet.
-- **Eerstvolgende stap:** de resterende controles na livegang (manager plus 3 is €244 en €2.112; Abacus), morgenochtend geen meldingen van bedragcontrole, referral-uitvoeren en team-facturatie, en bij de eerste echte Pro-betaling Mollie en Moneybird nakijken. Daarna "Bekende restpunten"; restpunt (a), de betalende klant, is besloten en staat gepland voor 27 september 2027. Terugdraaien is niet veilig zodra er na 27-11 een team is geactiveerd.
+- **Eerstvolgende stap:** de resterende controles na livegang (manager plus 3 is €244 en €2.112; Abacus is gecontroleerd), morgenochtend geen meldingen van bedragcontrole, referral-uitvoeren en team-facturatie, en bij de eerste echte Pro-betaling Mollie en Moneybird nakijken. Daarna "Bekende restpunten"; restpunt (a), de betalende klant, is besloten en staat gepland voor 27 september 2027. Terugdraaien is niet veilig zodra er na 27-11 een team is geactiveerd.
 
 ### Afvinklijst
 
@@ -127,7 +127,7 @@ Ongewijzigd: "vanaf €19" (`app/prijzen/page.tsx`), referralpagina, privacy, `s
 - `lib/kostenTarieven.ts:446-447, 625, 667-670`: teamomzet zonder manager, kosten met manager. `# teamleden` wordt teamleden zonder manager en de standaard gaat van 5 naar 4.
 - `app/abacus/BusinessCaseClient.tsx:101-102, 252-319, 374, 401`: labels, totalen, minimum van het veld.
 - `app/abacus/KostenCalculatorClient.tsx:127-139, 378` en `app/abacus/VerloopKaart.tsx:34-35`: telling en tekst.
-- Controle na de bouw: 250 solo users, 5 teams met 4 teamleden, geeft omzet €8.751. Bij koers 1,0949 en ongewijzigde kostenaannames is de winst €6.609.
+- Controle na de bouw: 250 solo users, 5 teams met 4 teamleden, geeft omzet €8.751. De eerder genoemde winst van €6.609 was fout: de huidige code geeft €6.588 bij koers 1,0968 en €6.584 bij 1,0949 (nagerekend 2026-11-27; de winst beweegt mee met de live koers). Door Arno op 2026-11-27 in Abacus gezien: omzet €8.751, winst €6.588. De winstbedragen onder "ElevenLabs" zijn niet opnieuw nagerekend.
 - Opgeslagen maanden in Trackrecord niet herschrijven. De lopende maand rekent wel direct met de nieuwe prijs.
 
 ## Fase 5: tests
