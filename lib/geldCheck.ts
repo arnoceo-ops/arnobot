@@ -115,7 +115,7 @@ export const GELD_DENKRUIMTE = 12000
 
 const MAX_BERICHTEN = 12
 const MAX_TEKENS_PER_BERICHT = 12000
-const TIJDSLIMIET_MS = 6000
+const TIJDSLIMIET_MS = 10000
 
 type Beurt = { role?: string; content?: unknown }
 const tekstVan = (b: Beurt) => (typeof b.content === 'string' ? b.content : '')
@@ -144,10 +144,12 @@ export type GeldUitkomst = GeldCheck & { geldvraag: boolean }
 export async function doeGeldCheck(client: Anthropic, historie: Beurt[], vraag: string, opties: Anthropic.RequestOptions): Promise<GeldUitkomst> {
   const res = await client.messages.create({
     model: GELDCHECK_MODEL,
-    max_tokens: 2000,
+    max_tokens: 6000,
     system: GELDCHECK_SYSTEEM,
     messages: [{ role: 'user', content: bouwCheckInvoer(historie, vraag) }],
-    thinking: { type: 'disabled' },
+    // Met denkstap: zo is de controle gemeten. Zonder denkstap koos het model via de echte API bij een prijsverlaging een verkeerde
+    // berekening (27-11). De denktokens tellen mee in max_tokens.
+    thinking: { type: 'adaptive' },
     output_config: { format: { type: 'json_schema', schema: GELDCHECK_SCHEMA } },
   }, { ...opties, timeout: TIJDSLIMIET_MS, maxRetries: 0 })
   if (res.stop_reason !== 'end_turn') throw new Error(`geldcontrole stop_reason ${res.stop_reason}`)

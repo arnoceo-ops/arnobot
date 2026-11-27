@@ -229,5 +229,12 @@ Huidig 10 van 30 geslaagd, alleen Sonnet 5.5 22 van 30, voorstel 30 van 30. Te g
 - Het kostenoverzicht per maand (`lib/maandKosten.ts`) rekent chatbeurten nog met het tarief van Sonnet 4.6.
 - Bij live: `docs/ARNOBOT_OVERZICHT.md` bijwerken.
 
-Testkosten: geen API-tegoed, alles via het Claude Code-abonnement. Testbestanden met gebruikersgegevens: `C:\Users\arno\arnobot-prive\test-geldtools\` (criteria in `criteria.md`) en `C:\Users\arno\arnobot-prive\geldadvies-jvk\`.
+### Proef met de echte API (27 november, avond)
+Eerst geweigerd door de limiet van de werkruimte Development (30 dollar); met akkoord van Arno verhoogd naar 35 dollar. 10 berichten, 0,85 dollar (grens 2).
+- **Technisch geslaagd:** geen API-fouten of lege antwoorden, toolronde met het nieuwe model werkt (2 keer), kostenmeting met prijzen voor beide nieuwe modellen, geen interne tekst zichtbaar.
+- **Inhoudelijk niet geslaagd:** bij de prijsverlaging koos het kleine model een verkeerde berekening en maakte het antwoord de oude fout (margepercentage keer omzetbedrag, advies om de verlaging toe te passen). Bij de korting weer 21% in plaats van 9% btw.
+- **Oorzaak (aangetoond voor het verschil in instelling, niet dat dit de fouten verklaart):** in de naspeeltest via Claude Code dacht het kleine model wel na, de code zette de denkstap uit. Alle eerdere metingen van de geldcontrole, ook de herkenning, gelden dus voor de versie met denkstap. De code staat nu op denkstap aan (tijdslimiet 10 s, max_tokens 6000); dat is nog niet via de API gemeten.
+- Wachttijd zonder denkstap in de controle: controle 1,0 tot 2,2 s, eerste tekst 3,5 tot 20,6 s. Gemiddeld per bericht ongeveer 0,08 dollar (nieuw model, 8 berichten) tegen 0,10 dollar (oud model, 2 berichten, kleine steekproef). Controle 0,0004 dollar.
+
+Testkosten tot de proef: geen API-tegoed, alles via het Claude Code-abonnement. Testbestanden met gebruikersgegevens: `C:\Users\arno\arnobot-prive\test-geldtools\` (criteria in `criteria.md`) en `C:\Users\arno\arnobot-prive\geldadvies-jvk\`.
 
