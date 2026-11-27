@@ -121,7 +121,7 @@ describe('haalGeheugenContext', () => {
     expect(r.geheugentekst).not.toContain('BLIJVENDE FEITEN')
   })
 
-  it('markeert een gesprek van meer dan 48 uur terug als verouderd en gebruikt alleen het onderwerp van toen', async () => {
+  it('markeert een gesprek van meer dan 48 uur terug als verouderd en zet nooit de samenvatting van toen in de prompt', async () => {
     const r = await haalGeheugenContext(
       nepSupabase({
         arnobot_blog_sessions: [{ ...OUD, session_id: 'huidig' }],
@@ -130,14 +130,12 @@ describe('haalGeheugenContext', () => {
       { ...basis, sessionId: 'huidig', history: [{ role: 'user', content: 'vraag' }, { role: 'assistant', content: 'antwoord' }] },
     )
     expect(r.verouderd).toBe(true)
-    expect(r.historie).toEqual([])
     expect(r.geheugentekst).toContain('EERDER DEEL VAN DIT GESPREK')
-    expect(r.geheugentekst).toContain('Onderwerp van toen: Verbetertraject voor klant')
     expect(r.geheugentekst).not.toContain('SAMENVATTING_OUD_TRAJECT_LOOPT')
     expect(r.geheugentekst).not.toContain('FEIT_OUD_DEAL_STAAT_OPEN')
   })
 
-  it('houdt bij het tweede bericht na een stilte de oude beurten nog steeds weg, wat het scherm ook meestuurt', async () => {
+  it('geeft na een stilte het eerdere gesprek mee met datum per bericht, ook op latere beurten', async () => {
     const urenGeleden = (n: number) => new Date(NU.getTime() - n * 3_600_000).toISOString()
     const r = await haalGeheugenContext(
       nepSupabase({
@@ -147,16 +145,14 @@ describe('haalGeheugenContext', () => {
           { question: 'OUDE_VRAAG', answer: 'OUD_ANTWOORD', created_at: urenGeleden(80) },
         ],
       }),
-      { ...basis, sessionId: 'huidig', history: [
-        { role: 'user', content: 'OUDE_VRAAG' }, { role: 'assistant', content: 'OUD_ANTWOORD' },
-        { role: 'user', content: 'NIEUWE_VRAAG' }, { role: 'assistant', content: 'NIEUW_ANTWOORD' },
-      ] },
+      { ...basis, sessionId: 'huidig', history: [{ role: 'user', content: 'wat het scherm stuurt' }, { role: 'assistant', content: 'x' }] },
     )
     expect(r.verouderd).toBe(true)
-    expect(r.historie.map(h => h.content)).toEqual(['NIEUWE_VRAAG', 'NIEUW_ANTWOORD'])
-    expect(r.geheugentekst).toContain('jij ziet die berichten niet')
-    expect(r.geheugentekst).not.toContain('OUDE_VRAAG')
-    expect(r.geheugentekst).not.toContain('OUD_ANTWOORD')
+    expect(r.historie).toHaveLength(4)
+    expect(r.historie[0].content).toMatch(/^\[App: geschreven op [^\]]+\]\nOUDE_VRAAG$/)
+    expect(r.historie[3].content).toBe('NIEUW_ANTWOORD')
+    expect(r.vraagRegel).toContain('vandaag')
+    expect(r.geheugentekst).toContain('Je ziet het eerdere gesprek')
   })
 
   it('geeft in een doorlopend gesprek precies de geschiedenis van het scherm door', async () => {
@@ -166,6 +162,7 @@ describe('haalGeheugenContext', () => {
       { ...basis, sessionId: 'huidig', history },
     )
     expect(r.historie).toBe(history)
+    expect(r.vraagRegel).toBe('')
     expect(r.geheugentekst).not.toContain('EERDER DEEL VAN DIT GESPREK')
   })
 

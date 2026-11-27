@@ -65,6 +65,7 @@ import { getRelevantChunksMultiQuery, formatChunksForPrompt } from '@/lib/rag'
 // verloor het antwoord duidelijk). Scheelt ongeveer 6.000 invoertokens, zo'n $0,018 per bericht. Terugzetten naar 20 kan met dit ene getal.
 const CHAT_KENNISBANK_FRAGMENTEN = 10
 import { haalGeheugenContext, bouwProfielContext, type GeheugenContext } from '@/lib/geheugenContext'
+import { zonderDatum } from '@/lib/hervatGesprek'
 import { buildRdsSystemPrompt } from '@/lib/systemPrompt'
 import { bouwAppModeratiePrompt, GRENSGEVAL_INSTRUCTIE } from '@/lib/moderatie'
 import { computeMsaScore } from '@/lib/msa'
@@ -537,21 +538,24 @@ export async function POST(req: NextRequest) {
 
     // memoryContextPromise/coachingContextPromise draaien al sinds vlak na de auth-check,
     // parallel aan de moderatie-check en de RAG-pipeline, in plaats van pas nu te starten.
-    const { geheugentekst: basisGeheugentekst, prevSessionCount, historie } = await memoryContextPromise
+    const { geheugentekst: basisGeheugentekst, prevSessionCount, historie, vraagRegel } = await memoryContextPromise
     const geheugentekst = basisGeheugentekst + documentGeheugen
     const importProfiel = await importProfielPromise
     const coachingContext = await coachingContextPromise
 
-    // Bij een hervat gesprek alleen de berichten van na de stilte; het model hoort dat het de rest niet ziet (lib/hervatGesprek.ts).
+    // Bij een hervat gesprek het opgeslagen gesprek met datum per bericht (lib/hervatGesprek.ts).
     const effectieveHistory = historie as Anthropic.MessageParam[]
+    // De datumregel gaat alleen naar het model: opgeslagen en getoond wordt de vraag zonder.
+    const vraagVoorModel = vraagRegel ? `${vraagRegel}
+${questionWithDocument}` : questionWithDocument
 
     const messages = [
       ...effectieveHistory,
       {
         role: 'user' as const,
         content: bijlageBlokken.length > 0
-          ? [...bijlageBlokken, { type: 'text' as const, text: questionWithDocument }]
-          : questionWithDocument,
+          ? [...bijlageBlokken, { type: 'text' as const, text: vraagVoorModel }]
+          : vraagVoorModel,
       },
     ]
 
@@ -586,7 +590,7 @@ export async function POST(req: NextRequest) {
     // Rekentool (lib/rekenTool.ts): alleen als het gesprek getallen bevat, zodat gewone vragen
     // ongemoeid blijven. De tool-beschrijving zelf bevat de instructie, de vaste persona blijft
     // ongewijzigd (verwatering).
-    const gesprekTekst = questionWithDocument + ' ' + effectieveHistory.slice(-6).map((h: { content?: unknown }) => (typeof h.content === 'string' ? h.content : '')).join(' ')
+    const gesprekTekst = questionWithDocument + ' ' + effectieveHistory.slice(-6).map((h: { content?: unknown }) => (typeof h.content === 'string' ? zonderDatum(h.content) : '')).join(' ')
     const toolLijst: Anthropic.ToolUnion[] = []
     // Met een bijlage (screenshot, PDF) staan de getallen niet in de tekst: dan ook zonder cijfers in de tekst
     // de tools meegeven, anders krijgt "wie is de grootste daler?" bij een dashboard-screenshot geen tools.
@@ -636,7 +640,7 @@ export async function POST(req: NextRequest) {
           const lezerUitvoeren: string[] = []
           const eerdereVragen = (effectieveHistory as { role?: string; content?: unknown }[])
             .filter(h => h.role === 'user' && typeof h.content === 'string')
-            .map(h => h.content as string)
+            .map(h => zonderDatum(h.content as string))
           const voerLeesDocumentUit = async (input: unknown): Promise<{ content: string; isError: boolean }> => {
             if (!lezer) return { content: 'Er is geen bijlage in dit gesprek.', isError: true }
             const gevraagd = typeof (input as { vraag?: unknown } | null)?.vraag === 'string' ? (input as { vraag: string }).vraag.trim() : ''

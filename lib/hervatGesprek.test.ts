@@ -1,34 +1,34 @@
 import { describe, it, expect } from 'vitest'
-import { bepaalHervatting, bouwHervatTekst } from './hervatGesprek'
+import { bepaalHervatting, zonderDatum, HERVAT_TEKST, MAX_RIJEN } from './hervatGesprek'
 
 const NU = new Date('2026-11-27T10:00:00Z').getTime()
 const rij = (urenGeleden: number, naam: string) => ({ question: `vraag ${naam}`, answer: `antwoord ${naam}`, created_at: new Date(NU - urenGeleden * 3_600_000).toISOString() })
-const inhoud = (h: { content: string }[]) => h.map(b => b.content)
 
 describe('bepaalHervatting', () => {
-  it('doet niets bij een doorlopend gesprek', () => {
+  it('doet niets bij een doorlopend gesprek of zonder berichten', () => {
     expect(bepaalHervatting([rij(1, 'c'), rij(20, 'b'), rij(60, 'a')], NU)).toBeNull()
-  })
-
-  it('doet niets zonder opgeslagen berichten', () => {
     expect(bepaalHervatting([], NU)).toBeNull()
   })
 
-  it('geeft bij het eerste bericht na de stilte geen geschiedenis mee', () => {
-    const h = bepaalHervatting([rij(72, 'oud2'), rij(73, 'oud1')], NU)
-    expect(h?.historie).toEqual([])
-    expect(h?.laatsteVoorStilte).toBe(rij(72, 'oud2').created_at)
+  it('geeft bij het eerste bericht na de stilte het hele eerdere gesprek mee, met datum per bericht', () => {
+    const h = bepaalHervatting([rij(96, 'b'), rij(97, 'a')], NU)!
+    expect(h.kaal.map(b => b.content)).toEqual(['vraag a', 'antwoord a', 'vraag b', 'antwoord b'])
+    expect(h.gedateerd[0].content).toBe('[App: geschreven op maandag 23 november 2026]\nvraag a')
+    expect(h.gedateerd[1].content).toBe('antwoord a')
+    expect(h.vraagRegel).toContain('nieuw bericht van vandaag, vrijdag 27 november 2026')
+    expect(h.vraagRegel).toContain('maandag 23 november 2026, 4 dagen eerder')
   })
 
-  it('houdt de oude berichten ook op latere beurten weg, de nieuwe gaan in volgorde mee', () => {
-    const h = bepaalHervatting([rij(0.1, 'nieuw2'), rij(0.5, 'nieuw1'), rij(72, 'oud')], NU)
-    expect(inhoud(h!.historie)).toEqual(['vraag nieuw1', 'antwoord nieuw1', 'vraag nieuw2', 'antwoord nieuw2'])
-    expect(h!.historie.map(b => b.role)).toEqual(['user', 'assistant', 'user', 'assistant'])
+  it('houdt ook op latere beurten het oude deel mee, gedateerd', () => {
+    const h = bepaalHervatting([rij(0.1, 'nieuw'), rij(96, 'oud')], NU)!
+    expect(h.gedateerd.map(b => zonderDatum(b.content))).toEqual(['vraag oud', 'antwoord oud', 'vraag nieuw', 'antwoord nieuw'])
+    expect(h.gedateerd[2].content).toContain('vrijdag 27 november 2026')
+    expect(h.vraagRegel).toBe('[App: geschreven op vrijdag 27 november 2026, vandaag]')
   })
 
-  it('kiest de laatste stilte als er meerdere zijn', () => {
-    const h = bepaalHervatting([rij(1, 'c'), rij(100, 'b'), rij(300, 'a')], NU)
-    expect(inhoud(h!.historie)).toEqual(['vraag c', 'antwoord c'])
+  it('gebruikt de Nederlandse datum, niet die van de server', () => {
+    const h = bepaalHervatting([{ question: 'v', answer: 'a', created_at: '2026-11-22T23:30:00Z' }], NU)!
+    expect(h.gedateerd[0].content).toContain('maandag 23 november 2026')
   })
 
   it('kantelt boven de 48 uur, niet erop', () => {
@@ -36,20 +36,15 @@ describe('bepaalHervatting', () => {
     expect(bepaalHervatting([rij(48.01, 'a')], NU)).not.toBeNull()
   })
 
-  it('slaat een beurt zonder antwoord over, want een leeg bericht weigert de API', () => {
-    const h = bepaalHervatting([{ ...rij(1, 'leeg'), answer: '' }, rij(2, 'goed'), rij(90, 'oud')], NU)
-    expect(inhoud(h!.historie)).toEqual(['vraag goed', 'antwoord goed'])
+  it('neemt niet meer beurten mee dan de limiet en slaat een beurt zonder antwoord over', () => {
+    const veel = Array.from({ length: MAX_RIJEN + 5 }, (_, i) => rij(100 + i, String(i)))
+    expect(bepaalHervatting(veel, NU)!.kaal).toHaveLength(MAX_RIJEN * 2)
+    expect(bepaalHervatting([{ ...rij(90, 'leeg'), answer: '' }, rij(91, 'goed')], NU)!.kaal).toHaveLength(2)
   })
 })
 
-describe('bouwHervatTekst', () => {
-  it('zegt dat het eerdere deel niet zichtbaar is en gebruikt geen streepjes', () => {
-    const t = bouwHervatTekst('24 november (3 dagen geleden)', 'Offerte')
-    expect(t).toContain('jij ziet die berichten niet')
-    expect(t).toContain('Onderwerp van toen: Offerte')
-    expect(t).not.toMatch(/[–—]/)
-  })
-  it('laat het onderwerp weg als dat onbekend is', () => {
-    expect(bouwHervatTekst('24 november', '')).not.toContain('Onderwerp van toen')
+describe('HERVAT_TEKST', () => {
+  it('bevat geen streepjes als leesteken', () => {
+    expect(HERVAT_TEKST).not.toMatch(/[–—]/)
   })
 })

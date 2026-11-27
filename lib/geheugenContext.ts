@@ -6,7 +6,7 @@ import { mailChatSignaal, mailConceptRegel } from '@/lib/mailPatroon'
 import { opzegRegel } from '@/lib/opzegPatroon'
 import { feitenRegel } from '@/lib/feitenControle'
 import { coachRolRegels, coachRolTrigger, coachRolVraagtAnalyse, adviesRegels } from '@/lib/coachRol'
-import { bepaalHervatting, bouwHervatTekst, MAX_RIJEN, type GelogdeBeurt } from '@/lib/hervatGesprek'
+import { bepaalHervatting, HERVAT_TEKST, MAX_RIJEN, type GelogdeBeurt } from '@/lib/hervatGesprek'
 
 // Opbouw van het gespreksgeheugen en de gebruikerscontext voor de hoofdchat. Stond in
 // app/api/chat/route.ts; hierheen verplaatst zodat de route en de testroute
@@ -103,8 +103,9 @@ export async function findSemanticallyRelevantOlderSessions(
   }
 }
 
-// historie: de geschiedenis die naar het model mag. Bij een hervat gesprek (verouderd) alleen de berichten van na de stilte.
-export type GeheugenContext = { geheugentekst: string; prevSessionCount: number; verouderd: boolean; historie: { role: string; content: string }[] }
+// historie: de geschiedenis die naar het model gaat. Bij een hervat gesprek (verouderd) het opgeslagen gesprek met datum per bericht,
+// en vraagRegel hoort vóór het nieuwe bericht (lib/hervatGesprek.ts).
+export type GeheugenContext = { geheugentekst: string; prevSessionCount: number; verouderd: boolean; historie: { role: string; content: string }[]; vraagRegel: string }
 
 export async function haalGeheugenContext(
   supabase: SupabaseClient,
@@ -164,8 +165,8 @@ export async function haalGeheugenContext(
         ])
           .then(async ([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten, terugkerendeEntiteiten, { data: laatsteCoaching }, { data: gelogdeBeurten }]) => {
             const hervatting = bepaalHervatting((gelogdeBeurten ?? []) as GelogdeBeurt[])
-            // Alles hieronder dat in de geschiedenis kijkt, ziet dezelfde geschiedenis als het model.
-            const historie = hervatting ? hervatting.historie : (Array.isArray(history) ? history : [])
+            // De regels hieronder zoeken in de tekst van het gesprek en krijgen het zonder datumregels.
+            const historie = hervatting ? hervatting.kaal : (Array.isArray(history) ? history : [])
             let geheugentekst = ''
             let prevSessionCount = 0
             if (prevSessions && prevSessions.length > 0) {
@@ -287,19 +288,9 @@ export async function haalGeheugenContext(
             }
             geheugentekst += adviesRegels(question, historie)
             geheugentekst += feitenRegel(question)
-            // Hervat gesprek: de berichten van voor de stilte gaan niet mee, op geen enkele beurt. Geen letterlijke berichten
-            // van toen, want die komen als gespreksfragment over als "nu" (replay-meting 2026-10-31). Alleen het neutrale
-            // onderwerp: de samenvatting en feiten bevatten juist de stand van zaken van toen.
-            if (hervatting) {
-              const { data: dezeSessie } = await supabase
-                .from('arnobot_blog_sessions')
-                .select('title, onderwerp')
-                .eq('user_id', userId)
-                .eq('session_id', sessionId)
-                .maybeSingle()
-              geheugentekst += bouwHervatTekst(geheugenDatum(hervatting.laatsteVoorStilte), dezeSessie ? geheugenOnderwerp(dezeSessie) : '')
-            }
-            return { geheugentekst, prevSessionCount, verouderd: hervatting !== null, historie }
+            // Hervat gesprek: het eerdere gesprek gaat mee, met datum per bericht (lib/hervatGesprek.ts).
+            if (hervatting) geheugentekst += HERVAT_TEKST
+            return { geheugentekst, prevSessionCount, verouderd: hervatting !== null, historie: hervatting ? hervatting.gedateerd : historie, vraagRegel: hervatting?.vraagRegel ?? '' }
           })
 }
 
