@@ -537,13 +537,13 @@ export async function POST(req: NextRequest) {
 
     // memoryContextPromise/coachingContextPromise draaien al sinds vlak na de auth-check,
     // parallel aan de moderatie-check en de RAG-pipeline, in plaats van pas nu te starten.
-    const { geheugentekst: basisGeheugentekst, prevSessionCount, verouderd } = await memoryContextPromise
+    const { geheugentekst: basisGeheugentekst, prevSessionCount, historie } = await memoryContextPromise
     const geheugentekst = basisGeheugentekst + documentGeheugen
     const importProfiel = await importProfielPromise
     const coachingContext = await coachingContextPromise
 
-    // Bij een verouderd gesprek zit de oude geschiedenis als gedateerd geheugen in geheugentekst.
-    const effectieveHistory = verouderd ? [] : (history || [])
+    // Bij een hervat gesprek alleen de berichten van na de stilte; het model hoort dat het de rest niet ziet (lib/hervatGesprek.ts).
+    const effectieveHistory = historie as Anthropic.MessageParam[]
 
     const messages = [
       ...effectieveHistory,

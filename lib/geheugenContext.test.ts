@@ -130,10 +130,43 @@ describe('haalGeheugenContext', () => {
       { ...basis, sessionId: 'huidig', history: [{ role: 'user', content: 'vraag' }, { role: 'assistant', content: 'antwoord' }] },
     )
     expect(r.verouderd).toBe(true)
+    expect(r.historie).toEqual([])
     expect(r.geheugentekst).toContain('EERDER DEEL VAN DIT GESPREK')
     expect(r.geheugentekst).toContain('Onderwerp van toen: Verbetertraject voor klant')
     expect(r.geheugentekst).not.toContain('SAMENVATTING_OUD_TRAJECT_LOOPT')
     expect(r.geheugentekst).not.toContain('FEIT_OUD_DEAL_STAAT_OPEN')
+  })
+
+  it('houdt bij het tweede bericht na een stilte de oude beurten nog steeds weg, wat het scherm ook meestuurt', async () => {
+    const urenGeleden = (n: number) => new Date(NU.getTime() - n * 3_600_000).toISOString()
+    const r = await haalGeheugenContext(
+      nepSupabase({
+        arnobot_blog_sessions: [],
+        arnobot_rds_logs: [
+          { question: 'NIEUWE_VRAAG', answer: 'NIEUW_ANTWOORD', created_at: urenGeleden(0.1) },
+          { question: 'OUDE_VRAAG', answer: 'OUD_ANTWOORD', created_at: urenGeleden(80) },
+        ],
+      }),
+      { ...basis, sessionId: 'huidig', history: [
+        { role: 'user', content: 'OUDE_VRAAG' }, { role: 'assistant', content: 'OUD_ANTWOORD' },
+        { role: 'user', content: 'NIEUWE_VRAAG' }, { role: 'assistant', content: 'NIEUW_ANTWOORD' },
+      ] },
+    )
+    expect(r.verouderd).toBe(true)
+    expect(r.historie.map(h => h.content)).toEqual(['NIEUWE_VRAAG', 'NIEUW_ANTWOORD'])
+    expect(r.geheugentekst).toContain('jij ziet die berichten niet')
+    expect(r.geheugentekst).not.toContain('OUDE_VRAAG')
+    expect(r.geheugentekst).not.toContain('OUD_ANTWOORD')
+  })
+
+  it('geeft in een doorlopend gesprek precies de geschiedenis van het scherm door', async () => {
+    const history = [{ role: 'user', content: 'vraag' }, { role: 'assistant', content: 'antwoord' }]
+    const r = await haalGeheugenContext(
+      nepSupabase({ arnobot_blog_sessions: [], arnobot_rds_logs: [{ question: 'x', answer: 'y', created_at: new Date(NU.getTime() - 3_600_000).toISOString() }] }),
+      { ...basis, sessionId: 'huidig', history },
+    )
+    expect(r.historie).toBe(history)
+    expect(r.geheugentekst).not.toContain('EERDER DEEL VAN DIT GESPREK')
   })
 
   it('zet het mailpatroon in de prompt vanaf 3 gesprekken met een mailverzoek, niet eerder', async () => {

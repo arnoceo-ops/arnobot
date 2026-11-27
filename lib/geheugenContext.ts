@@ -6,6 +6,7 @@ import { mailChatSignaal, mailConceptRegel } from '@/lib/mailPatroon'
 import { opzegRegel } from '@/lib/opzegPatroon'
 import { feitenRegel } from '@/lib/feitenControle'
 import { coachRolRegels, coachRolTrigger, coachRolVraagtAnalyse, adviesRegels } from '@/lib/coachRol'
+import { bepaalHervatting, bouwHervatTekst, MAX_RIJEN, type GelogdeBeurt } from '@/lib/hervatGesprek'
 
 // Opbouw van het gespreksgeheugen en de gebruikerscontext voor de hoofdchat. Stond in
 // app/api/chat/route.ts; hierheen verplaatst zodat de route en de testroute
@@ -102,7 +103,8 @@ export async function findSemanticallyRelevantOlderSessions(
   }
 }
 
-export type GeheugenContext = { geheugentekst: string; prevSessionCount: number; verouderd: boolean }
+// historie: de geschiedenis die naar het model mag. Bij een hervat gesprek (verouderd) alleen de berichten van na de stilte.
+export type GeheugenContext = { geheugentekst: string; prevSessionCount: number; verouderd: boolean; historie: { role: string; content: string }[] }
 
 export async function haalGeheugenContext(
   supabase: SupabaseClient,
@@ -148,20 +150,22 @@ export async function haalGeheugenContext(
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle(),
-          // Tijdstip van het vorige bericht in dit gesprek: bij een hervat gesprek van weken of
-          // maanden terug is de meegestuurde geschiedenis geen actuele stand van zaken meer.
+          // De opgeslagen berichten van dit gesprek, nieuwste eerst: bij een hervat gesprek van dagen of maanden terug
+          // is de meegestuurde geschiedenis geen actuele stand van zaken meer (lib/hervatGesprek.ts).
           Array.isArray(history) && history.length > 0
             ? supabase
                 .from('arnobot_rds_logs')
-                .select('created_at')
+                .select('question, answer, created_at')
                 .eq('user_id', userId)
                 .eq('session_id', sessionId)
                 .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle()
-            : Promise.resolve({ data: null as { created_at: string } | null }),
+                .limit(MAX_RIJEN + 1)
+            : Promise.resolve({ data: null as GelogdeBeurt[] | null }),
         ])
-          .then(async ([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten, terugkerendeEntiteiten, { data: laatsteCoaching }, { data: laatsteBericht }]) => {
+          .then(async ([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten, terugkerendeEntiteiten, { data: laatsteCoaching }, { data: gelogdeBeurten }]) => {
+            const hervatting = bepaalHervatting((gelogdeBeurten ?? []) as GelogdeBeurt[])
+            // Alles hieronder dat in de geschiedenis kijkt, ziet dezelfde geschiedenis als het model.
+            const historie = hervatting ? hervatting.historie : (Array.isArray(history) ? history : [])
             let geheugentekst = ''
             let prevSessionCount = 0
             if (prevSessions && prevSessions.length > 0) {
@@ -258,19 +262,14 @@ export async function haalGeheugenContext(
                 geheugentekst += `\nOntwikkelpunt(en) mindset: ${mindsetOntwikkelpunten.map(p => p.tekst).join(' | ')}`
               }
             }
-            // Verouderd gesprek (laatste bericht langer dan 48 uur geleden, bv. via ?resume= of een
-            // tab die dagen openstond): de oude berichten gaan NIET als live beurten mee, want dan
-            // ankert het model erop en behandelt het ze als de actuele stand (bevestigd met een
-            // replay van het testgesprek, 2026-10-31: de notitie alleen was niet genoeg). Ze gaan
-            // als gedateerd, ingekort geheugen mee.
             // Mailpatroon: gebruikt de gebruiker ArnoBot vooral als tekstschrijver? (lib/mailPatroon.ts)
             const recenteGesprekken = prevSessions ?? []
             geheugentekst += mailChatSignaal(recenteGesprekken.filter(s => s.mail_verzoek === true).length, recenteGesprekken.length)
-            geheugentekst += mailConceptRegel(question, history)
+            geheugentekst += mailConceptRegel(question, historie)
             // Opzeggende klanten: oorzaak boven gevolg, en herhaling vanaf drie gesprekken (lib/opzegPatroon.ts)
-            geheugentekst += opzegRegel(question, history, recenteGesprekken.map(s => s.onderwerp ?? s.title))
+            geheugentekst += opzegRegel(question, historie, recenteGesprekken.map(s => s.onderwerp ?? s.title))
             // Coachrol: reset, projectassistentie en patroonspiegel (lib/coachRol.ts)
-            const coachTrigger = coachRolTrigger(question, history)
+            const coachTrigger = coachRolTrigger(question, historie)
             if (coachRolVraagtAnalyse(coachTrigger)) {
               const { data: laatsteAnalyse } = await supabase
                 .from('arnobot_analyses')
@@ -286,27 +285,21 @@ export async function haalGeheugenContext(
                 analyseDatum: laatsteAnalyse ? geheugenDatum(laatsteAnalyse.created_at) : '',
               })
             }
-            geheugentekst += adviesRegels(question, history)
+            geheugentekst += adviesRegels(question, historie)
             geheugentekst += feitenRegel(question)
-            let verouderd = false
-            if (laatsteBericht && Array.isArray(history) && history.length > 0 && Date.now() - new Date(laatsteBericht.created_at).getTime() > 48 * 60 * 60 * 1000) {
-              verouderd = true
-              // Geen letterlijke berichten van toen: die komen als gespreksfragment over als "nu"
-              // (replay-meting 2026-10-31). De samenvatting van de sessie, met datum, wel.
+            // Hervat gesprek: de berichten van voor de stilte gaan niet mee, op geen enkele beurt. Geen letterlijke berichten
+            // van toen, want die komen als gespreksfragment over als "nu" (replay-meting 2026-10-31). Alleen het neutrale
+            // onderwerp: de samenvatting en feiten bevatten juist de stand van zaken van toen.
+            if (hervatting) {
               const { data: dezeSessie } = await supabase
                 .from('arnobot_blog_sessions')
                 .select('title, onderwerp')
                 .eq('user_id', userId)
                 .eq('session_id', sessionId)
                 .maybeSingle()
-              // Alleen het neutrale onderwerp van toen: de samenvatting en feiten bevatten juist de
-              // stand van zaken van toen, die het model als "nu" ging noemen.
-              const inhoud = dezeSessie
-                ? `Onderwerp van toen: ${geheugenOnderwerp(dezeSessie)}. Wat er toen speelde is mogelijk achterhaald, vraag hoe het er nu voor staat.`
-                : String((history as { content: string }[]).filter((_, i) => i % 2 === 0).slice(-1)[0]?.content ?? '').slice(0, 300)
-              geheugentekst += `\n\nEERDER DEEL VAN DIT GESPREK (laatste bericht ${geheugenDatum(laatsteBericht.created_at)}):\nDe gebruiker pakt een gesprek van toen weer op. Wat hieronder staat is een herinnering aan dat gesprek en geen actuele stand van zaken. Wat de gebruiker nu schrijft is leidend. Weet je niet of iets hieruit nog klopt, stel dan één korte vraag.\n${inhoud}`
+              geheugentekst += bouwHervatTekst(geheugenDatum(hervatting.laatsteVoorStilte), dezeSessie ? geheugenOnderwerp(dezeSessie) : '')
             }
-            return { geheugentekst, prevSessionCount, verouderd }
+            return { geheugentekst, prevSessionCount, verouderd: hervatting !== null, historie }
           })
 }
 
