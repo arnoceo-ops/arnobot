@@ -133,7 +133,7 @@ Gegeven zijn de regels van 25-11 hieronder en de spelregels op `app/referrals/pa
 6. Om wanbetaling geblokkeerd team: tegoed staat stil, vervalt na 30 dagen. Gewoon teamlid geworden: vervalt.
 7. **Alles exclusief btw:** het laagste van beide maandprijzen zonder btw; bij uitkeren komt de btw erbij (particulier en zakelijk). Zo geeft ArnoBot nooit meer weg dan een maand netto van beide kanten. Vervangt de eerdere tekst over getoonde prijzen en de btw-basis van de aanbrenger.
 8. Per verlenging zoveel als in de betaling past, de rest blijft staan.
-9. Klant is een team: aantal gebruikers op het moment van toekennen.
+9. Klant is een team: aantal gebruikers op het moment van toekennen. (Noot 2026-11-27, geldt vanaf de uitrol van de prijswijziging: geteld worden de teamleden zonder de manager; de teamwaarde is het managerbedrag plus die teamleden, zie `docs/PRICING_DECISIONS.md`. Is `min_seats` leeggemaakt, dan is de ondergrens wat het laatst regulier is gefactureerd.)
 
 **Aanvullingen 25-11:**
 - Het plafond en het abonnement komen uit arnobot_subscriptions (wat er betaald wordt), nooit uit approved_users.plan. Een account kan cadeau op Pro staan terwijl Basic betaald wordt. Zo'n cadeau valt bij de volgende betalingsverwerking terug naar het betaalde plan (zetToegang); nog niet geregeld.

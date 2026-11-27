@@ -6,11 +6,11 @@
 // per maand en per jaar; het managerbedrag is de prijs van de managerlaag.
 // Zelf aanmelden vanaf een manager plus 3 teamleden.
 //
-// Seat-wijzigingen tijdens een lopend jaarcontract: true-up, volledig
-// handmatig (net als de rest van de facturatie, geen payment provider).
-// Jaarprijs staat vast op het aantal gebruikers bij tekenen, nieuwe
-// gebruikers worden apart maandelijks bijgefactureerd tot de volgende
-// jaarvernieuwing, weggevallen gebruikers worden niet terugbetaald.
+// Extra teamleden tijdens een lopend jaarcontract: de cron maakt eenmalig een
+// tussenfactuur naar rato (lib/billing/teamFacturatie.ts). Bij een maandteam
+// tellen ze mee op de volgende factuur. Minder teamleden gaat pas in bij de
+// verlenging, zonder terugbetaling. Facturen rekenen altijd met de bedragen
+// hieronder, dus met de huidige prijslijst.
 export type Cyclus = 'maandelijks' | 'jaarlijks'
 
 export const TEAM_BASISTARIEF_MAANDELIJKS = 97

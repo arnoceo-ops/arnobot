@@ -49,7 +49,7 @@ Managers kunnen een teammodule gebruiken: ze zien de voortgang van hun verkopers
 
 ## Verdienmodel
 
-Drie publieke abonnementen op https://arno.bot/prijzen, plus één niet-publieke tier. Volledige onderbouwing en beslissingsgeschiedenis: `docs/PRICING_DECISIONS.md`.
+Drie publieke abonnementen op https://arno.bot/prijzen, plus één niet-publieke tier. De tarieven van Pro en Team hieronder zijn besloten op 2026-11-26 en gebouwd, maar op 2026-11-27 nog niet live (`docs/PRIJSWIJZIGING_PLAN.md`). Volledige onderbouwing en beslissingsgeschiedenis: `docs/PRICING_DECISIONS.md`.
 
 **Basic:**
 - Maandelijks: €29/maand
@@ -57,16 +57,22 @@ Drie publieke abonnementen op https://arno.bot/prijzen, plus één niet-publieke
 - Trial: 30 dagen gratis, geen creditcard vereist
 
 **Pro:**
-- Maandelijks: €59/maand
-- Jaarlijks: €468/jaar (= €39/maand, korting ~34%)
+- Maandelijks: €49/maand
+- Jaarlijks: €396/jaar (= €33/maand, scheelt €192 per jaar)
 - Trial: 30 dagen gratis, geen creditcard vereist
 
 **Team:**
-- €97/maand platformtarief (managerlaag) + €49/gebruiker/maand, vanaf 3 gebruikers
-- Jaarlijks: €924/jaar platform + €468/gebruiker/jaar (= €77 + €39/maand-equivalent, korting ~20%)
+- Manager €97/maand, inclusief het eigen Pro-gebruik, + €49 per teamlid per maand
+- Jaarlijks: €924/jaar voor de manager + €396 per teamlid per jaar (= €77 + €33/maand-equivalent)
+- Minimaal een manager plus 3 teamleden (€244/maand of €2.112/jaar). Kleiner: via team@arno.bot; je stelt het met de hand in, tegen dezelfde formule. Uitnodigen en zelf activeren kan tot en met 25 teamleden
 - Geen aparte trial: de manager start zelf als individuele Pro-gebruiker en upgradet later. Aanvraag via https://arno.bot/team (formulier, geen automatische betaling)
 
 **Elite:** de losse, individuele Elite-plan (€397/maand) is op 25 augustus 2026 volledig uit het systeem verwijderd, na een bevestigde 0-gebruikerstelling. Een Elite-optie binnen een Team-offerte (€338/maand surplus per teamlid) bestaat nog wel, zie "Team" hierboven.
+
+**Prijsverlaging (besluit 2026-11-26, niet geautomatiseerd):**
+- Maandabonnement: de lagere prijs vanaf de volgende betaling, niets terug. Jaarabonnement dat maximaal 30 dagen geleden is betaald: het verschil terug (coulance, staat bewust niet in de voorwaarden). Ouder: de lagere prijs bij verlenging.
+- Een bestaand solo-abonnement houdt in het systeem het oude bedrag, dus aanpassen doe je met de hand.
+- Terugbetalen: per bank overmaken, creditnota in Moneybird en inboeken met de databasefunctie `referral_handmatig_betaling` (alleen voor solo-betalingen; niet beproefd). **Nooit** via een gedeeltelijke Mollie-terugbetaling en **nooit** met de refundknop in de admin (die beëindigt het abonnement).
 
 **Referral:**
 - Elke gebruiker heeft een referralcode, behalve gewone teamleden en gratis accounts (bij een gratis account werkt een bestaande code niet en ontstaat er geen tegoed)

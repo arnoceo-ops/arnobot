@@ -2,7 +2,7 @@
 
 ## Statusblok
 
-- **Laatst bijgewerkt:** 2026-11-12
+- **Laatst bijgewerkt:** 2026-11-27 (bedragen en teamtelling bij de prijswijziging van 2026-11-26, nog niet live; de werkwijze is niet gewijzigd)
 - **Waar we staan:** bewust niet gebouwd (besluit Arno, 2026-11-12: hij verwacht dit niet snel). Dit document is de handmatige werkwijze voor het eerste echte geval, plus de vier vragen die dan beantwoord moeten worden. Context en het bouwplan voor de andere overstappen: `docs/OVERSTAP_PLAN.md`.
 - **Eerstvolgende stap:** geen. Pas oppakken als een zakelijke solo-jaarklant Team wil.
 - **Gekozen:** handmatig volgens deze checklist. **Verworpen:** nu bouwen (deelterugbetaling, deel-creditnota, voorbeeldscherm), want het geval is niet te verwachten. **Verworpen:** het jaar laten uitlopen (Arno: Team gaat meteen in). **Terugvaloptie als terugbetalen niet lukt:** het restant verrekenen op de eerste Team-factuur.
@@ -21,16 +21,16 @@ Een **zakelijke** klant met een lopend solo-jaarabonnement (`arnobot_subscriptio
 ## De checklist
 
 **Voorbereiding**
-1. Spreek met de klant af: de datum **D** waarop Team ingaat, het aantal seats, de Team-cyclus (maand of jaar; staat los van de solo-cyclus) en het terug te betalen bedrag.
+1. Spreek met de klant af: de datum **D** waarop Team ingaat, het aantal teamleden zonder de manager, de Team-cyclus (maand of jaar; staat los van de solo-cyclus) en het terug te betalen bedrag.
 2. Zoek de rij op in `arnobot_subscriptions` en de bijbehorende betaling in `arnobot_payments`. Noteer: `bedrag_cent`, `btw_cent`, `periode_start`, `periode_einde`, `mollie_payment_id`, `mollie_subscription_id`, `moneybird_factuur_id`.
-3. **Bereken het bedrag naar rato:** netto = (`bedrag_cent` min `btw_cent`) maal R gedeeld door T, waarbij R het aantal resterende dagen is van D tot `periode_einde` en T het aantal dagen van `periode_start` tot `periode_einde`. Btw 21% erbij, terugbetaling bruto, afgerond op centen. Voorbeeld: Pro zakelijk jaar, bruto €566,28 (netto €468,00), Team start na 3 maanden (R/T = 9/12): netto €351,00, bruto **€424,71**.
+3. **Bereken het bedrag naar rato:** netto = (`bedrag_cent` min `btw_cent`) maal R gedeeld door T, waarbij R het aantal resterende dagen is van D tot `periode_einde` en T het aantal dagen van `periode_start` tot `periode_einde`. Btw 21% erbij, terugbetaling bruto, afgerond op centen. Reken altijd met wat er in de rij staat, niet met de actuele prijslijst. Voorbeeld voor een **klant op de oude Pro-prijs** (afgesloten vóór de prijswijziging): Pro zakelijk jaar, bruto €566,28 (netto €468,00), Team start na 3 maanden (R/T = 9/12): netto €351,00, bruto **€424,71**. Voorbeeld op de nieuwe prijs: bruto €479,16 (netto €396,00), zelfde moment: netto €297,00, bruto **€359,37**.
 
 **Uitvoering, in deze volgorde**
 4. **Mollie-dashboard:** deelterugbetaling van de jaarbetaling voor het bruto bedrag, omschrijving "Terugbetaling naar rato bij overstap naar Team". Controleer de status: `queued` (te laag Mollie-saldo, wacht tot er geld binnenkomt; Revolut-uitbetalingen kunnen het saldo laag houden), `pending`, `processing`, `refunded` of `failed`. Dezelfde bedragen binnen een uur op dezelfde betaling worden als dubbel geweigerd. Faalt of wordt het geweigerd: terugvaloptie hieronder.
 5. **Mollie-dashboard:** annuleer het doorlopende jaarabonnement van deze klant (`mollie_subscription_id`), anders incasseert Mollie over een jaar opnieuw.
 6. **Supabase:** zet de solo-rij op `ended` en `mollie_sub_geannuleerd_at` op nu (handmatige SQL, alleen die ene rij). Daarmee slaat de billing-cron de rij over en komt de foutieve afscheidsmail (cron stap 5, kijkt niet naar team-dekking) niet.
 7. **Moneybird:** maak een creditnota voor het deelbedrag (netto plus 21% btw, bruto gelijk aan de terugbetaling) tegen de originele jaarfactuur, en registreer de terugbetaling met het Mollie-id.
-8. **Team activeren:** volg `docs/TEAM_PROCES.md` (fase 1, stap 4 en 7): `command_manager = true` op D, en op `/bot/admin/teams` het team activeren met min. seats, cyclus en `volgende_factuurdatum` = D. De cron maakt dan op D de Team-factuur (Moneybird plus Mollie-betaallink).
+8. **Team activeren:** volg `docs/TEAM_PROCES.md` (fase 1, stap 4 en 7): `command_manager = true` op D, en op `/bot/admin/teams` het team activeren met min. teamleden (zonder manager), cyclus en `volgende_factuurdatum` = D. De cron maakt dan op D de Team-factuur (Moneybird plus Mollie-betaallink).
 
 **Controle achteraf**
 9. Refund-status `refunded` in Mollie; in `arnobot_payments` staat `terugbetaald_cent` op het deelbedrag en de rij is NIET als geheel terugbetaald verwerkt.

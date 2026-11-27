@@ -2,9 +2,94 @@
 
 Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat deze keuzes opnieuw ter discussie komen. Wijzigingen hier alleen na expliciet nieuw besluit van Arno.
 
-## Voorstel nieuwe tarieven (2026-11-26, NOG NIET INGEVOERD)
+## Tiers en bedragen
 
-**Status:** Arno heeft op 2026-11-26 besloten deze tarieven in te voeren. Ze zijn nog niet ingevoerd: de tarieven onder "Tiers en bedragen" hieronder staan nog live. Stand, volledige inventaris en openstaande punten: `docs/PRIJSWIJZIGING_PLAN.md`.
+**Geldende tarieven sinds het besluit van 2026-11-26** (Pro en Team gewijzigd, Basic niet). Gebouwd op de tak `prijswijziging`, op 2026-11-27 nog niet live: tot de uitrol rekent de live site met de vorige tarieven. Stand en uitrol: `docs/PRIJSWIJZIGING_PLAN.md`. Onderbouwing en verworpen varianten: "Besluitrecord nieuwe tarieven Pro en Team" hieronder.
+
+### Basic
+- €19/maand bij jaarbetaling (€228/jaar totaal)
+- €29/maand bij maandelijkse betaling
+- 30 dagen gratis proberen
+
+**Features:**
+- Dagelijks sparren met ArnoBot
+- Eén gespreksanalyse per dag
+- Geheugen over je recente gesprekken
+
+### Pro
+- €33/maand bij jaarbetaling (€396/jaar totaal), was €39 (€468/jaar)
+- €49/maand bij maandelijkse betaling, was €59
+- Jaarbesparing ten opzichte van twaalf keer maandelijks: €192 (was €240)
+- 30 dagen gratis proberen
+- Copy-patroon: "Alles van Basic, plus:"
+
+**Features (bovenop Basic), volgorde besloten 2026-08-02:**
+- Onbeperkt chatten en oefenen
+- Uitgebreider gespreksgeheugen
+- Volledig archief van al je output
+- Coaching op mindset, systeem en actie
+- Gesproken antwoorden, Arno's stem
+- De ArnoBot-app (Android)
+- **Toegevoegd (besloten 2026-08-13):** eenmalig gesprek met Arno zelf, ontgrendeld zodra er een coachingdocument is gegenereerd (dus na minimaal 5 sessies, niet vanaf dag één) én pas na daadwerkelijke betaling, niet al tijdens de trial. Trial-gebruikers starten namelijk al standaard op `plan='premium'`, dus alleen op plan filteren sloot trials niet uit. Niet voor Basic, en niet voor teamleden onder een Team-abonnement (dat verloopt via de manager, buiten de app om, bewust geen in-app bouw hiervoor). Technische gating: `plan === 'premium' && paid` in `app/bot/coaching/CoachingClient.tsx`, identiek server-side afgedwongen op `app/bot/gesprek/page.tsx` zelf (die pagina had voorheen geen eigen check). Zie ABONNEMENTEN.md, sectie "Gesprek met Arno (eenmalig, Pro)" voor de volledige implementatie.
+
+### Team
+- **Manager: €97/maand, of €77/maand-equivalent bij jaarlijkse vooruitbetaling (€924/jaar), inclusief het eigen Pro-gebruik van de manager.** De manager is nooit een apart gefactureerd teamlid.
+- **+ €49 per teamlid per maand**, of €33/maand-equivalent bij jaarlijkse vooruitbetaling (€396 per teamlid per jaar). Gelijk aan Pro solo, per maand en per jaar. Niet degressief, geen staffelkorting.
+- **Minimaal een manager plus 3 teamleden:** €244/maand, of €2.112/jaar (€176/maand-equivalent). Tekst voor kleinere teams: "Team is er vanaf een manager en 3 teamleden. Begin je kleiner, bijvoorbeeld als startup met 2 teamleden? Neem dan contact op via team@arno.bot."
+- **Kleiner team:** Arno stelt het met de hand in (`/bot/admin/teams`, vanaf 1 teamlid) en het betaalt dezelfde formule (2 teamleden: €195/maand of €143/maand-equivalent). Verworpen: een aparte prijs. Het is een uitzondering op het minimum, niet op de prijs.
+- **Maximaal 25 teamleden naast de manager** voor uitnodigen (join) en zelf activeren (keuze van de bouwsessie 2026-11-27, aan Arno voorgelegd). Het aanvraagformulier en de beheerpagina hebben geen maximum, maar boven de 25 teamleden kan niemand joinen zonder codewijziging. Reden: zelf activeren stond tot 500 terwijl er maar 25 rijen konden aansluiten. Verworpen: zelf activeren op 500 laten staan.
+- **Telling:** de eigenaar van het team (`arnobot_teams.manager_id`) wordt niet geteld en alleen hij kan zelf activeren; een tweede account met de rol manager telt als teamlid. `arnobot_teams.min_seats` en `arnobot_team_facturen.seats_aantal` betekenen teamleden zonder de manager (factuurrijen van vóór deze wijziging hebben de oude betekenis, inclusief manager). Gekozen: geen nieuwe kolom, omdat geen enkel team gefactureerd werd. Verworpen: een nieuwe kolom naast de oude.
+- Code: `lib/teamPricing.ts` (formule, minimum, maximum, teksten) en `huidigSeats` in `lib/billing/teamFacturatie.ts`.
+- **Jaaroptie (toegevoegd 2026-08-10):** de toenmalige tekst en onderbouwing staan, vervallen voor wat de bedragen betreft, onder "Waarom deze bedragen zo zijn gekozen". Een tussentijds toegevoegd teamlid wordt bij een jaarabonnement eenmalig en naar rato bijgefactureerd (`docs/MOLLIE_PLAN.md`, fase 2b, en artikel 4 van de voorwaarden).
+- **Geen aparte trial.** De manager start zelf als individuele Pro-gebruiker (30 dagen gratis) en upgradet later naar Team wanneer hij zijn team wil meenemen. Deze upgrade-flow moet functioneel bestaan in de app (zie open punt onderaan).
+- **Facturatie voorlopig handmatig** (bevestigd 2026-08-02), net als Basic/Pro nu al werken (geen payment provider aangesloten). Geen aparte, uitgebreide aanvraagflow met factuurgegevens/KvK/BTW meer zoals de oude Command-staffel had, dat vervalt samen met de staffel zelf. Zodra er een payment provider is aangesloten, wordt dit voor alle tiers tegelijk geautomatiseerd, niet Team als eerste of enige uitzondering.
+- Copy-patroon: "Alles van Pro, plus:", geldt per teamlid (elk teamlid krijgt volledige Pro-functionaliteit)
+
+**Features (bovenop Pro, per teamlid):**
+- Teamoverzicht: individuele scores
+- Teamvoortgang als trend over tijd
+- Vroeg signaal bij stagnatie
+- AI-voorbereiding voor elke 1:1
+- Volledig 1:1 archief met eigen notities
+
+**Exclusief voor de manager (niet voor teamleden):**
+- Eigen leiderschapsaccount: eigen ruimte om te sparren over sales, organisatie en executie van het team. Dit is nadrukkelijk **geen coachingaccount** (de manager wordt niet gecoacht zoals een teamlid), het is een leiderschapsinstrument. **Op de prijzenkaart zelf (besloten 2026-08-02) staat deze bullet als eerste**, ondanks dat de kaart zelf geen visueel onderscheid maakt tussen manager-exclusieve en per-teamlid features (blijft één platte lijst, zie hierboven).
+- Team Spotlight: collectieve analyse van het hele team (`app/api/bot/team/spotlight`). Bestond al functioneel sinds fase 1 van de teammodule, stond alleen nog niet als bullet op de prijzenkaart. **Toegevoegd als 2e bullet (besloten 2026-08-11)**, direct na "Eigen leiderschapsaccount": een tastbaar, werkend verschil dat de hogere Team-prijs rechtvaardigt, in plaats van het als verrassing pas na aankoop te tonen.
+- Privacy garantie: managers zien nooit de inhoud van individuele gesprekken van teamleden, alleen geaggregeerde signalen die ertoe doen. Deze toelichting hoort thuis op de losstaande `/team` pagina, niet in de prijzenkaart zelf.
+
+**Elite-optie binnen de `/team`-offerte-aanvraag (besloten 2026-08-11):**
+Elite (zie de tabel in "Tiers en bedragen" hierboven, €397/maand solo) is geen publieke kaart meer, maar Arno wil het nog wel kunnen aanbieden aan individuele teamleden binnen een Team-offerte. Overwogen opties:
+- **Gekozen: surplus = exact het verschil tussen solo Elite (€397) en solo Pro (€59) = €338/maand extra per Elite-teamlid**, bovenop het gewone Team-per-gebruikertarief (toen €49 of €39, sinds 2026-11-26 €49 of €33 per teamlid). Geen bundelkorting op dit bedrag: die extra's kosten altijd hetzelfde, ongeacht via welke route (solo of Team) iemand ze afneemt.
+- **Verworpen: een verlaagde "bundel"-prijs op de €338.** Zou de schaarste van Arno's eigen tijd (de capaciteitscap van 50 Elite-klanten) verwateren door 'm goedkoper te maken via een bulkdeal.
+- **Verworpen: geen surplus, Elite-extra's gratis meenemen binnen Team-capaciteit.** Ondergewaardeert Arno's eigen tijd.
+- Geen aparte jaarprijs voor dit surplus (Elite zelf heeft geen jaaroptie): hetzelfde bedrag geldt ongeacht de gekozen Team-facturatiecyclus.
+- Reden dat Arno voor het niet-verwaterde bedrag kon kiezen zonder de capaciteitscap direct te laten knellen: de uitvoering (het maandelijkse gesprek) hoeft niet altijd door Arno zelf, kan ook door een door hem aangewezen coach gebeuren. Geen publieke vermelding hiervan nu, puur Arno's eigen leveringsflexibiliteit.
+- Implementatie: `TEAM_ELITE_SURPLUS_PER_MAAND` in `lib/teamPricing.ts`, checkbox + aantal-veld op `/team`, opgeslagen in nieuwe kolom `elite_aantal` op `arnobot_command_requests` (SQL-migratie, zie `docs/ABONNEMENTEN.md` voor de exacte statement en of Arno die al bevestigd heeft uitgevoerd vóór je hierop verder bouwt).
+
+**Addendum (2026-08-25):** de solo Elite-plan waar de €338-berekening hierboven op gebaseerd was, is inmiddels verwijderd (0 gebruikers, zie `docs/ABONNEMENTEN.md`, "Elite (individueel)"). Deze Team-Elite-surplusoptie blijft ongewijzigd bestaan als losstaand, vast bedrag, de historische herleiding naar solo-Elite is alleen nog documentatie, geen actief vergelijkingstarief meer.
+
+**Addendum (2026-11-26):** de Elite-toeslag blijft €338 per Elite-teamlid per maand en is een los vast bedrag dat niet meebeweegt met de Pro-prijs. Verworpen: €348 (het verschil tussen €397 en de nieuwe Pro-prijs van €49).
+
+## Waarom deze bedragen zo zijn gekozen
+
+**Vervallen op 2026-11-26:** de punten hieronder over de bedragen en de bewaarde jaaroptie-alinea horen bij de vorige tarieven (Pro €59 of €468 per jaar, teamlid €49 of €468 per jaar, manager meegeteld als gebruiker, minimaal 3 gebruikers inclusief manager). Ze blijven ongewijzigd staan als geschiedenis en zijn geen geldende onderbouwing meer. De huidige onderbouwing staat in "Besluitrecord nieuwe tarieven Pro en Team". Het punt over geen aparte Team-trial is niet door dit besluit geraakt.
+
+- **Team-seat (€49) vs. solo Pro maandelijks (€59):** lichte volumekorting bij gelijk commitment niveau (beide maandelijks opzegbaar, geen jaarverplichting). Bewust géén korting t.o.v. de jaarlijkse solo-prijs (€39), want dat zou minder commitment (Team, maandelijks) belonen met een lagere prijs dan meer commitment (solo, jaarlijks), omgekeerde SaaS-logica.
+- **Waarom geen jaaroptie bij Team:** teamgrootte fluctueert (aannames, vertrek), maandelijkse flexibiliteit is functioneel relevanter voor deze doelgroep dan een jaarkorting.
+- **Waarom €97 basistarief:** dit is niet een aparte "platformfee" los van gebruik, het is de eigen Pro-waarde van de manager (€59, want hij krijgt zelf ook alles van Pro) plus €38 opslag voor de manager-exclusieve laag: teamoverzicht, teamvoortgang-trends, vroegsignalering, AI-voorbereiding voor 1:1's en het leiderschapsaccount. Ter vergelijking: een teamlid betaalt €49 voor uitsluitend zijn eigen Pro-toegang, zonder die manager-laag. De opslag van €38 voor een volledig extra functionaliteitslaag is daarmee eerder behoudend dan overdreven geprijsd.
+- **Waarom geen aparte Team-trial:** teamdata opbouwen kost weken, een aflopende trial zou net op het waardevolle moment data laten "verdwijnen". De impliciete trial (manager begint solo als Pro) lost dit al op zonder omzet weg te geven aan een segment dat toch al laagdrempelig maandelijks kan op- en afzeggen.
+
+**Vervallen alinea uit de Team-sectie, letterlijk bewaard:**
+
+- **Jaaroptie toegevoegd (besloten 2026-08-10):** ~20% korting bij vooruitbetalen, bewust minder dan Basic/Pro's ~34% (Team is een volledig platform hoger: managerlaag, teamoverzicht en coaching zijn voor elk lid inbegrepen, niet alleen voor de manager). €39/gebruiker/maand is bewust exact gelijk aan Pro's jaarprijs, zodat een teamlid nooit goedkoper uitpakt dan een solo Pro-jaarabonnee (zelfde principe als bij de €49-maandprijs t.o.v. Pro €59/maand). Seat-wijzigingen tijdens een lopend jaarcontract: true-up, volledig handmatig (jaarprijs vast op het aantal seats bij tekenen, nieuwe seats apart maandelijks bijgefactureerd tot de volgende jaarvernieuwing, weggevallen seats niet terugbetaald), gangbare aanpak bij SaaS-jaarcontracten. Was eerder bewust uitgesteld vanwege fluctuerende teamgrootte, nu alsnog gebouwd op Arno's verzoek.
+
+**Eén regel per bullet (besloten 2026-08-02):** elke feature-bullet moet in de kaartlay-out op één regel passen, niet uitwrappen naar een tweede regel. Reden: bij ongelijke regelaantallen per bullet ontstaat een rommelig, ongelijkmatig ritme tussen de drie kaarten. Bij het herzien van te lange bullets altijd eerst proberen te verkorten zonder de kern te verliezen, pas als dat niet lukt de inhoud zelf aanpassen (zoals bij "onbeperkt" hierboven).
+
+**"Maandelijks opzegbaar." vervangt "Elke maand op te zeggen" (besloten 2026-08-02):** geldt voor de maandelijkse variant van de Basic/Pro-billingnote (getoond bij de maandelijks-stand van de jaar/maand-toggle). **Vervallen 2026-10-10:** het label is vervangen door "Per maand." (Basic/Pro) en "Opzegtermijn één maand." (Team), zie `docs/MOLLIE_PLAN.md`.
+
+## Besluitrecord nieuwe tarieven Pro en Team (2026-11-26)
+
+**Status:** Arno heeft op 2026-11-26 besloten deze tarieven in te voeren. Ze staan als geldende tarieven onder "Tiers en bedragen". Gebouwd op de tak `prijswijziging`, op 2026-11-27 nog niet live. Stand, inventaris en openstaande punten: `docs/PRIJSWIJZIGING_PLAN.md`. De kolommen "Oud" en "Nieuw" en de berekeningen hieronder zijn van het moment van het besluit.
 
 ### Tarieven
 
@@ -16,10 +101,10 @@ Dit document legt de definitieve pricing structuur vast. Doel: voorkomen dat dez
 
 ### Teamregels
 
-- De manager zit in de €97 (of €77) en betaalt dus geen apart Pro-bedrag. Nu telt de code de manager mee als betalende gebruiker.
+- De manager zit in de €97 (of €77) en betaalt dus geen apart Pro-bedrag. Vóór deze wijziging telde de code de manager mee als betalende gebruiker.
 - Een team is een manager plus **minimaal 3 teamleden**. Kleinste team: €244 per maand, of €176 per maand bij een jaarabonnement. De formulering "3 gebruikers inclusief manager" willen we nergens meer zien.
 - Tekst voor kleinere teams: "Team is er vanaf een manager en 3 teamleden. Begin je kleiner, bijvoorbeeld als startup met 2 teamleden? Neem dan contact op via team@arno.bot."
-- Open: hoe een uitzondering geprijsd wordt. Advies: de gewone formule (2 teamleden is €195, of €143 bij een jaarabonnement), dus alleen een uitzondering op het minimum.
+- Besloten: een uitzondering betaalt de gewone formule (2 teamleden is €195, of €143 bij een jaarabonnement), dus alleen een uitzondering op het minimum. Verworpen: een aparte prijs.
 
 ### Waarom
 
@@ -40,7 +125,7 @@ Eén Pro-prijs voor iedereen, en daarbovenop een managerbedrag. Een team kost al
 
 Berekend met de formules uit `lib/kostenTarieven.ts`, buiten Abacus om. Aannames: 250 solo users (80% Basic, 20% Pro; 40% van Basic en 10% van Pro op jaarbasis), 5 teams van een manager plus 4 teamleden, 20% van de teams op jaarbasis, wisselkoers 1,0949 dollar per euro (26 november 2026).
 
-| | Huidig | Voorstel |
+| | Oud | Nieuw |
 |---|---:|---:|
 | Omzet solo | €7.850 | €7.370 |
 | Omzet team | €1.640 | €1.381 |
@@ -60,7 +145,7 @@ Aandeel Pro, met dezelfde overige aannames:
 | 40% | €7.049 | €8.433 |
 | 50% | €7.584 | €9.076 |
 
-Bij 250 solo users is de huidige winst terug bij ongeveer 34% Pro, **alleen zolang de kostensprong hieronder niet is bereikt**. Reageert alleen de vraag naar Pro, dan zijn 69 in plaats van 50 solo Pro-klanten nodig (+38%).
+Bij 250 solo users is de oude winst terug bij ongeveer 34% Pro, **alleen zolang de kostensprong hieronder niet is bereikt**. Reageert alleen de vraag naar Pro, dan zijn 69 in plaats van 50 solo Pro-klanten nodig (+38%).
 
 ### Eerst controleren: kostensprong door spraak
 
@@ -70,86 +155,27 @@ De tabellen hierboven rekenen met 1,0 credit per teken: de sprong ligt dan boven
 
 Welk deel van de proefgebruikers betaalt, welk deel van de betalende solo-klanten Pro kiest (belangrijkste cijfer), hoeveel Basic-klanten upgraden en hoeveel teamaanvragen binnenkomen. Spreek vooraf een meetmoment af op aantallen, bijvoorbeeld na 50 afgelopen proefperiodes.
 
-### Wat er bij invoering moet veranderen
+### Beleid bij een prijsverlaging
+
+- **Maandabonnement:** de nieuwe prijs geldt vanaf de eerstvolgende betaling, niets terug.
+- **Jaarabonnement dat maximaal 30 dagen vóór de verlaging is betaald:** het verschil terug. Dit is coulance en staat bewust niet in de voorwaarden.
+- **Langer geleden betaald:** de nieuwe prijs bij verlenging.
+- Verworpen: de oude prijs houden; nooit iets terugbetalen.
+- **Niet geautomatiseerd.** Een bestaand solo-abonnement houdt het opgeslagen bedrag (ook bij de knop verlengen en bij Mollie), dus dit gaat met de hand. Teamfacturen, ook de tussenfactuur, worden daarentegen berekend met de actuele prijzen uit `lib/teamPricing.ts`.
+- **Terugbetalen:** nooit via een gedeeltelijke Mollie-terugbetaling en nooit via de refundknop in de admin. De live referralcode ziet de eerste als "andere terugbetaling" en de knop beëindigt het abonnement. Wel: per bank overmaken, een creditnota in Moneybird, en inboeken met de databasefunctie `referral_handmatig_betaling` (`docs/sql/2026-11-26-referral-verrekening.sql`; die kent alleen betalingen uit `arnobot_payments`, geen teamfacturen). Deze werkwijze is niet beproefd.
+- **Artikel 4 van de voorwaarden:** een prijsverhoging van een lopend abonnement wordt minimaal drie maanden vooraf aangekondigd, hooguit één keer per jaar; een verlaging kan op elk moment en geldt vanaf de eerstvolgende betaling. Verworpen: de oude tekst, die ook bij een verlaging drie maanden aankondiging en opzeggen noemde.
+- **Niet 14 dagen wachten met de livegang** (besluit Arno: de aankondigingstermijn uit artikel 11 is volgens hem niet van toepassing).
+
+### Uitvoering
 
 Zie `docs/PRIJSWIJZIGING_PLAN.md`.
-
-## Tiers en bedragen
-
-### Basic
-- €19/maand bij jaarbetaling (€228/jaar totaal)
-- €29/maand bij maandelijkse betaling
-- 30 dagen gratis proberen
-
-**Features:**
-- Dagelijks sparren met ArnoBot
-- Eén gespreksanalyse per dag
-- Geheugen over je recente gesprekken
-
-### Pro
-- €39/maand bij jaarbetaling (€468/jaar totaal)
-- €59/maand bij maandelijkse betaling
-- 30 dagen gratis proberen
-- Copy-patroon: "Alles van Basic, plus:"
-
-**Features (bovenop Basic), volgorde besloten 2026-08-02:**
-- Onbeperkt chatten en oefenen
-- Uitgebreider gespreksgeheugen
-- Volledig archief van al je output
-- Coaching op mindset, systeem en actie
-- Gesproken antwoorden, Arno's stem
-- De ArnoBot-app (Android)
-- **Toegevoegd (besloten 2026-08-13):** eenmalig gesprek met Arno zelf, ontgrendeld zodra er een coachingdocument is gegenereerd (dus na minimaal 5 sessies, niet vanaf dag één) én pas na daadwerkelijke betaling, niet al tijdens de trial. Trial-gebruikers starten namelijk al standaard op `plan='premium'`, dus alleen op plan filteren sloot trials niet uit. Niet voor Basic, en niet voor teamleden onder een Team-abonnement (dat verloopt via de manager, buiten de app om, bewust geen in-app bouw hiervoor). Technische gating: `plan === 'premium' && paid` in `app/bot/coaching/CoachingClient.tsx`, identiek server-side afgedwongen op `app/bot/gesprek/page.tsx` zelf (die pagina had voorheen geen eigen check). Zie ABONNEMENTEN.md, sectie "Gesprek met Arno (eenmalig, Pro)" voor de volledige implementatie.
-
-### Team
-- €97/maand vast bedrag (platformtarief voor de manager laag), of €77/maand-equivalent bij jaarlijkse vooruitbetaling (€924/jaar)
-- **+ €49 per gebruiker/maand** (niet degressief, geen staffelkorting, vaste formule), of €39/gebruiker/maand-equivalent bij jaarlijkse vooruitbetaling (€468/gebruiker/jaar)
-- Vanaf 3 gebruikers
-- **Jaaroptie toegevoegd (besloten 2026-08-10):** ~20% korting bij vooruitbetalen, bewust minder dan Basic/Pro's ~34% (Team is een volledig platform hoger: managerlaag, teamoverzicht en coaching zijn voor elk lid inbegrepen, niet alleen voor de manager). €39/gebruiker/maand is bewust exact gelijk aan Pro's jaarprijs, zodat een teamlid nooit goedkoper uitpakt dan een solo Pro-jaarabonnee (zelfde principe als bij de €49-maandprijs t.o.v. Pro €59/maand). Seat-wijzigingen tijdens een lopend jaarcontract: true-up, volledig handmatig (jaarprijs vast op het aantal seats bij tekenen, nieuwe seats apart maandelijks bijgefactureerd tot de volgende jaarvernieuwing, weggevallen seats niet terugbetaald), gangbare aanpak bij SaaS-jaarcontracten. Was eerder bewust uitgesteld vanwege fluctuerende teamgrootte, nu alsnog gebouwd op Arno's verzoek.
-- **Geen aparte trial.** De manager start zelf als individuele Pro-gebruiker (30 dagen gratis) en upgradet later naar Team wanneer hij zijn team wil meenemen. Deze upgrade-flow moet functioneel bestaan in de app (zie open punt onderaan).
-- **Facturatie voorlopig handmatig** (bevestigd 2026-08-02), net als Basic/Pro nu al werken (geen payment provider aangesloten). Geen aparte, uitgebreide aanvraagflow met factuurgegevens/KvK/BTW meer zoals de oude Command-staffel had, dat vervalt samen met de staffel zelf. Zodra er een payment provider is aangesloten, wordt dit voor alle tiers tegelijk geautomatiseerd, niet Team als eerste of enige uitzondering.
-- Copy-patroon: "Alles van Pro, plus:", geldt per teamlid (elk teamlid krijgt volledige Pro-functionaliteit)
-
-**Features (bovenop Pro, per teamlid):**
-- Teamoverzicht: individuele scores
-- Teamvoortgang als trend over tijd
-- Vroeg signaal bij stagnatie
-- AI-voorbereiding voor elke 1:1
-- Volledig 1:1 archief met eigen notities
-
-**Exclusief voor de manager (niet voor teamleden):**
-- Eigen leiderschapsaccount: eigen ruimte om te sparren over sales, organisatie en executie van het team. Dit is nadrukkelijk **geen coachingaccount** (de manager wordt niet gecoacht zoals een teamlid), het is een leiderschapsinstrument. **Op de prijzenkaart zelf (besloten 2026-08-02) staat deze bullet als eerste**, ondanks dat de kaart zelf geen visueel onderscheid maakt tussen manager-exclusieve en per-teamlid features (blijft één platte lijst, zie hierboven).
-- Team Spotlight: collectieve analyse van het hele team (`app/api/bot/team/spotlight`). Bestond al functioneel sinds fase 1 van de teammodule, stond alleen nog niet als bullet op de prijzenkaart. **Toegevoegd als 2e bullet (besloten 2026-08-11)**, direct na "Eigen leiderschapsaccount": een tastbaar, werkend verschil dat de hogere Team-prijs rechtvaardigt, in plaats van het als verrassing pas na aankoop te tonen.
-- Privacy garantie: managers zien nooit de inhoud van individuele gesprekken van teamleden, alleen geaggregeerde signalen die ertoe doen. Deze toelichting hoort thuis op de losstaande `/team` pagina, niet in de prijzenkaart zelf.
-
-**Elite-optie binnen de `/team`-offerte-aanvraag (besloten 2026-08-11):**
-Elite (zie de tabel in "Tiers en bedragen" hierboven, €397/maand solo) is geen publieke kaart meer, maar Arno wil het nog wel kunnen aanbieden aan individuele teamleden binnen een Team-offerte. Overwogen opties:
-- **Gekozen: surplus = exact het verschil tussen solo Elite (€397) en solo Pro (€59) = €338/maand extra per Elite-teamlid**, bovenop het gewone Team-per-gebruikertarief (€49 of €39). Geen bundelkorting op dit bedrag: die extra's kosten altijd hetzelfde, ongeacht via welke route (solo of Team) iemand ze afneemt.
-- **Verworpen: een verlaagde "bundel"-prijs op de €338.** Zou de schaarste van Arno's eigen tijd (de capaciteitscap van 50 Elite-klanten) verwateren door 'm goedkoper te maken via een bulkdeal.
-- **Verworpen: geen surplus, Elite-extra's gratis meenemen binnen Team-capaciteit.** Ondergewaardeert Arno's eigen tijd.
-- Geen aparte jaarprijs voor dit surplus (Elite zelf heeft geen jaaroptie): hetzelfde bedrag geldt ongeacht de gekozen Team-facturatiecyclus.
-- Reden dat Arno voor het niet-verwaterde bedrag kon kiezen zonder de capaciteitscap direct te laten knellen: de uitvoering (het maandelijkse gesprek) hoeft niet altijd door Arno zelf, kan ook door een door hem aangewezen coach gebeuren. Geen publieke vermelding hiervan nu, puur Arno's eigen leveringsflexibiliteit.
-- Implementatie: `TEAM_ELITE_SURPLUS_PER_MAAND` in `lib/teamPricing.ts`, checkbox + aantal-veld op `/team`, opgeslagen in nieuwe kolom `elite_aantal` op `arnobot_command_requests` (SQL-migratie, zie `docs/ABONNEMENTEN.md` voor de exacte statement en of Arno die al bevestigd heeft uitgevoerd vóór je hierop verder bouwt).
-
-**Addendum (2026-08-25):** de solo Elite-plan waar de €338-berekening hierboven op gebaseerd was, is inmiddels verwijderd (0 gebruikers, zie `docs/ABONNEMENTEN.md`, "Elite (individueel)"). Deze Team-Elite-surplusoptie blijft ongewijzigd bestaan als losstaand, vast bedrag, de historische herleiding naar solo-Elite is alleen nog documentatie, geen actief vergelijkingstarief meer.
-
-## Waarom deze bedragen zo zijn gekozen
-
-- **Team-seat (€49) vs. solo Pro maandelijks (€59):** lichte volumekorting bij gelijk commitment niveau (beide maandelijks opzegbaar, geen jaarverplichting). Bewust géén korting t.o.v. de jaarlijkse solo-prijs (€39), want dat zou minder commitment (Team, maandelijks) belonen met een lagere prijs dan meer commitment (solo, jaarlijks), omgekeerde SaaS-logica.
-- **Waarom geen jaaroptie bij Team:** teamgrootte fluctueert (aannames, vertrek), maandelijkse flexibiliteit is functioneel relevanter voor deze doelgroep dan een jaarkorting.
-- **Waarom €97 basistarief:** dit is niet een aparte "platformfee" los van gebruik, het is de eigen Pro-waarde van de manager (€59, want hij krijgt zelf ook alles van Pro) plus €38 opslag voor de manager-exclusieve laag: teamoverzicht, teamvoortgang-trends, vroegsignalering, AI-voorbereiding voor 1:1's en het leiderschapsaccount. Ter vergelijking: een teamlid betaalt €49 voor uitsluitend zijn eigen Pro-toegang, zonder die manager-laag. De opslag van €38 voor een volledig extra functionaliteitslaag is daarmee eerder behoudend dan overdreven geprijsd.
-- **Waarom geen aparte Team-trial:** teamdata opbouwen kost weken, een aflopende trial zou net op het waardevolle moment data laten "verdwijnen". De impliciete trial (manager begint solo als Pro) lost dit al op zonder omzet weg te geven aan een segment dat toch al laagdrempelig maandelijks kan op- en afzeggen.
-
-**Eén regel per bullet (besloten 2026-08-02):** elke feature-bullet moet in de kaartlay-out op één regel passen, niet uitwrappen naar een tweede regel. Reden: bij ongelijke regelaantallen per bullet ontstaat een rommelig, ongelijkmatig ritme tussen de drie kaarten. Bij het herzien van te lange bullets altijd eerst proberen te verkorten zonder de kern te verliezen, pas als dat niet lukt de inhoud zelf aanpassen (zoals bij "onbeperkt" hierboven).
-
-**"Maandelijks opzegbaar." vervangt "Elke maand op te zeggen" (besloten 2026-08-02):** geldt voor de maandelijkse variant van de Basic/Pro-billingnote (getoond bij de maandelijks-stand van de jaar/maand-toggle). **Vervallen 2026-10-10:** het label is vervangen door "Per maand." (Basic/Pro) en "Opzegtermijn één maand." (Team), zie `docs/MOLLIE_PLAN.md`.
 
 ## BTW-weergave (besloten 2026-09-03)
 
 Het oorspronkelijke Stripe-plan met de volledige onderbouwing staat alleen nog in git (`docs/PAYMENTS_PLAN.md`, verwijderd 2026-11-15). Kort:
 
 - `/prijzen` toont kale bedragen, geen BTW-vermelding. Voor een consument geldt dat als het eindbedrag inclusief BTW.
-- Consument betaalt het getoonde bedrag all-in; netto voor ArnoBot = bedrag / 1,21 (Pro-jaar €39 → €32,23 netto). Checkout-totaal voor een consument moet exact het getoonde bedrag zijn.
+- Consument betaalt het getoonde bedrag all-in; netto voor ArnoBot = bedrag / 1,21 (Pro-jaar, per maand: €33 → €27,27 netto). Checkout-totaal voor een consument moet exact het getoonde bedrag zijn.
 - Zakelijke klant voert een BTW-nummer in bij de checkout en rekent af exclusief BTW; netto voor ArnoBot = het volle bedrag.
 - Team blijft "excl. BTW" tonen (B2B-only).
 - Abacus modelleert de B2C-BTW-haircut bewust niet: B2C-volume naar verwachting een verwaarloosbaar deel van de omzet.
@@ -159,8 +185,8 @@ Het oorspronkelijke Stripe-plan met de volledige onderbouwing staat alleen nog i
 - **Eén gedeelde jaar/maand-toggle** boven Basic en Pro. Niet twee losse toggles per kaart, dat zou oneerlijke kruisvergelijkingen mogelijk maken (bijv. Basic maandelijks naast Pro jaarlijks).
 - **Team reageert niet op de toggle**, blijft altijd hetzelfde bedrag tonen. **Herzien (2026-08-02):** de eerdere subtekst onder de toggle ("Geldt voor Basic en Pro. Team is altijd maandelijks.") is bewust verwijderd, Arno vond het overbodig naast de kaarten zelf.
 - **Basic-bullets lijnen rij-voor-rij uit met Pro/Team** (besloten 2026-08-02, herzien): eerste poging (`flex: 1; justify-content: space-between`, bullets over de hele hoogte verspreiden) bleek fout, dat trekt Basic's 3 items juist scheef t.o.v. de rijen van Pro/Team in plaats van gelijk. Teruggedraaid naar gewone vaste regelafstand (`gap: 10px`, elke bullet `min-height: 21px`). Omdat alles boven de bullet-lijst (kop, prijsblok, "ALLES VAN X"-label) al gelijke hoogte heeft, liggen rij 1/2/3 daardoor vanzelf op dezelfde hoogte bij alle drie de kaarten, Basic heeft simpelweg geen rij 4-6.
-- **Team-kaart toont geen prijsdetails/staffel**, alleen het basisbedrag + per-gebruiker bedrag. CTA linkt door naar `arno.bot/team` voor verdere toelichting (privacy, rekenvoorbeelden, leiderschapsaccount uitleg).
-- **Team-kaart reageert sinds 2026-08-10 op dezelfde jaarlijks/maandelijks-toggle als Basic/Pro** (was eerder altijd vast op de maandprijs, simpelweg omdat de jaaroptie toen nog niet bestond). Toont bij "jaarlijks" €77 + €39/gebruiker (maand-equivalent) met een billingnote "Bij jaarbetaling, €924 + €468/gebruiker per jaar", verder zelfde patroon als Basic/Pro.
+- **Team-kaart toont geen prijsdetails/staffel**, alleen het managerbedrag + het bedrag per teamlid. CTA linkt door naar `arno.bot/team` voor verdere toelichting (privacy, rekenvoorbeelden, leiderschapsaccount uitleg).
+- **Team-kaart reageert sinds 2026-08-10 op dezelfde jaarlijks/maandelijks-toggle als Basic/Pro** (was eerder altijd vast op de maandprijs, simpelweg omdat de jaaroptie toen nog niet bestond). Toont bij "jaarlijks" €77 (maand-equivalent) met de billingnotes "Incl. manager, + €33 per teamlid" en "€924 + €396 per teamlid, per jaar", plus de tekst voor kleinere teams op de kaart (sinds 2026-11-26), verder zelfde patroon als Basic/Pro.
 - Geen kwantificering van jaarbesparing in copy (geen "bespaar X maanden"), bedragen kunnen wijzigen, tekst zou dan achterhaald raken. Toggle communiceert het voordeel puur door het bedrag zelf te tonen.
 - **Pagina-eyebrow (besloten 2026-08-02):** het amber label bovenaan de hero (`app/prijzen/page.tsx`) is "Tarieven", niet "Prijzen".
 

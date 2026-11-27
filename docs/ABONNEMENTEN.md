@@ -8,8 +8,9 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 
 ## Status
 
-**Laatst bijgewerkt:** 2026-11-15
+**Laatst bijgewerkt:** 2026-11-27
 **Waar we staan:** de structuur Basic, Pro en Team staat en wordt via Mollie en Moneybird betaald (live sinds 2026-11-04, zie `docs/MOLLIE_PLAN.md`). Prijzen en onderbouwing: `docs/PRICING_DECISIONS.md`. Overstappen tussen abonnementen is live sinds 2026-11-12 (zie hieronder en `docs/OVERSTAP_PLAN.md`). Teams kunnen als agent-proef zichzelf activeren (`docs/TEAM_PROCES.md`). Elite als solo-plan is verwijderd (2026-08-25); alleen de Team-Elite-surplusoptie bestaat nog. Voice-uit staat tijdelijk uit voor iedereen buiten Arno's accounts (`lib/voice.ts`). Het gesprek met Arno is Pro-only en niet aan betaling gebonden (besluit 2026-08-25, zie "Gesprek met Arno").
+**Prijswijziging (besloten 2026-11-26):** de bedragen en teamregels in dit document zijn de nieuwe (Pro €49 of €396, Team inclusief manager). Gebouwd op de tak `prijswijziging`, op 2026-11-27 nog niet live; uitrol en restpunten in `docs/PRIJSWIJZIGING_PLAN.md`.
 **Eerstvolgende stap:**
 - `[ ]` Overwegen of `arnobot_command_requests` en de vestigiale `niveau`-kolom ooit een echte schema-opschoning verdienen (geen migratie nu, zie "Team-aanvraagflow"). Puur interne naamgeving.
 - `[ ]` Supabase PITR: bij 150 actieve gebruikers, zie de mijlpalen in `CLAUDE.md` (niet eerder).
@@ -20,7 +21,7 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 
 | | **Basic** (`basis`) | **Pro** (`premium`) | **Team** (`team`) |
 |---|---|---|---|
-| Prijs | €19/mnd bij jaarbetaling (€228/jr), €29/mnd maandelijks | €39/mnd bij jaarbetaling (€468/jr), €59/mnd maandelijks | €97/mnd + €49/gebruiker/mnd, of €77/mnd-equiv. + €39/gebruiker/mnd-equiv. bij jaarbetaling (~20% korting), vanaf 3 gebruikers |
+| Prijs | €19/mnd bij jaarbetaling (€228/jr), €29/mnd maandelijks | €33/mnd bij jaarbetaling (€396/jr), €49/mnd maandelijks | Manager €97/mnd (incl. eigen Pro) + €49/teamlid/mnd, of €77 + €33/teamlid/mnd-equiv. bij jaarbetaling (€924 + €396 per teamlid per jaar), vanaf een manager en 3 teamleden |
 | Zichtbaar op `/prijzen` | Ja | Ja | Ja, zonder staffel |
 | Trial | 30 dagen gratis | 30 dagen gratis | Via het aanvraagformulier geen trial. Via een agent-link 30 dagen gratis proef met 10 dagen coulance, zie `docs/TEAM_PROCES.md` |
 | Coaching | Nee | Ja (mindset/systeem/actie) | Ja (erft alle Pro-functionaliteit) |
@@ -34,7 +35,7 @@ Referentiedocument voor de huidige plan-structuur, zodat besluiten hierover niet
 
 **Elite verwijderd (2026-08-25):** de losse, individuele Elite-plan (`plan='elite'`, €397/maand, alleen handmatig toe te kennen) is volledig uit het systeem gehaald na een bevestigde 0-gebruikerstelling. Verwijderd: de Telegram-toegangssectie op de accountpagina, de admin-capaciteitsteller (was 50), de toggle-optie, en de Elite-prijs/telling in Abacus (`lib/kostenTarieven.ts`, `kosten-tracking`). **Blijft ongewijzigd, expliciet buiten scope:** de Team-Elite-surplusoptie (`arnobot_teams.niveau='elite'`, `TEAM_ELITE_SURPLUS_PER_MAAND` in `lib/teamPricing.ts`, zichtbaar op de `/team`-offerteaanvraag), dat is een losstaande, nog levende verkoopoptie binnen Team-deals, geen relatie meer met een bestaand solo-Elite-tarief om zich aan te spiegelen (zie de aanpassing hieronder). Zie geheugen `project-elite-plan-removal`.
 
-Volledige onderbouwing van deze bedragen (waarom €97 platformtarief, waarom geen staffel meer, waarom Team een kleinere jaarkorting krijgt dan Basic/Pro, feature-taal-logica) staat in `docs/PRICING_DECISIONS.md`, niet hier gedupliceerd.
+Volledige onderbouwing van deze bedragen (het managerbedrag, waarom geen staffel, het besluitrecord van 2026-11-26, feature-taal-logica) staat in `docs/PRICING_DECISIONS.md`, niet hier gedupliceerd.
 
 ---
 
@@ -112,21 +113,21 @@ Dashboardtoegang draait op een losse kolom **`command_manager`** (boolean op `ap
 
 **Waarom losgekoppeld:** ten tijde van dit ontwerp kon een Team-groep volledig Pro-niveau óf volledig Elite-niveau zijn (via de oude `/command`-staffelflow), en met `plan==='team'` als enige schakelaar was er geen manier om iemand tegelijk Elite-functies te geven én toegang tot het managerdashboard. Inmiddels (2026-08-10) heeft Team geen niveau-keuze meer, maar de kolom blijft losgekoppeld, geen reden om dat terug te draaien.
 
-**Belangrijk, ongewijzigd:** dit blijft losstaand van de collaboration-teamfunctie zelf (`arnobot_teams`/`arnobot_team_members`, tot 25 leden, gaat over gezamenlijke coaching-dashboards/1:1's). Geen technische koppeling tussen "aantal seats waarvoor betaald is" en "aantal leden in het collaboration-team".
+**Belangrijk, ongewijzigd:** dit blijft losstaand van de collaboration-teamfunctie zelf (`arnobot_teams`/`arnobot_team_members`, de manager plus maximaal 25 teamleden, gaat over gezamenlijke coaching-dashboards/1:1's). Geen technische koppeling tussen "aantal seats waarvoor betaald is" en "aantal leden in het collaboration-team". **Noot 2026-11-27:** de teamfacturatie telt inmiddels wel de leden in `arnobot_team_members` zonder de eigenaar, met `min_seats` als ondergrens (`huidigSeats`, `lib/billing/teamFacturatie.ts`).
 
 ### Team-aanvraagflow (`/team`, tot 2026-08-10 `/command`)
 
-**Volledig herzien (2026-08-10):** geen niveau-keuze meer (Premium/Elite is vervallen als publieke keuze op deze pagina, zie open punt hieronder), geen gestaffelde prijs meer. Nu: vlakke prijs €97 platformtarief + €49/gebruiker/maand, of €77 + €39/gebruiker/maand-equivalent bij jaarlijkse vooruitbetaling (~20% korting, toegevoegd later dezelfde dag), vanaf 3 gebruikers. Rekenlogica in `lib/teamPricing.ts` (`berekenTeamPrijsPerMaand`), vervangt het oude `lib/commandPricing.ts` (verwijderd).
+**Volledig herzien (2026-08-10):** geen niveau-keuze meer (Premium/Elite is vervallen als publieke keuze op deze pagina, zie open punt hieronder), geen gestaffelde prijs meer. Nu (bedragen en telling van 2026-11-26): €97/maand voor de manager, inclusief eigen Pro, + €49/teamlid/maand, of €77 + €33/teamlid/maand-equivalent bij jaarlijkse vooruitbetaling (de jaaroptie is later op 2026-08-10 toegevoegd, toen met andere bedragen), vanaf een manager en 3 teamleden. Kleiner: via team@arno.bot, Arno richt het met de hand in tegen dezelfde formule. Rekenlogica in `lib/teamPricing.ts` (`berekenTeamPrijsPerMaand`), vervangt het oude `lib/commandPricing.ts` (verwijderd).
 
-**Elite-optie (besloten en gebouwd 2026-08-11, kolom `elite_aantal` bestaat in productie, gecontroleerd 2026-11-15):** `/team` heeft nu een checkbox "Ook Elite-niveau voor een deel van je team" plus een aantal-veld, met een vast surplus van €338/maand per Elite-teamlid (`TEAM_ELITE_SURPLUS_PER_MAAND` in `lib/teamPricing.ts`, = verschil tussen solo Elite €397 en solo Pro €59, geen aparte jaarkorting op dit bedrag). De API-route (`app/api/team-aanvraag/route.ts`) valideert en slaat dit op in een nieuwe kolom `elite_aantal` op `arnobot_command_requests`, en vermeldt het in de offerte-notificatiemail.
+**Elite-optie (besloten en gebouwd 2026-08-11, kolom `elite_aantal` bestaat in productie, gecontroleerd 2026-11-15):** `/team` heeft nu een checkbox "Ook Elite-niveau voor een deel van je team" plus een aantal-veld, met een vast surplus van €338/maand per Elite-teamlid (`TEAM_ELITE_SURPLUS_PER_MAAND` in `lib/teamPricing.ts`, ooit het verschil tussen solo Elite €397 en solo Pro van toen €59, sinds 2026-11-26 een los vast bedrag, geen aparte jaarkorting op dit bedrag). De API-route (`app/api/team-aanvraag/route.ts`) valideert en slaat dit op in een nieuwe kolom `elite_aantal` op `arnobot_command_requests`, en vermeldt het in de offerte-notificatiemail.
 
-Publieke pagina (geen `/bot`-prefix, geen inlog vereist). Formulier: bedrijfsnaam, KvK-nummer, BTW-nummer, factuuradres, aanvrager, bestelnummer (optioneel), aantal gebruikers, jaarlijks/maandelijks-toggle, live berekende prijs excl. BTW.
+Publieke pagina (geen `/bot`-prefix, geen inlog vereist). Formulier: bedrijfsnaam, KvK-nummer, BTW-nummer, factuuradres, aanvrager, bestelnummer (optioneel), aantal teamleden zonder de aanvrager zelf (minimaal 3), jaarlijks/maandelijks-toggle, live berekende prijs excl. BTW.
 
 Opslag: tabel `arnobot_command_requests` (Supabase, naam bewust ongewijzigd), plus e-mailmelding naar `arno@arno.bot` per aanvraag (`app/api/team-aanvraag/route.ts`).
 
 **Vestigiale kolom `niveau`, `cyclus` weer betekenisvol:** de tabel heeft nog een `niveau`-kolom uit de oude staffelflow die niet meer overeenkomt met wat de UI aanbiedt (geen niveau-keuze meer), de route stuurt hiervoor nu altijd `'premium'` als vaste, geldige filler-waarde, geen Supabase-migratie nodig. `cyclus` is sinds de jaaroptie weer een echte, betekenisvolle waarde (`'maandelijks'`/`'jaarlijks'`), niet langer vestigiaal.
 
-**Supabase-inrichting na aanvraag: volledig handmatig, blijvend.** Arno zoekt de aanvrager na akkoord handmatig op in `approved_users`, zet `command_manager=true` en `plan`, en `paid_at` zodra de factuur betaald is. De volledige checklist van aanvraag tot eerste factuur staat in `docs/TEAM_PROCES.md`. **Uitzondering sinds 2026-11-15:** een manager van een gratis agent-proef activeert zijn team zelf op de accountpagina (TEAM ACTIVEREN), zonder offerte of handmatige stappen. De handmatige route blijft voor teams via het aanvraagformulier. Opzeggen van een Team volgt dezelfde regel als zakelijke Basic en Pro (artikel 7, opzegtermijn één maand), met een automatische einddatum en stop van de facturatie: zie `docs/TEAM_PROCES.md`, fase 6.
+**Supabase-inrichting na aanvraag: volledig handmatig, blijvend.** Arno zoekt de aanvrager na akkoord handmatig op in `approved_users`, zet `command_manager=true` en `plan`, en `paid_at` zodra de factuur betaald is. De volledige checklist van aanvraag tot eerste factuur staat in `docs/TEAM_PROCES.md`. **Uitzondering sinds 2026-11-15:** een manager van een gratis agent-proef activeert zijn team zelf op de accountpagina (TEAM ACTIVEREN), zonder offerte of handmatige stappen (alleen de eigenaar van het team, van 3 tot en met 25 teamleden). De handmatige route blijft voor teams via het aanvraagformulier. Opzeggen van een Team volgt dezelfde regel als zakelijke Basic en Pro (artikel 7, opzegtermijn één maand), met een automatische einddatum en stop van de facturatie: zie `docs/TEAM_PROCES.md`, fase 6.
 
 **Afgerond en losgelaten: DocuSeal-offerte-automatisering.** Was gebouwd en getest, maar het brondocument-template liep vast op opmaakproblemen en heeft nooit echt gedraaid. Besloten (2026-08-01): niet hervatten. Arno gebruikt DocuSeal niet meer en heeft geen account meer. De code (`lib/docusealOffer.ts` en de aanroep ervan) is verwijderd.
 
@@ -170,6 +171,7 @@ Volledige uitwerking, besluiten en verworpen alternatieven: `docs/OVERSTAP_PLAN.
 - **Opzeggen terwijl een overstap gepland staat:** de overstap vervalt, het abonnement eindigt aan het einde van de betaalde periode (ook zakelijk, zonder de extra maand uit artikel 7). **Opzegging intrekken** kan zolang het abonnement nog loopt.
 - **Solo-jaar naar Team** en **Team naar solo:** handmatig, zie `docs/SOLO_JAAR_NAAR_TEAM.md`. **Team maand naar jaar:** Arno zet de cyclus in `/bot/admin/teams` vóór de volgende factuurdatum.
 - **Prijswijziging bij bestaande abonnementen:** pas bouwen bij een aankondiging (Mollie-bedrag per abonnement aanpassen met een script met voorbeeldrun). **Betaalmethode wijzigen:** via de bestaande route na een mislukte incasso.
+- **Prijsverlaging (besluit 2026-11-26):** maandabonnement: nieuwe prijs vanaf de volgende betaling, niets terug. Jaarabonnement dat maximaal 30 dagen geleden is betaald: het verschil terug (coulance, bewust niet in de voorwaarden). Ouder: nieuwe prijs bij verlenging. Niet geautomatiseerd; werkwijze en verworpen alternatieven in `docs/PRICING_DECISIONS.md`, "Beleid bij een prijsverlaging". Nooit via een gedeeltelijke Mollie-terugbetaling of de refundknop in de admin.
 - Voorwaarden versie 3.0 (artikel 4, 7 en 8). Alleen voor de eigenaar en de interne testaccounts tot `OVERSTAP_OPEN=true`.
 
 ---

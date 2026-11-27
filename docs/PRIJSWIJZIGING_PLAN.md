@@ -3,18 +3,18 @@
 ## Status
 
 - **Laatst bijgewerkt:** 2026-11-27
-- **Waar we staan:** fase 1 is gebouwd op de tak `prijswijziging` (werkmap `C:Usersarnoarnobot-prijs`, niet gepusht): commit 1c870b0a plus de herstellingen uit de eerste onafhankelijke controle; 2109 tests groen. De herstellingen worden nog nagekeken. Live is niets gewijzigd. Plekken en regelnummers: "Bijwerking 27-11" gaat voor.
-- **Eerstvolgende stap:** uitslag van de controle op de herstellingen verwerken, daarna fase 2 tot en met 6. Vóór livegang twee onafhankelijke controles over de hele wijziging en een nieuwe databasemeting.
+- **Waar we staan:** fase 1 tot en met 6 zijn gebouwd op de tak `prijswijziging` (werkmap `C:\Users\arno\arnobot-prijs`): 2120 tests groen, nagekeken door onafhankelijke agents. **NIET live.** De regels onder "Uitgangspunt" tot en met "Fase 6" beschrijven het plan van vóór de bouw; regelnummers en de kolom "Nu" zijn van toen. De PDF-versies van de documenten zijn nog niet opnieuw gerenderd (`npm run docs:pdf`). Bekende restpunten staan in de sectie "Bekende restpunten".
+- **Eerstvolgende stap:** Arno keurt de teksten goed, de database opnieuw meten, mergen naar master en daarna de controles na de deploy (fase 7).
 
 ### Afvinklijst
 
 - [ ] Fase 0: besluiten en voorbereiding (besluiten klaar; ElevenLabs open)
-- [ ] Fase 1: rekenlogica Team
-- [ ] Fase 2: prijsconstanten
-- [ ] Fase 3: zichtbare teksten en voorwaarden
-- [ ] Fase 4: interne tools
-- [ ] Fase 5: tests
-- [ ] Fase 6: documenten
+- [x] Fase 1: rekenlogica Team
+- [x] Fase 2: prijsconstanten
+- [x] Fase 3: zichtbare teksten en voorwaarden
+- [x] Fase 4: interne tools
+- [x] Fase 5: tests
+- [x] Fase 6: documenten
 - [ ] Fase 7: uitrol en controle
 
 ## Uitgangspunt
@@ -142,9 +142,31 @@ Nieuw: manager wordt niet geteld; klein team krijgt een correcte factuur; zelf a
 ## Fase 7: uitrol en controle
 
 1. Database opnieuw meten (abonnementen, teams, open betalingen).
-2. Eén deploy met fase 1 tot en met 5. De deploy is het schakelmoment; er is geen feature flag. Niet tussen 05:00 en 05:20 UTC (billing- en teamcrons).
+2. Eén deploy met fase 1 tot en met 5. De deploy is het schakelmoment; er is geen feature flag. **Niet pushen tussen 04:55 en 05:45 UTC** (billing-, team- en referralcrons, 05:00 tot 05:40).
 3. Controleren dat de productie-alias op de nieuwe deploy staat.
-4. `/prijzen`, `/bot/upgrade`, `/team/aanvragen`, afrekenscherm en Abacus nakijken. Voorbeeld manager plus 3: €244 en €2.112.
+4. `/prijzen`, `/bot/upgrade`, `/team/aanvragen`, afrekenscherm en Abacus nakijken.
+
+**Terugdraaien is NIET veilig zodra na de deploy een team is geactiveerd.** De oude code telt de manager weer mee: de maandfactuur wordt €49 te hoog en een jaarteam krijgt een onterechte tussenfactuur. Eerst `min_seats` en `volgende_factuurdatum` van dat team leegmaken, of de nieuwe teamlogica behouden.
+
+Controles na de deploy:
+
+- De productie-alias wijst naar de nieuwe deploy.
+- Afrekenscherm: Pro €49,00 per maand en €396,00 per jaar; zakelijk (incl. btw) €59,29 en €479,16; jaarabonnement met referralkorting (particulier) €363,00; Basic ongewijzigd.
+- Team, manager plus 3 teamleden: €244 per maand en €2.112 per jaar.
+- Het abonnement van de betalende klant staat nog op `bedrag_cent` 22800.
+- De volgende ochtend geen meldingen van de bedragcontrole, `referral-uitvoeren` en `team-facturatie`.
+- Eerste echte Pro-betaling: het totaal van de Mollie-betaling, het Mollie-abonnement en de Moneybird-factuur kloppen alle drie op de cent.
+
+## Bekende restpunten
+
+- **(a) Betalende klant, vóór de verlengdatum regelen.** De betalende klant staat in `approved_users` op `plan` `premium`, terwijl het abonnement `basis` is. Elke geslaagde abonnementsbetaling of mislukte upgrade schrijft het plan van het abonnement terug (`lib/billing/verwerking.ts`, `zetToegang` en het terugzetten van een upgrade). Bij verlenging zou deze klant dus naar Basic zakken. Regelen vóór de verlengdatum.
+- **(b) 1 cent, geaccepteerd.** Referraltegoed kan 1 cent boven €49,00 uitkomen als het tegen een grotere betaling wordt verrekend (`brutoVanNetto(4050)` is 4901). Op een eigen betaling van €49 is het begrensd op €49,00.
+- **(c) Vóór een volgende prijswijziging oplossen.** Op enkele plekken wordt nog met de actuele prijslijst vergeleken of gerekend: `kiesVoordeel` in `lib/billing/referralPlanner.ts`, de terugval in `betaaldMaandCent` in `lib/billing/referralGrootboek.ts`, het voorbeeld van solo naar Team in `lib/billing/soloNaarTeam.ts` en het terugzetten van een upgrade. Nu zijn er geen gegevens die dit raakt.
+- **(d) Teams boven 25 teamleden** kunnen niet joinen zonder codewijziging (`TEAM_MAX_TEAMLEDEN` in `lib/teamPricing.ts`), ook als Arno een hoger minimum instelt.
+- **(e) ElevenLabs:** de controle van het tegoed (creditverbruik) staat nog open, zie "ElevenLabs".
+- **Teamfacturen volgen altijd de huidige prijslijst** (`lib/teamPricing.ts`), ook de tussenfactuur bij een jaarteam. Een lopend teamcontract houdt dus niet zijn oude bedrag. Een latere verhoging zou bij de eerstvolgende factuur vanzelf ingaan, in strijd met de drie maanden aankondiging in artikel 4. Nu wordt geen team gefactureerd; oplossen vóór een volgende teamprijswijziging.
+- **Terugbetaling op een teamfactuur** kan niet worden ingeboekt met `referral_handmatig_betaling` (die zoekt alleen in `arnobot_payments`).
+- De kostengrenzen per Pro-gebruiker (`docs/DOCUMENTEN_PLAN.md`) zijn onderbouwd met Pro €39.
 
 ## Buiten de repo (niet gecontroleerd)
 
