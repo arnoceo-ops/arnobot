@@ -542,7 +542,7 @@ export async function POST(req: NextRequest) {
     const importProfiel = await importProfielPromise
     const coachingContext = await coachingContextPromise
 
-    // Bij een verouderd gesprek zit de oude geschiedenis als gedateerd geheugen in geheugentekst.
+    // Na meer dan 30 dagen stilte gaan de oude berichten niet mee, het gesprek staat dan in geheugentekst (lib/geheugenContext.ts).
     const effectieveHistory = verouderd ? [] : (history || [])
 
     const messages = [

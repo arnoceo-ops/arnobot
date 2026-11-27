@@ -39,10 +39,61 @@ export const SEMANTIC_MEMORY_TOP_N = { basis: 3, overig: 8 } as const
 export function geheugenDatum(iso: string): string {
   const d = new Date(iso)
   const dagen = Math.max(0, Math.floor((Date.now() - d.getTime()) / 86_400_000))
-  const datum = d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+  const datum = kalenderdag(iso)
   if (dagen >= 70) return datum
   const geleden = dagen < 14 ? `${dagen} dag${dagen === 1 ? '' : 'en'} geleden` : `${Math.round(dagen / 7)} weken geleden`
   return `${datum}, ${geleden}`
+}
+
+const kalenderdag = (iso: string) => new Date(iso).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Amsterdam' })
+
+// De rij in arnobot_blog_sessions houdt de datum van de eerste opslag, ook als het gesprek later is
+// voortgezet en opnieuw samengevat. Daarom komt de datering uit de berichten zelf (27 november 2026).
+// Samenvatting en feiten zijn niet per regel te dateren. Bij een gesprek dat hooguit 30 dagen
+// overspant telt de leeftijd vanaf het laatste bericht en staat het begin erbij. Is de spreiding
+// groter, dan blijft de begindatum gelden: anders gaat oude inhoud ineens als recent mee.
+const MAX_SPREIDING_MS = 30 * 24 * 60 * 60 * 1000
+
+export type GesprekPeriode = { eerste: string; laatste: string }
+
+export async function haalGesprekPeriodes(supabase: SupabaseClient, userId: string, sessieIds: string[]): Promise<Map<string, GesprekPeriode>> {
+  const periodes = new Map<string, GesprekPeriode>()
+  if (sessieIds.length === 0) return periodes
+  try {
+    for (let van = 0; ; van += 1000) {
+      const { data, error } = await supabase
+        .from('arnobot_rds_logs')
+        .select('session_id, created_at')
+        .eq('user_id', userId)
+        .in('session_id', sessieIds)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .range(van, van + 999)
+      if (error) throw new Error(error.message)
+      for (const rij of (data ?? []) as { session_id: string; created_at: string }[]) {
+        const p = periodes.get(rij.session_id)
+        if (!p) periodes.set(rij.session_id, { eerste: rij.created_at, laatste: rij.created_at })
+        else p.laatste = rij.created_at
+      }
+      if (!data || data.length < 1000) return periodes
+    }
+  } catch (e) {
+    // Zonder berichtdata geldt de datum van de rij. Een halve uitkomst zou verkeerd dateren.
+    console.error('[chat] berichtdata voor geheugen ophalen mislukt:', e)
+    return new Map()
+  }
+}
+
+export function dateerOpBerichten<T extends { session_id: string; created_at: string }>(sessie: T, periodes: Map<string, GesprekPeriode>): T & { begonnen?: string } {
+  const p = periodes.get(sessie.session_id)
+  if (!p || Date.parse(p.laatste) - Date.parse(p.eerste) > MAX_SPREIDING_MS) return sessie
+  return { ...sessie, created_at: p.laatste, begonnen: p.eerste }
+}
+
+export function sessieDatum(s: { created_at: string; begonnen?: string }): string {
+  const label = geheugenDatum(s.created_at)
+  if (!s.begonnen || kalenderdag(s.begonnen) === kalenderdag(s.created_at)) return label
+  return `${label}, gesprek begonnen op ${kalenderdag(s.begonnen)}`
 }
 
 // Herinneringen ouder dan 6 weken komen niet meer als situatiefeiten de prompt in, alleen als
@@ -102,6 +153,16 @@ export async function findSemanticallyRelevantOlderSessions(
   }
 }
 
+// Tot en met deze stilte gaat een voortgezet gesprek in zijn geheel mee, net als zonder pauze (besluit
+// 27 november 2026: de app belooft dat ArnoBot onthoudt). Daarboven gaan de oude berichten niet als live
+// beurten mee op het eerste bericht, want dan ankert het model erop als de actuele stand (31 oktober 2026,
+// berichten van maanden eerder). Het gesprek komt dan in het geheugen zoals elk ander eerder gesprek, met
+// datum en dezelfde ouderdomsregels, zodat voortzetten niet minder meegeeft dan een nieuw gesprek.
+// De 30 dagen zijn een keuze, niet gemeten.
+export const VERS_GESPREK_MS = 30 * 24 * 60 * 60 * 1000
+
+const SESSIE_KOLOMMEN = 'session_id, title, summary, feiten, onderwerp, feiten_blijvend, mail_verzoek, uitdaging, actie_status, created_at'
+
 export type GeheugenContext = { geheugentekst: string; prevSessionCount: number; verouderd: boolean }
 
 export async function haalGeheugenContext(
@@ -121,7 +182,7 @@ export async function haalGeheugenContext(
   const negeer = p.negeerSessieIds ?? []
   let recenteQuery = supabase
     .from('arnobot_blog_sessions')
-    .select('session_id, title, summary, feiten, onderwerp, feiten_blijvend, mail_verzoek, uitdaging, actie_status, created_at')
+    .select(SESSIE_KOLOMMEN)
     .eq('user_id', userId)
     .not('session_id', 'eq', sessionId)
   for (const id of negeer) recenteQuery = recenteQuery.not('session_id', 'eq', id)
@@ -148,8 +209,7 @@ export async function haalGeheugenContext(
             .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle(),
-          // Tijdstip van het vorige bericht in dit gesprek: bij een hervat gesprek van weken of
-          // maanden terug is de meegestuurde geschiedenis geen actuele stand van zaken meer.
+          // Tijdstip van het vorige bericht in dit gesprek, voor de grens VERS_GESPREK_MS.
           Array.isArray(history) && history.length > 0
             ? supabase
                 .from('arnobot_rds_logs')
@@ -161,9 +221,33 @@ export async function haalGeheugenContext(
                 .maybeSingle()
             : Promise.resolve({ data: null as { created_at: string } | null }),
         ])
-          .then(async ([{ data: prevSessions }, { data: sparringSessions }, oudereKandidaten, terugkerendeEntiteiten, { data: laatsteCoaching }, { data: laatsteBericht }]) => {
+          .then(async ([{ data: andereSessies }, { data: sparringSessions }, kandidatenOpRij, terugkerendeEntiteiten, { data: laatsteCoaching }, { data: laatsteBericht }]) => {
             let geheugentekst = ''
             let prevSessionCount = 0
+            const verouderd = !!laatsteBericht && Array.isArray(history) && history.length > 0
+              && Date.now() - new Date(laatsteBericht.created_at).getTime() > VERS_GESPREK_MS
+            // Gaan de berichten niet mee, dan telt dit gesprek als eerder gesprek, ook als het buiten
+            // het venster van recente gesprekken valt. Verwijderd of uitgesloten blijft weg.
+            let prevSessions = andereSessies
+            if (verouderd) {
+              const { data: ditGesprek } = await supabase
+                .from('arnobot_blog_sessions')
+                .select(SESSIE_KOLOMMEN)
+                .eq('user_id', userId)
+                .eq('session_id', sessionId)
+                .is('deleted_at', null)
+                .eq('community_excluded', false)
+                .maybeSingle()
+              if (ditGesprek) {
+                prevSessions = [...(andereSessies ?? []), ditGesprek]
+                  .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+              }
+            }
+            const periodes = await haalGesprekPeriodes(supabase, userId, [...new Set([...(prevSessions ?? []), ...kandidatenOpRij].map(s => s.session_id as string))])
+            prevSessions = (prevSessions ?? [])
+              .map(s => dateerOpBerichten(s, periodes))
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            const oudereKandidaten = kandidatenOpRij.map(s => dateerOpBerichten(s, periodes))
             if (prevSessions && prevSessions.length > 0) {
               prevSessionCount = prevSessions.length
               // Herinneringen ouder dan 6 weken staan in een eigen blok dat zichzelf als vaak
@@ -171,14 +255,14 @@ export async function haalGeheugenContext(
               // als de huidige stand van zaken (replay testgebruikersincident, 2026-10-31).
               const recenteSessies = prevSessions.filter(s => !isOudGeheugen(s.created_at))
               const oudeSessies = prevSessions.filter(s => isOudGeheugen(s.created_at))
-              const feitenBlokken = recenteSessies.filter(s => s.feiten).map(s => `[${geheugenDatum(s.created_at)}]\n${s.feiten}`).join('\n\n')
+              const feitenBlokken = recenteSessies.filter(s => s.feiten).map(s => `[${sessieDatum(s)}]\n${s.feiten}`).join('\n\n')
               const samenvattingen = recenteSessies.filter(s => s.summary).map(s => {
-                const datum = geheugenDatum(s.created_at)
+                const datum = sessieDatum(s)
                 return `- ${datum}: ${s.summary}`
               }).join('\n')
               const blijvendeFeiten = [...new Set(oudeSessies.flatMap(s => feitenRegels(s.feiten_blijvend)))]
               const oudeOnderwerpen = oudeSessies
-                .map(s => `- ${geheugenDatum(s.created_at)}: ${geheugenOnderwerp(s)}`)
+                .map(s => `- ${sessieDatum(s)}: ${geheugenOnderwerp(s)}`)
                 .join('\n')
               const uitdagingSessies = prevSessions.filter(s => s.uitdaging)
               const recentSessieMetUitdaging = uitdagingSessies[0] ?? null
@@ -210,7 +294,7 @@ export async function haalGeheugenContext(
                 const extraOpen = openActies.filter(s => s.session_id !== recentSessieMetUitdaging?.session_id)
                 if (extraOpen.length > 0) {
                   const lijst = extraOpen.map(s => {
-                    const datum = geheugenDatum(s.created_at)
+                    const datum = sessieDatum(s)
                     const st = s.actie_status === 'deels' ? 'deels gedaan' : s.actie_status === 'nee' ? 'nog niet gedaan' : 'geen antwoord gegeven'
                     return `- ${datum}: ${s.uitdaging} (${st})`
                   }).join('\n')
@@ -233,7 +317,7 @@ export async function haalGeheugenContext(
               .slice(0, semantischeTopN)
             if (relevanteOudereSessies.length > 0) {
               const oudereTekst = relevanteOudereSessies.map(s => {
-                const datum = geheugenDatum(s.created_at)
+                const datum = sessieDatum(s)
                 // Oud: alleen het onderwerp (de stand van zaken is onbekend), recent: volledige inhoud.
                 const inhoud = isOudGeheugen(s.created_at)
                   ? `${geheugenOnderwerp(s)} (stand van zaken onbekend, alleen als vraag gebruiken)`
@@ -258,11 +342,6 @@ export async function haalGeheugenContext(
                 geheugentekst += `\nOntwikkelpunt(en) mindset: ${mindsetOntwikkelpunten.map(p => p.tekst).join(' | ')}`
               }
             }
-            // Verouderd gesprek (laatste bericht langer dan 48 uur geleden, bv. via ?resume= of een
-            // tab die dagen openstond): de oude berichten gaan NIET als live beurten mee, want dan
-            // ankert het model erop en behandelt het ze als de actuele stand (bevestigd met een
-            // replay van het testgesprek, 2026-10-31: de notitie alleen was niet genoeg). Ze gaan
-            // als gedateerd, ingekort geheugen mee.
             // Mailpatroon: gebruikt de gebruiker ArnoBot vooral als tekstschrijver? (lib/mailPatroon.ts)
             const recenteGesprekken = prevSessions ?? []
             geheugentekst += mailChatSignaal(recenteGesprekken.filter(s => s.mail_verzoek === true).length, recenteGesprekken.length)
@@ -288,24 +367,6 @@ export async function haalGeheugenContext(
             }
             geheugentekst += adviesRegels(question, history)
             geheugentekst += feitenRegel(question)
-            let verouderd = false
-            if (laatsteBericht && Array.isArray(history) && history.length > 0 && Date.now() - new Date(laatsteBericht.created_at).getTime() > 48 * 60 * 60 * 1000) {
-              verouderd = true
-              // Geen letterlijke berichten van toen: die komen als gespreksfragment over als "nu"
-              // (replay-meting 2026-10-31). De samenvatting van de sessie, met datum, wel.
-              const { data: dezeSessie } = await supabase
-                .from('arnobot_blog_sessions')
-                .select('title, onderwerp')
-                .eq('user_id', userId)
-                .eq('session_id', sessionId)
-                .maybeSingle()
-              // Alleen het neutrale onderwerp van toen: de samenvatting en feiten bevatten juist de
-              // stand van zaken van toen, die het model als "nu" ging noemen.
-              const inhoud = dezeSessie
-                ? `Onderwerp van toen: ${geheugenOnderwerp(dezeSessie)}. Wat er toen speelde is mogelijk achterhaald, vraag hoe het er nu voor staat.`
-                : String((history as { content: string }[]).filter((_, i) => i % 2 === 0).slice(-1)[0]?.content ?? '').slice(0, 300)
-              geheugentekst += `\n\nEERDER DEEL VAN DIT GESPREK (laatste bericht ${geheugenDatum(laatsteBericht.created_at)}):\nDe gebruiker pakt een gesprek van toen weer op. Wat hieronder staat is een herinnering aan dat gesprek en geen actuele stand van zaken. Wat de gebruiker nu schrijft is leidend. Weet je niet of iets hieruit nog klopt, stel dan één korte vraag.\n${inhoud}`
-            }
             return { geheugentekst, prevSessionCount, verouderd }
           })
 }

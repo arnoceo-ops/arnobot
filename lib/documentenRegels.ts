@@ -5,9 +5,10 @@ import { isInternalTestUser } from '@/lib/internalTestAccounts'
 
 export const DOCUMENTEN_BUCKET = 'arnobot-documenten'
 
-// Een tijdelijke kopie leeft tot laatst gebruikt plus 48 uur. Dat is dezelfde grens waarop de app een
-// gesprek als verouderd behandelt (lib/geheugenContext.ts en app/bot/SparClient.tsx): bij een kortere
-// levensduur verdwijnt een document midden in een gesprek dat de app nog als lopend ziet.
+// Een tijdelijke kopie leeft tot laatst gebruikt plus 48 uur. Dat is dezelfde grens waarop de app bij
+// opnieuw openen een nieuw gesprek begint (app/bot/SparClient.tsx): bij een kortere levensduur verdwijnt
+// een document midden in een gesprek dat de app nog als lopend ziet. De berichten van een voortgezet
+// gesprek gaan langer mee (VERS_GESPREK_MS in lib/geheugenContext.ts), een tijdelijk bestand niet.
 export const DOCUMENT_LEVENSDUUR_MS = 48 * 60 * 60 * 1000
 
 // Per type een grens. Een afbeelding mag bij Anthropic niet groter zijn dan 10 MB (bron: platform.claude.com/docs/en/build-with-claude/vision,
