@@ -3,8 +3,8 @@
 ## Status
 
 **Laatst bijgewerkt:** 27 november 2026
-**Waar we staan:** kernset goedgekeurd. Oorzaakonderzoek ronde 1 en 2 klaar: het model maakt het grootste verschil, maar geen opstelling haalt de volledige toets (zie fase 2). Er is niets aan de chat, de prompt of de database aangepast.
-**Eerstvolgende stap:** akkoord van Arno op ronde 3: Opus 5.5 met lagere effort, met en zonder gestructureerde geldstap.
+**Waar we staan:** kernset goedgekeurd. Ronde 1 tot en met 3 klaar: Opus 5.5 leest bedragen veel beter; de geldstap als instructie helpt deels, maar dwingt niets af (zie fase 2). Er is niets aan de chat, de prompt of de database aangepast.
+**Eerstvolgende stap:** akkoord van Arno op het bouwen en testen van de afgedwongen geldstap; Arno beoordeelt de toonproef.
 
 - [x] Fase 0: nulmeting en kritische toets van het plan
 - [ ] Fase 1: examen goedkeuren (kernset gedaan) en uitbreiden
@@ -68,7 +68,7 @@ Ronde 2: drie gevallen (prijsverlaging "omgedraaid", btw-vergelijking, inclusief
 | kaal (alleen korte instructie) | 7/8 | 0/8 | 3/8 |
 | Sonnet 4.6 met denkstap | 7/8 | 2/8 | 1/8 |
 | Sonnet 5.5 met denkstap | 8/8 | 7/8 | 2/8 |
-| Opus 5.5 met denkstap | 2/8 | 8/8 | 6/8 |
+| Opus 5.5 met denkstap | 1/8 (gecorrigeerd na ronde 3, was 2/8) | 8/8 | 6/8 |
 
 Conclusies:
 - Geheugen, kennisbank, geschiedenis en de verdachte promptregels zijn niet de hoofdoorzaak: ook zonder ArnoBot-prompt komen dezelfde fouten. De hypothese over "vraag en lever tegelijk" is voor deze gevallen niet bevestigd. Bij het verliesgeval gaf "zonder regels" vaker de goede richting (7/8 tegen 2/8), bij de andere twee niet.
@@ -78,6 +78,28 @@ Conclusies:
 - Beperkingen: 3 gevallen, 8 pogingen (verschillen van 1 à 3 zeggen weinig), beoordelaars zijn ook Claude, lagere effort niet getest, toon niet beoordeeld.
 
 **Niet gekozen (nog niet):** direct overstappen op Opus 5.5. Wachttijd, lengte, toon en lagere effort zijn niet getest.
+
+### Ronde 3: Opus 5.5 op lagere effort, met en zonder geldstap (27 november 2026)
+
+96 antwoorden, zelfde drie gevallen, 8 per combinatie, blind beoordeeld door dezelfde beoordelaars. De geldstap is hier alleen een extra instructie (tekst in `scripts/examen-geldadvies.ts`), gebaseerd op Arno's oordelen over deze gevallen; de uitslag is daardoor waarschijnlijk te gunstig.
+
+| Meting (midden en laag samen) | Zonder geldstap | Met geldstap |
+|---|---|---|
+| Prijs: richting omgedraaid | 7/16 | 2/16 |
+| Prijs: zonder schadelijke fout (omgedraaid, verzonnen, rekenfout) | 6/16 | 8/16 |
+| Prijs: vraagt of de gebruiker met de klant door wil | 0/16 | 0/16 |
+| Prijs: vraagt naar meedalende kosten | 0/16 | 2/16 |
+| Korting: btw goed | 16/16 | 16/16 |
+| Korting: vraagt wat je terugkrijgt | 4/16 | 12/16 |
+| Verlies goed berekend | 14/16 | 14/16 |
+
+- Laag en midden verschillen niet duidelijk in kwaliteit. Mediaan tot eerste tekst: laag 19 tot 20 s, midden 29 s; 380 tot 427 woorden. Geschat $0,23 tot $0,26 per antwoord.
+- De instructie noemt "wil en kan je met deze klant door" letterlijk, en geen van de 32 prijsantwoorden (16 met de instructie) vroeg het. Een instructie dwingt niet af.
+- Alle prijsantwoorden beginnen met de foute eerdere antwoorden in de geschiedenis. Een eerste oordeel zonder die geschiedenis is niet opnieuw getest.
+- Beoordelaars rekenden geheugenfeiten als verzonnen omdat zij het geheugen niet zagen; de strenge score op het kortingsgeval is daarom niet bruikbaar.
+- Testkosten ronde 1 tot en met 3: ongeveer $47.
+
+**Voorstel (nog niet goedgekeurd): afgedwongen geldstap, alleen in de test.** Stap 1: het model vult verplichte velden (per bedrag wat het is, gegeven of aanname, effect per keuze, doorgaan met de klant bekend of onbekend, kosten, tegenprestatie) via structured outputs (geforceerde tool_choice werkt niet op Opus 5.5 en Sonnet 5.5 volgens de API-documentatie in de claude-api skill, 27-11). Stap 2: code controleert; ontbreekt een beslissend veld, dan moet het antwoord een vraag zijn. Stap 3: schrijven en controleren of richting en argumenten kloppen met de velden. Verworpen als eindoplossing: alleen de instructie.
 
 ## Fase 3 en 4: kandidaten
 

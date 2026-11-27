@@ -25,6 +25,8 @@ const MAX_RONDES = 6
 type Variant = {
   model: string
   denken?: boolean
+  effort?: 'low' | 'medium' | 'high'
+  geldstap?: boolean
   weg?: ('geheugen' | 'kennisbank' | 'historie' | 'persona' | 'regels')[]
 }
 // Verdachte regels uit lib/systemPrompt.ts (hypotheses in docs/GELDADVIES_PLAN.md). Elk stuk wordt letterlijk uit de prompt geknipt.
@@ -42,7 +44,23 @@ export const VARIANTEN: Record<string, Variant> = {
   denkstap: { model: 'claude-sonnet-4-6', denken: true },
   sonnet55: { model: 'claude-sonnet-5-5', denken: true },
   opus55: { model: 'claude-opus-5-5', denken: true },
+  opusMidden: { model: 'claude-opus-5-5', denken: true, effort: 'medium' },
+  opusLaag: { model: 'claude-opus-5-5', denken: true, effort: 'low' },
+  opusMiddenGeld: { model: 'claude-opus-5-5', denken: true, effort: 'medium', geldstap: true },
+  opusLaagGeld: { model: 'claude-opus-5-5', denken: true, effort: 'low', geldstap: true },
 }
+
+// Proefversie van de geldstap (docs/GELDADVIES_PLAN.md), alleen in deze test. Gebaseerd op de vier salesoordelen van Arno. In deze proef een
+// instructie die bij elk geval meegaat; de herkenning van een geldvraag en een controle in code zijn nog niet gebouwd.
+const GELDSTAP = `GELDSTAP (geldt als de vraag draait om een bedrag, prijs, korting, marge, verlies of contractvoorwaarde; gaat dan voor op de regels over vragen stellen hierboven)
+
+Bepaal eerst voor jezelf, voordat je iets vindt:
+1. Wat elk bedrag is: wie betaalt wie, met of zonder btw, welke periode, huidige stand of beginstand, deel of totaal. Vergelijk alleen bedragen op dezelfde basis.
+2. Wat gegeven is en wat je aanneemt. Kan een ontbrekend gegeven je oordeel omdraaien, vraag er dan eerst naar. Anders noem je de aanname hardop.
+3. Wat elke keuze met het geld van de gebruiker doet. Elk argument dat je gebruikt wijst dezelfde kant op als je advies.
+4. Wat je over de situatie moet weten: wil en kan de gebruiker met deze klant door, draagt de marge het, en dalen de kosten mee of zijn die al gedaald. Bij korting of iets weggeven: wat krijgt de gebruiker ervoor terug. Vraagt een klant andere voorwaarden: eerst bellen en achterhalen waarom.
+
+Je zegt niet dat je deze stap doet. Je antwoord blijft kort. Heb je meer dan één gegeven nodig om te kunnen oordelen, vraag die dan samen in één korte alinea.`
 
 type Geval = { code: string; sessie: string; beurt: number }
 type Rij = { session_id: string; question: string; answer: string; bron_context: string | null; verbruik: { lengte?: string } | null; created_at: string; user_id: string }
@@ -104,6 +122,7 @@ async function main() {
       system = system.map(b => ({ ...b, text: VERDACHT.reduce((t, re) => { if (re.test(t)) geknipt++; return t.replace(re, '') }, b.text) }))
       if (geknipt !== VERDACHT.length) throw new Error(`verdachte regels niet gevonden (${geknipt} van ${VERDACHT.length}), lib/systemPrompt.ts is gewijzigd`)
     }
+    if (v.geldstap) system = [...system, { type: 'text', text: GELDSTAP }]
     const maxTokens = lengte === 'kort' ? 750 : lengte === 'uitgebreid' ? 2500 : 1450
     const metTools = /\d/.test(vraag + ' ' + historie.slice(-6).map(h => h.content).join(' '))
     const tabel = /[|\t]/.test(vraag)
@@ -126,7 +145,7 @@ async function main() {
     let stop = ''
     for (let ronde = 0; ronde <= MAX_RONDES; ronde++) {
       // Denktokens tellen mee in max_tokens: met denkstap komt er ruimte bovenop de lengte van het antwoord.
-      const extra: Record<string, unknown> = v.denken ? { thinking: { type: 'adaptive' }, output_config: { effort: 'high' } } : {}
+      const extra: Record<string, unknown> = v.denken ? { thinking: { type: 'adaptive' }, output_config: { effort: v.effort ?? 'high' } } : {}
       const stream = client.messages.stream({
         model: v.model, max_tokens: v.denken ? p.maxTokens + 12000 : p.maxTokens, system: p.system, messages: berichten,
         ...(p.tools ? { tools: p.tools } : {}), ...extra,
