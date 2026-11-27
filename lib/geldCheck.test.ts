@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { getallenIn, voerGeldCheckUit, bouwCheckInvoer, gebruikersTekst, metGeldBlok, doeGeldCheck } from '@/lib/geldCheck'
+import { describe, it, expect, afterEach, vi } from 'vitest'
+import { getallenIn, voerGeldCheckUit, bouwCheckInvoer, gebruikersTekst, metGeldBlok, doeGeldCheck, geldBeschikbaarVoor } from '@/lib/geldCheck'
 
 // Alle bedragen hier zijn verzonnen.
 describe('getallenIn', () => {
@@ -64,5 +64,28 @@ describe('doeGeldCheck', () => {
 
   it('een afgekapt antwoord is een fout', async () => {
     await expect(doeGeldCheck(nep('max_tokens', '{'), [], 'x', {})).rejects.toThrow()
+  })
+})
+
+describe('geldBeschikbaarVoor', () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('alleen de eigenaar, tot de schakelaar open staat', () => {
+    vi.stubEnv('ARNOBOT_OWNER_USER_ID', 'user_eigenaar')
+    vi.stubEnv('GELDCONTROLE_OPEN', '')
+    vi.stubEnv('GELDCONTROLE_UIT', '')
+    expect(geldBeschikbaarVoor('user_eigenaar')).toBe(true)
+    expect(geldBeschikbaarVoor('user_ander')).toBe(false)
+    expect(geldBeschikbaarVoor(null)).toBe(false)
+    vi.stubEnv('GELDCONTROLE_OPEN', 'true')
+    expect(geldBeschikbaarVoor('user_ander')).toBe(true)
+    vi.stubEnv('GELDCONTROLE_UIT', '1')
+    expect(geldBeschikbaarVoor('user_eigenaar')).toBe(false)
+  })
+
+  it('zonder ingestelde eigenaar niemand', () => {
+    vi.stubEnv('ARNOBOT_OWNER_USER_ID', '')
+    vi.stubEnv('GELDCONTROLE_OPEN', '')
+    expect(geldBeschikbaarVoor('user_ander')).toBe(false)
   })
 })

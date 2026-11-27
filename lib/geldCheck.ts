@@ -106,6 +106,17 @@ export function voerGeldCheckUit(gevonden: unknown, gebruikersTekst: string): Ge
   return { blok, uitgevoerd, afgekeurd }
 }
 
+/**
+ * Wie de geldcontrole, de geldfuncties en het nieuwere model krijgt. Nu alleen de eigenaar (ARNOBOT_OWNER_USER_ID); voor alle anderen
+ * werkt de chat zoals hiervoor. Voor iedereen aanzetten: GELDCONTROLE_OPEN=true. Meteen uit, ook voor de eigenaar: GELDCONTROLE_UIT=1.
+ */
+export function geldBeschikbaarVoor(userId: string | null | undefined): boolean {
+  if (!userId || process.env.GELDCONTROLE_UIT === '1') return false
+  if (process.env.GELDCONTROLE_OPEN === 'true') return true
+  const eigenaar = process.env.ARNOBOT_OWNER_USER_ID
+  return !!eigenaar && eigenaar === userId
+}
+
 export const GELDCHECK_MODEL = 'claude-haiku-5-5'
 // Een herkende geldvraag wordt door dit model beantwoord (met denkstap). Gemeten 27-11: het vorige chatmodel hield de richting van een
 // prijswijziging niet vast, ook niet met de juiste uitkomst bij de vraag.

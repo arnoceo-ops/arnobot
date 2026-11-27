@@ -73,8 +73,8 @@ import { limietVeilig } from '@/lib/limietVeilig'
 import { Redis } from '@upstash/redis'
 import { E2E_TEST_USER_ID, MANUAL_TEST_USER_ID, APP_REVIEWER_ID } from '@/lib/internalTestAccounts'
 import { transcribeAudioAttachment, AUDIO_MEDIA_TYPES } from '@/lib/assemblyai'
-import { CHAT_REKENTOOLS, voerToolUit } from '@/lib/rekenTool'
-import { doeGeldCheck, metGeldBlok, GELD_ANTWOORD_MODEL, GELD_DENKRUIMTE, type GeldUitkomst } from '@/lib/geldCheck'
+import { CHAT_REKENTOOLS, CHAT_REKENTOOLS_GELD, voerToolUit } from '@/lib/rekenTool'
+import { geldBeschikbaarVoor, doeGeldCheck, metGeldBlok, GELD_ANTWOORD_MODEL, GELD_DENKRUIMTE, type GeldUitkomst } from '@/lib/geldCheck'
 import { streamRonde, haalWerkruisWeg } from '@/lib/chatStreamRonde'
 import { vindOnjuisteSuperlatieven } from '@/lib/tabelClaims'
 import { maakVerbruik, telOp, telOpLezer, telTool, telWeggegooid } from '@/lib/chatVerbruik'
@@ -557,9 +557,10 @@ export async function POST(req: NextRequest) {
     ]
 
     // Geldcontrole (lib/geldCheck.ts): een klein model haalt de gegevens uit het gesprek, de code rekent, en de uitkomst gaat bij de vraag mee.
-    // Mislukt of duurt het te lang, dan loopt de beurt zoals zonder controle. Uitzetten zonder codewijziging: GELDCONTROLE_UIT=1.
+    // Mislukt of duurt het te lang, dan loopt de beurt zoals zonder controle. Wie dit krijgt: geldBeschikbaarVoor.
+    const geldAan = geldBeschikbaarVoor(userId)
     let geld: GeldUitkomst | null = null
-    if (process.env.GELDCONTROLE_UIT !== '1') {
+    if (geldAan) {
       try {
         geld = await Sentry.startSpan({ name: 'chat.geldcontrole', op: 'ai.claude' }, () =>
           doeGeldCheck(client, effectieveHistory, questionWithDocument, aiContext(userId, 'chat-geldcontrole')))
@@ -611,7 +612,7 @@ export async function POST(req: NextRequest) {
     const heeftBijlage = bijlageBlokken.length > 0
     const tabelInTekst = /[|\t]/.test(questionWithDocument)
     if (/\d/.test(gesprekTekst) || heeftBijlage) {
-      toolLijst.push(...CHAT_REKENTOOLS.filter(t => heeftBijlage || tabelInTekst || (t.name !== 'schrijf_tabel_over' && t.name !== 'tabel_vraag')))
+      toolLijst.push(...(geldAan ? CHAT_REKENTOOLS_GELD : CHAT_REKENTOOLS).filter(t => heeftBijlage || tabelInTekst || (t.name !== 'schrijf_tabel_over' && t.name !== 'tabel_vraag')))
     }
     const tabelStaat = maakTabelStaat()
     if (linkInGesprek) toolLijst.push(WEB_FETCH_TOOL)

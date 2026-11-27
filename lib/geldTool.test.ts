@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { voerToolUit, CHAT_REKENTOOLS } from '@/lib/rekenTool'
+import { voerToolUit, CHAT_REKENTOOLS, CHAT_REKENTOOLS_GELD, REKEN_TOOL } from '@/lib/rekenTool'
 
 // Alle bedragen hier zijn verzonnen.
 const prijs = (i: unknown) => voerToolUit('prijswijziging', i)
@@ -101,8 +101,17 @@ describe('deel_van_totaal', () => {
 })
 
 describe('registratie', () => {
-  it('de drie geldtools zitten in de chatlijst', () => {
-    const namen = CHAT_REKENTOOLS.map(t => t.name)
-    for (const n of ['prijswijziging', 'prijzen_vergelijken', 'deel_van_totaal']) expect(namen).toContain(n)
+  const geld = ['prijswijziging', 'prijzen_vergelijken', 'deel_van_totaal']
+
+  it('de drie geldtools zitten alleen in de geldlijst', () => {
+    for (const n of geld) {
+      expect(CHAT_REKENTOOLS_GELD.map(t => t.name)).toContain(n)
+      expect(CHAT_REKENTOOLS.map(t => t.name)).not.toContain(n)
+    }
+  })
+
+  it('alleen de rekenmachine in de geldlijst verwijst door', () => {
+    expect(REKEN_TOOL.description).not.toContain('NIET met deze tool')
+    expect(CHAT_REKENTOOLS_GELD[0].description).toContain('NIET met deze tool')
   })
 })
