@@ -62,15 +62,24 @@ describe('bouwProfielContext', () => {
   })
 })
 
-// Minimale nep-Supabase: elke query op een tabel geeft de vaste rijen terug. Voor dit geheugen telt
-// alleen wat er in de tekst terechtkomt, niet hoe de query is gefilterd.
+// Minimale nep-Supabase: elke query op een tabel geeft de vaste rijen terug. Alleen de filters op
+// session_id tellen mee, want of het open gesprek wel of niet in het geheugen komt hangt daaraan.
 type Rij = Record<string, unknown>
 function nepSupabase(tabellen: Record<string, Rij[]>) {
   const bouwer = (tabel: string) => {
     const b: Record<string, unknown> = {}
-    for (const m of ['select', 'eq', 'neq', 'not', 'is', 'in', 'gte', 'lte', 'order', 'limit']) b[m] = () => b
-    b.maybeSingle = async () => ({ data: (tabellen[tabel] ?? [])[0] ?? null })
-    b.then = (ok: (v: unknown) => unknown) => Promise.resolve({ data: tabellen[tabel] ?? [] }).then(ok)
+    let rijen = tabellen[tabel] ?? []
+    for (const m of ['select', 'neq', 'is', 'in', 'gte', 'lte', 'order', 'limit']) b[m] = () => b
+    b.eq = (kolom: string, waarde: unknown) => {
+      if (kolom === 'session_id') rijen = rijen.filter(r => r.session_id === undefined || r.session_id === waarde)
+      return b
+    }
+    b.not = (kolom: string, _op: string, waarde: unknown) => {
+      if (kolom === 'session_id') rijen = rijen.filter(r => r.session_id !== waarde)
+      return b
+    }
+    b.maybeSingle = async () => ({ data: rijen[0] ?? null })
+    b.then = (ok: (v: unknown) => unknown) => Promise.resolve({ data: rijen }).then(ok)
     return b
   }
   return { from: (t: string) => bouwer(t), rpc: async () => ({ data: [], error: null }) } as never
@@ -121,20 +130,63 @@ describe('haalGeheugenContext', () => {
     expect(r.geheugentekst).not.toContain('BLIJVENDE FEITEN')
   })
 
-  it('markeert een gesprek van meer dan 48 uur terug als verouderd en gebruikt alleen het onderwerp van toen', async () => {
-    const r = await haalGeheugenContext(
-      nepSupabase({
-        arnobot_blog_sessions: [{ ...OUD, session_id: 'huidig' }],
-        arnobot_rds_logs: [{ created_at: dagenGeleden(115) }],
-      }),
-      { ...basis, sessionId: 'huidig', history: [{ role: 'user', content: 'vraag' }, { role: 'assistant', content: 'antwoord' }] },
-    )
+  const geschiedenis = [{ role: 'user', content: 'vraag' }, { role: 'assistant', content: 'antwoord' }]
+  const voortgezet = (dagenStil: number, eigen: Rij, andere: Rij[] = []) => haalGeheugenContext(
+    nepSupabase({
+      arnobot_blog_sessions: [...andere, { ...eigen, session_id: 'huidig' }],
+      arnobot_rds_logs: [{ created_at: dagenGeleden(dagenStil) }],
+    }),
+    { ...basis, sessionId: 'huidig', history: geschiedenis },
+  )
+
+  it('laat een voortgezet gesprek tot en met 30 dagen stilte in zijn geheel meegaan, zonder extra tekst', async () => {
+    for (const dagen of [4, 30]) {
+      const r = await voortgezet(dagen, { ...RECENT, created_at: dagenGeleden(dagen) })
+      expect(r.verouderd).toBe(false)
+      // De berichten gaan zelf mee, dus het open gesprek staat niet ook nog in het geheugen.
+      expect(r.geheugentekst).not.toContain('SAMENVATTING_RECENT')
+      expect(r.geheugentekst).not.toContain('EERDER DEEL VAN DIT GESPREK')
+      expect(r.prevSessionCount).toBe(0)
+    }
+  })
+
+  it('kantelt boven de 30 dagen, niet erop', async () => {
+    const eigen = { ...RECENT, created_at: dagenGeleden(30) }
+    expect((await voortgezet(30, eigen)).verouderd).toBe(false)
+    expect((await voortgezet(30.01, eigen)).verouderd).toBe(true)
+  })
+
+  it('geeft na meer dan 30 dagen het eigen gesprek met samenvatting, feiten en datum, tot 6 weken oud', async () => {
+    const r = await voortgezet(31, { ...RECENT, created_at: dagenGeleden(31) })
     expect(r.verouderd).toBe(true)
-    expect(r.geheugentekst).toContain('EERDER DEEL VAN DIT GESPREK')
-    expect(r.geheugentekst).toContain('Onderwerp van toen: Verbetertraject voor klant')
+    expect(r.geheugentekst).toContain('SAMENVATTING_RECENT')
+    expect(r.geheugentekst).toContain('FEIT_RECENT')
+    expect(r.geheugentekst).toContain('4 weken geleden')
+    expect(r.prevSessionCount).toBe(1)
+  })
+
+  it('geeft van een eigen gesprek ouder dan 6 weken alleen het onderwerp en de blijvende feiten', async () => {
+    const r = await voortgezet(115, OUD)
+    expect(r.verouderd).toBe(true)
+    expect(r.geheugentekst).toContain('Verbetertraject voor klant')
+    expect(r.geheugentekst).toContain('Gebruiker verkoopt software aan MKB')
     expect(r.geheugentekst).not.toContain('SAMENVATTING_OUD_TRAJECT_LOOPT')
     expect(r.geheugentekst).not.toContain('FEIT_OUD_DEAL_STAAT_OPEN')
   })
+
+  it('geeft bij voortzetten na meer dan 30 dagen hetzelfde geheugen als een nieuw gesprek', async () => {
+    const ander = { ...RECENT, session_id: 'ander', summary: 'ANDER_GESPREK', feiten: 'ANDER_FEIT' }
+    for (const eigen of [{ ...RECENT, created_at: dagenGeleden(35) }, OUD]) {
+      const voort = await voortgezet(31, eigen, [ander])
+      const vers = await haalGeheugenContext(
+        nepSupabase({ arnobot_blog_sessions: [ander, { ...eigen, session_id: 'huidig' }] }),
+        basis,
+      )
+      expect(voort.geheugentekst).toBe(vers.geheugentekst)
+      expect(voort.prevSessionCount).toBe(vers.prevSessionCount)
+    }
+  })
+
 
   it('zet het mailpatroon in de prompt vanaf 3 gesprekken met een mailverzoek, niet eerder', async () => {
     const mail = (n: number) => Array.from({ length: n }, (_, i) => ({ ...RECENT, session_id: 'm' + i, mail_verzoek: true }))
