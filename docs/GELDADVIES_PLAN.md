@@ -156,3 +156,11 @@ Geldstap met Opus 5.5 (laag) voor invullen, schrijven en controleren, 7 pogingen
 - **Verworpen voor deze ronde:** de korte prompt. Weinig voorbewijs, geheugenteksten bevatten zelf ook instructies, past niet in het budget en vraagt een schrijver die de gevallen niet zag.
 - **Naspelen is niet gelijk aan live:** `bron_context` mist delen van bijlagen en sessiedocumenten, historie vervalt live na 48 uur, en het script mist linktool, documentlezer en vervolg na `max_tokens`. Per geval controleren, niet getrouwe gevallen vervangen.
 - **Uitslag zegt alleen** of het op deze beurten kansrijk is. Geen foutpercentage, veiligheid of gedrag over hele gesprekken.
+
+### Ontleding van bestaande antwoorden (27 november 2026)
+
+10 gesprekken, 73 beurten, 3 gebruikers, gelezen door een agent (niet blind, bewust veel lastige gesprekken, dus geen foutpercentage). 26 ernstige fouten: geld 6, vermoeden als feit 6, toeschrijving 4, voorbarig oordeel 4, andere vraag niet gezien 2, overig 4. Informatie was 19 keer zichtbaar, 5 keer niet, 2 keer onbekend. Voor de zwaarste toeschrijvingen en vrijwel alle geldfouten is geen instructie aanwijsbaar. Details en 8 gevallen: `C:\Users\arno\arnobot-prive\coach-ontleding\`.
+
+**Los van het model:** bij het eerste bericht na meer dan 48 uur stilte stuurt de chat geen geschiedenis mee (`app/api/chat/route.ts`, `effectieveHistory`; `lib/geheugenContext.ts`, `verouderd`). Alleen het onderwerp van toen gaat mee, en in het ontlede geval meldde ArnoBot niet dat het de eerdere berichten niet zag. Bewuste keuze van 31 oktober (oude berichten kwamen over als "nu"), dus niet zomaar terugdraaien. Nog geen oplossing gekozen.
+
+**Teststand:** 8 gevallen klaar (6 mislukt, 2 goed; 2 onder voorbehoud). Geschat $3,64, ongunstig $7,40. Wacht op akkoord op gevallen en lat.
