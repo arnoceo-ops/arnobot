@@ -4,7 +4,7 @@
 
 - **Laatst bijgewerkt:** 2026-11-27
 - **Waar we staan:** LIVE sinds 2026-11-27 (commit edbad599, gepusht om 07:58 UTC op uitdrukkelijk akkoord van Arno). Vlak vóór de push gemeten: alleen het Basic-abonnement van €228, geen Pro tegen de oude prijs, geen gefactureerd team. Na de uitrol op arno.bot nagekeken: /prijzen (jaarstand €19, €33, €77, teamregel), /team, /team/aanvragen en /voorwaarden (versie 3.2); het klantabonnement staat nog op 22800.
-- **Eerstvolgende stap:** de controles na livegang die een login vragen (afrekenscherm Pro €49,00 en €396,00, zakelijk €59,29 en €479,16; manager plus 3 is €244 en €2.112; Abacus), morgenochtend geen meldingen van bedragcontrole, referral-uitvoeren en team-facturatie, en bij de eerste echte Pro-betaling Mollie en Moneybird nakijken. Daarna "Bekende restpunten". Terugdraaien is niet veilig zodra er na 27-11 een team is geactiveerd.
+- **Eerstvolgende stap:** de controles na livegang die een login vragen (afrekenscherm Pro €49,00 en €396,00, zakelijk €59,29 en €479,16; manager plus 3 is €244 en €2.112; Abacus), morgenochtend geen meldingen van bedragcontrole, referral-uitvoeren en team-facturatie, en bij de eerste echte Pro-betaling Mollie en Moneybird nakijken. Daarna "Bekende restpunten"; restpunt (a), de betalende klant, is besloten en staat gepland voor 27 september 2027. Terugdraaien is niet veilig zodra er na 27-11 een team is geactiveerd.
 
 ### Afvinklijst
 
@@ -159,7 +159,11 @@ Controles na de deploy:
 
 ## Bekende restpunten
 
-- **(a) Betalende klant, vóór de verlengdatum regelen.** De betalende klant staat in `approved_users` op `plan` `premium`, terwijl het abonnement `basis` is. Elke geslaagde abonnementsbetaling of mislukte upgrade schrijft het plan van het abonnement terug (`lib/billing/verwerking.ts`, `zetToegang` en het terugzetten van een upgrade). Bij verlenging zou deze klant dus naar Basic zakken. Regelen vóór de verlengdatum.
+- **(a) Betalende klant, vóór de verlengdatum regelen.** De betalende klant staat in `approved_users` op `plan` `premium`, terwijl het abonnement `basis` is. Elke geslaagde abonnementsbetaling of mislukte upgrade schrijft het plan van het abonnement terug (`lib/billing/verwerking.ts`, `zetToegang` en het terugzetten van een upgrade). Bij verlenging zou deze klant dus naar Basic zakken: de herinneringsmails noemen Basic en de knop verlengen incasseert het opgeslagen Basic-bedrag.
+  - **Besluit Arno (2026-11-27):** de klant houdt Pro tot het einde van de lopende periode. Het cadeau geldt alleen voor die periode. Bij verlenging geldt het gewone Pro-tarief van dat moment.
+  - **Gekozen:** het abonnement vlak vóór het verlengvenster eenmalig met de hand op Pro zetten (`plan` `premium`, `bedrag_cent` volgens de prijslijst van dat moment en het klanttype van dat moment). Verlengen en mails gebruiken die twee velden. Het venster opent rond 7 oktober 2027 (45 dagen vóór het einde op 21 november 2027); herinnering op 27 september 2027.
+  - **Verworpen:** nu een pakketwissel bij verlenging inbouwen (nieuwe betaalcode en databasewijziging voor één klant); het abonnement nu al op Pro zetten (de administratie toont dan een jaar Pro terwijl Basic is betaald, en de referralwaarde verandert meteen).
+  - **Bij uitvoering:** eerst de code van verlengen, herinneringsmails en referralwaarde opnieuw nalezen (die rekent na de wijziging met Pro, ook over de lopende periode); alleen wijzigen na akkoord van Arno. Arno vertelt de klant vooraf het nieuwe bedrag: het verlengscherm noemt bij de knop geen bedrag.
 - **(b) 1 cent, geaccepteerd.** Referraltegoed kan 1 cent boven €49,00 uitkomen als het tegen een grotere betaling wordt verrekend (`brutoVanNetto(4050)` is 4901). Op een eigen betaling van €49 is het begrensd op €49,00.
 - **(c) Vóór een volgende prijswijziging oplossen.** Op enkele plekken wordt nog met de actuele prijslijst vergeleken of gerekend: `kiesVoordeel` in `lib/billing/referralPlanner.ts`, de terugval in `betaaldMaandCent` in `lib/billing/referralGrootboek.ts`, het voorbeeld van solo naar Team in `lib/billing/soloNaarTeam.ts` en het terugzetten van een upgrade. Nu zijn er geen gegevens die dit raakt.
 - **(d) Teams boven 25 teamleden** kunnen niet joinen zonder codewijziging (`TEAM_MAX_TEAMLEDEN` in `lib/teamPricing.ts`), ook als Arno een hoger minimum instelt.
