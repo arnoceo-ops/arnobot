@@ -5,6 +5,7 @@
 **Laatst bijgewerkt:** 27 november 2026
 **Waar we staan:** ronde 4 klaar: de afgedwongen geldstap is kansrijk (eerste geslaagde antwoorden op de prijsverlaging, geen omdraaiing meer), maar traag, duur en niet foutloos (zie fase 2). Alles zit alleen in testscripts; aan de chat, de prompt en de database is niets aangepast.
 **Eerstvolgende stap:** de geldstap staat stil. Er ligt een voorstel (nog niet goedgekeurd) om eerst model en instructies samen te vergelijken op coachgesprekken, zie "Overdracht" onderaan.
+**Stand einde dag 27 november:** niets aan de rekenfouten of het geldadvies is live veranderd; de modeltest op coachgesprekken haalde de lat niet (zie onderaan). Een betalende gebruiker heeft van Arno gehoord dat de fouten gezien zijn en dat eraan gewerkt wordt, en wacht op antwoord; of Arno dat inmiddels gaf, is niet bekend. Betaalde tests: zie "Testsleutels en kosten" in `docs/GEHEUGEN_PLAN.md`.
 
 - [x] Fase 0: nulmeting en kritische toets van het plan
 - [ ] Fase 1: examen goedkeuren (kernset gedaan) en uitbreiden

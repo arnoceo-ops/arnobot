@@ -95,3 +95,17 @@ Uit code en git, niets gedraaid. Punt 1 en de eerste stap van punt 3 door de bou
 ## Analyses (nagekeken 27 november)
 
 `app/api/bot/coaching-analyse/route.ts` en `lib/analyseContext.ts`: per geselecteerd gesprek gaan alleen datum, titel en samenvatting mee, niet de berichten. Geen grens van 6 weken, wel alleen uit de laatste 100 gesprekken, 3 tot 20 per analyse. Bij 80% overlap of meer met een eerdere analyse: de vorige tekst plus alleen de nieuwe gesprekken. Voorstel (niet goedgekeurd, niet gebouwd): bij geselecteerde gesprekken de berichten zelf lezen, met een oplossing voor lange gesprekken.
+
+## Coachingsdocument (nagekeken 27 november)
+
+`app/api/bot/coaching/route.ts`: leest van de laatste 50 gesprekken (ongeacht leeftijd) datum, aantal vragen, titel, samenvatting en feiten, plus tot 10 analyses, 10 sparverslagen, een deel van het vorige document en signalen (profiel, plannen, actieopvolging, scoreverloop, excuustaal per gesprek). **Niet de berichten zelf**, terwijl de opdracht naar mindset en taalgebruik vraagt. Of bestaande documenten daardoor fout zijn, is niet gemeten. Zonder testaccounts staan er 12 documenten in de geschiedenis (7 gebruikers, juni tot en met november).
+
+**Open vraag van Arno:** meet wat het kost als alle gesprekken volledig meegaan. Reden: weinig gebruikers vragen een document aan, dus dan moet het goed zijn. Nog niet gemeten: de tokentelling werd geweigerd door de werkruimtelimiet van de `.env.local`-sleutel (tot 1 december). Alternatieven: schatten op tekstlengte, of met akkoord van Arno op een andere sleutel. Het app-tarief voor `claude-fable-5-1` is $10 invoer en $50 uitvoer per miljoen tokens (`lib/aiGebruik.ts`, niet opnieuw bij Anthropic nagekeken). Meetscript (alleen lezen): `C:\Users\arno\arnobot-prive\sessie-27-11\meet-coachingkosten.mjs`.
+
+## Testsleutels en kosten (27 november)
+
+- Op deze computer staan twee Anthropic-sleutels (Windows-variabele en `.env.local`). De tests van die dag liepen op de Windows-sleutel. Alle scripts in `scripts/` dwingen nu de `.env.local`-sleutel af (`scripts/testSleutel.mjs`, CI `scripts/check-test-sleutel.mjs`). Losse tijdelijke scripts en oude takken vallen daar niet onder.
+- Volgens de Console stond vrijwel alles van die dag (ongeveer $71, inclusief live) in werkruimte Default. Dat de live app daar ook zit, is afgeleid uit overeenkomende dagbedragen, niet bewezen.
+- De werkruimte van de `.env.local`-sleutel gaf "workspace API usage limits" tot 1 december. Of en hoe hoog die limiet is, is niet in de Console gezien.
+- Voor een betaalde test: bedrag en harde grens vooraf, akkoord van Arno, en eerst het dagtotaal over alle sessies bekijken.
+
