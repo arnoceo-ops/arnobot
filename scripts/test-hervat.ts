@@ -6,6 +6,7 @@
  * gevallen.json: [{ "code": "H1", "sessie": "<begin session_id>", "beurt": 5 }]  bewaarde vraag, context en tijdstip van die beurt
  *            of:  [{ "code": "O1", "sessie": "<begin session_id>", "vraag": "..." }]  nieuwe vraag vandaag na het hele gesprek, zonder
  *                 geheugen en kennisfragmenten: de geschiedenis is dan de enige bron van oude informatie.
+ * Met "tot": 4 bij een nieuwe vraag ziet het model alleen de eerste 4 beurten, op het tijdstip van beurt 5.
  * Schrijft niets in de database. Harde grens: $2.
  */
 import { readFileSync, writeFileSync, existsSync } from 'fs'
@@ -21,7 +22,7 @@ for (const l of readFileSync(envPad, 'utf8').split(/\r?\n/)) {
 }
 process.env.VITEST = '1' // zet de kostenmeting uit, zodat niets in de database komt
 
-type Geval = { code: string; sessie: string; beurt?: number; vraag?: string }
+type Geval = { code: string; sessie: string; beurt?: number; vraag?: string; tot?: number }
 type Rij = { session_id: string; question: string; answer: string; bron_context: string | null; verbruik: { lengte?: string } | null; created_at: string; user_id: string }
 type Uitslag = { code: string; run: number; vraag: string; vraagRegel: string; historie: number; antwoord: string; kostenUsd: number; stop: string }
 
@@ -55,8 +56,9 @@ async function main() {
     const sessie = logs.filter(r => r.session_id?.startsWith(g.sessie))
     if (sessie.length === 0) throw new Error(`${g.code}: gesprek niet gevonden`)
     const rij = g.beurt ? sessie[g.beurt - 1] : undefined
-    const eerder = g.beurt ? sessie.slice(0, g.beurt - 1) : sessie
-    const nu = rij ? new Date(rij.created_at).getTime() : Date.now()
+    const eerder = g.beurt ? sessie.slice(0, g.beurt - 1) : sessie.slice(0, g.tot ?? sessie.length)
+    const volgende = g.tot ? sessie[g.tot] : undefined
+    const nu = rij || volgende ? new Date((rij ?? volgende)!.created_at).getTime() : Date.now()
     const hervatting = bepaalHervatting([...eerder].reverse(), nu)
     if (!hervatting) throw new Error(`${g.code}: geen stilte van meer dan 48 uur`)
 
