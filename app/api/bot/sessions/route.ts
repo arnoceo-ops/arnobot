@@ -66,7 +66,7 @@ export async function GET() {
         let feiten = ''
         try {
           const [summaryRes, feitenRes] = await Promise.all([
-            anthropic.messages.create(samenvattingParams(conversationText), aiContext(userId, 'sessie-samenvatting')),
+            anthropic.messages.create(samenvattingParams(conversationText, [], userId), aiContext(userId, 'sessie-samenvatting')),
             anthropic.messages.create(feitenParams(bronTekst), aiContext(userId, 'sessie-feiten')),
           ])
           summary = getText(summaryRes.content)
@@ -77,7 +77,7 @@ export async function GET() {
             if (t.vermijd.length) {
               const nieuw = await herstelSamenvatting(anthropic, {
                 volledigGesprek: conversationText, bron: bronTekst, vermijd: t.vermijd,
-                schrijf: async (gesprek, vermijd) => getText((await anthropic.messages.create(samenvattingParams(gesprek, vermijd), aiContext(userId, 'sessie-samenvatting-herstel'))).content),
+                schrijf: async (gesprek, vermijd) => getText((await anthropic.messages.create(samenvattingParams(gesprek, vermijd, userId), aiContext(userId, 'sessie-samenvatting-herstel'))).content),
               }, userId)
               if (nieuw) summary = nieuw
             }

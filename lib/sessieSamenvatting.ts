@@ -37,9 +37,23 @@ export function gebruikersBron(berichten: { role: string; content: string }[]): 
     .join('\n\n')
 }
 
-export const samenvattingParams = (conversationText: string, vermijd: string[] = []): Anthropic.MessageCreateParamsNonStreaming => ({
-  model: 'claude-haiku-4-5-20251001',
-  max_tokens: 300,
+export const SAMENVATTING_MODEL = 'claude-haiku-4-5-20251001'
+export const SAMENVATTING_MODEL_EIGENAAR = 'claude-sonnet-5-5'
+const SAMENVATTING_TEKENS = 300
+// Sonnet 5.5 denkt eerst na en die tokens tellen mee in max_tokens: zonder eigen ruimte kan er geen tekst overblijven.
+const SAMENVATTING_DENKRUIMTE = 4000
+
+// Proef sinds 2026-11-28: alleen voor de eigenaar schrijft Sonnet 5.5 de samenvatting. Aanleiding: Haiku 4.5 gaf een advies van
+// ArnoBot verkeerd weer ("te defensief" kwam in het antwoord niet voor). De opdracht zelf is bewust gelijk gebleven.
+function samenvattingModelOpties(userId?: string | null) {
+  const eigenaar = process.env.ARNOBOT_OWNER_USER_ID
+  return eigenaar && userId === eigenaar
+    ? { model: SAMENVATTING_MODEL_EIGENAAR, max_tokens: SAMENVATTING_TEKENS + SAMENVATTING_DENKRUIMTE, thinking: { type: 'adaptive' as const }, output_config: { effort: 'low' as const } }
+    : { model: SAMENVATTING_MODEL, max_tokens: SAMENVATTING_TEKENS }
+}
+
+export const samenvattingParams = (conversationText: string, vermijd: string[] = [], userId?: string | null): Anthropic.MessageCreateParamsNonStreaming => ({
+  ...samenvattingModelOpties(userId),
   system: `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. Direct, ongefilterd, geen bullshit. Geen corporate taal. Geen accenten op woorden voor nadruk. Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
 
 ${RULE_ENGLISH_TERMS}

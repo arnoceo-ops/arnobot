@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
   let excuustaal = false
 
 
-  const callSummaryModel = () => anthropic.messages.create(samenvattingParams(conversationText), aiContext(userId, 'sessie-samenvatting'))
+  const callSummaryModel = (voorUserId: string | null = userId) => anthropic.messages.create(samenvattingParams(conversationText, [], voorUserId), aiContext(userId, 'sessie-samenvatting'))
   // Feiten en entiteiten komen alleen uit wat de gebruiker zelf zegt (ARNO ingekort als context).
   const bronTekst = gebruikersBron(messages as { role: string; content: string }[])
   const callFeitenModel = () => anthropic.messages.create(feitenParams(bronTekst), aiContext(userId, 'sessie-feiten'))
@@ -331,7 +331,8 @@ ${BRONDATA_REGEL}`,
 
     if (!summary) {
       console.error(`[session-end] lege summary, retry (sessie ${sessionId})`)
-      const retryRes = await callSummaryModel()
+      // De herkansing gaat altijd naar het standaardmodel: levert het proefmodel niets op, dan is er toch een samenvatting.
+      const retryRes = await callSummaryModel(null)
       summary = schoonSamenvatting(getText(retryRes.content), retryRes.stop_reason)
     }
     if (!feiten) {
@@ -445,7 +446,7 @@ ${BRONDATA_REGEL}`,
           const nieuw = await herstelSamenvatting(anthropic, {
             volledigGesprek: conversationText, bron: bronTekst, vermijd: t.vermijd,
             schrijf: async (gesprek, vermijd) => {
-              const res = await anthropic.messages.create(samenvattingParams(gesprek, vermijd), aiContext(userId, 'sessie-samenvatting-herstel'))
+              const res = await anthropic.messages.create(samenvattingParams(gesprek, vermijd, userId), aiContext(userId, 'sessie-samenvatting-herstel'))
               return schoonSamenvatting(getText(res.content), res.stop_reason)
             },
           }, userId)
