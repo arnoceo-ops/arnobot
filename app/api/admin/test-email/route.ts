@@ -23,7 +23,6 @@ const TO = 'arno@arno.bot'
 // het risico een per ongeluk gedraaide echte run is, en dat vangt een tweede klik af.
 const CRON_MET_TESTKNOP: { type: string; cron: string; echteActie?: boolean }[] = [
   { type: 'weekly_activity',       cron: '/api/cron/weekly-activity' },
-  { type: 'weekly_top_users',      cron: '/api/cron/weekly-top-users' },
   { type: 'competitie',            cron: '/api/cron/competitie' },
   { type: 'model_check',           cron: '/api/cron/model-check', echteActie: true },
   { type: 'data_cleanup',          cron: '/api/cron/data-cleanup' },

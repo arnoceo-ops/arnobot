@@ -403,10 +403,9 @@ Alle crons vereisen de `Authorization: Bearer {CRON_SECRET}` header. Vercel stuu
 | `/api/cron/leveranciers-wijzigingen` | Maandag 06:50 | Wekelijkse controle op wijzigingen in DPA's en deprecations-pagina's van leveranciers |
 | `/api/cron/comp-reminder-nov` | 25 t/m 29 november 08:00 (eenmalig) | Eenmalige mail aan één gebruiker met gratis toegang tot 1 december, alleen als Mollie live staat. Wegwerpcode na verzending |
 | `/api/cron/sessies-afsluiten` | Elk uur (:40) | Rondt gesprekken af die 12 uur stil liggen en geen of een achterlopende samenvatting hebben (venster 36 uur, max 12 per run). Selectie via SQL-functie `sessies_zonder_actuele_synthese`, synthese via `/api/bot/session-end` met CRON_SECRET. Sessie die 3 keer mislukt: Telegram-melding |
-| `/api/cron/weekly-activity` | Zaterdag 04:00 | Wekelijks activiteitsrapport (actieve gebruikers afgelopen 7 dagen) |
+| `/api/cron/weekly-activity` | Zaterdag 04:00 | Weekoverzicht in Telegram: top 10 actieve gebruikers van de afgelopen 7 dagen met vragen, gesprekken, analyses, coaching en laatst actief |
 | `/api/cron/productvragen` | Dagelijks 06:30 UTC | Telegram-overzicht van vragen over het gebruik van ArnoBot zelf (Haiku kiest ze uit de laatste 24 uur, zonder testaccounts). Geen bericht als er niets is. Stuurt daarnaast de FAQ-zoektermen zonder treffer (tabel `faq_zoekmislukkingen`) en ruimt die na 30 dagen op |
 | `/api/cron/uitdaging-herinnering` | Dagelijks 03:10 | Herinnering aan de laatste sessie-uitdaging op dag 1/3/7 (Ebbinghaus) |
-| `/api/cron/weekly-top-users` | Zaterdag 04:05 | Top 10 actieve gebruikers |
 | `/api/cron/auto-analyse` | Dagelijks 04:05 | Analyse aanmaken (`/bot/analyses`) bij 10+ nieuwe gesprekken sinds de laatste analyse, plus mail "Je analyses zijn bijgewerkt" |
 | `/api/bot/backfill-embeddings` | Dagelijks 04:05 | Embeddings aanvullen voor zoekfunctie |
 | `/api/cron/refresh-openers` | 1e vd maand 04:05 | Gespreksopeners vernieuwen met verse AI-output. Analyseert de 300 meest recente gesprekken + 50 meest recente analyses (over alle gebruikers samen, aantal-gebaseerd, geen datumvenster) |

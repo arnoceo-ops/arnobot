@@ -1,8 +1,8 @@
 import { registreerCronRun } from '@/lib/cronRun'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { notifyCronFailure } from '@/lib/cron-notify'
-import { isInternalTestUser } from '@/lib/internalTestAccounts'
+import { notifyCronFailure, notifyTelegram } from '@/lib/cron-notify'
+import { excludeInternalTestUsers } from '@/lib/internalTestAccounts'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
 const supabase = createClient(
@@ -10,16 +10,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-async function sendTelegram(text: string) {
-  const token = process.env.TELEGRAM_BOT_TOKEN
-  const chatId = process.env.TELEGRAM_CHAT_ID
-  if (!token || !chatId) return
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text }),
-  })
-}
+const MAX_GEBRUIKERS = 10
 
 async function cronHandler(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -31,74 +22,79 @@ async function cronHandler(req: NextRequest) {
   const now = new Date()
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  // De hele week in blokken (lib/haalAlleRijen.ts): boven 1000 vragen per week vielen de nieuwste weg.
-  const logs = await haalAlleRijen<{ user_id: string; created_at: string }>((van, tot) =>
-    supabase
-      .from('arnobot_rds_logs')
-      .select('user_id, created_at')
-      .gte('created_at', sevenDaysAgo)
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: true })
-      .range(van, tot))
+  // De hele week in blokken (lib/haalAlleRijen.ts): boven 1000 rijen vielen de nieuwste weg.
+  const [logs, analyses, coaching] = await Promise.all([
+    haalAlleRijen<{ user_id: string; session_id: string; created_at: string }>((van, tot) =>
+      excludeInternalTestUsers(supabase.from('arnobot_rds_logs').select('user_id, session_id, created_at').gte('created_at', sevenDaysAgo))
+        .order('created_at', { ascending: false }).order('id', { ascending: true }).range(van, tot)),
+    haalAlleRijen<{ user_id: string }>((van, tot) =>
+      excludeInternalTestUsers(supabase.from('arnobot_analyses').select('user_id').gte('created_at', sevenDaysAgo))
+        .order('id', { ascending: true }).range(van, tot)),
+    haalAlleRijen<{ user_id: string }>((van, tot) =>
+      excludeInternalTestUsers(supabase.from('arnobot_coaching_scores').select('user_id').gte('created_at', sevenDaysAgo))
+        .order('id', { ascending: true }).range(van, tot)),
+  ])
 
-  const userMap: Record<string, { count: number; lastActive: string }> = {}
+  // De logs staan nieuwste eerst: de eerste regel per gebruiker is dus het laatst actieve moment.
+  const userMap: Record<string, { vragen: number; gesprekken: Set<string>; lastActive: string }> = {}
   for (const log of logs) {
-    if (isInternalTestUser(log.user_id)) continue
-    if (!userMap[log.user_id]) {
-      userMap[log.user_id] = { count: 0, lastActive: log.created_at }
-    }
-    userMap[log.user_id].count++
+    userMap[log.user_id] ??= { vragen: 0, gesprekken: new Set(), lastActive: log.created_at }
+    userMap[log.user_id].vragen++
+    userMap[log.user_id].gesprekken.add(log.session_id)
   }
 
-  const userIds = Object.keys(userMap)
+  const telPerGebruiker = (rijen: { user_id: string }[]) => {
+    const tel: Record<string, number> = {}
+    for (const r of rijen) tel[r.user_id] = (tel[r.user_id] || 0) + 1
+    return tel
+  }
+  const analysesTel = telPerGebruiker(analyses)
+  const coachingTel = telPerGebruiker(coaching)
 
   const weekOf = now.toLocaleDateString('nl-NL', {
     timeZone: 'Europe/Amsterdam',
     day: 'numeric',
     month: 'long',
   })
+  const titel = `📊 ARNOBOT WEEK · ${weekOf}`
+  const activeUsers = Object.keys(userMap).length
 
-  if (userIds.length === 0) {
-    await sendTelegram(`📊 ARNOBOT WEEKACTIVITEIT · ${weekOf}\n\nGeen gesprekken in de afgelopen 7 dagen.`)
-    return NextResponse.json({ ok: true, activeUsers: 0 })
+  if (activeUsers === 0) {
+    if (!await notifyTelegram(`${titel}\n\nGeen gesprekken in de afgelopen 7 dagen.`)) throw new Error('telegram_niet_verzonden')
+    return NextResponse.json({ ok: true, activeUsers })
   }
+
+  const topIds = Object.keys(userMap)
+    .sort((a, b) => userMap[b].vragen - userMap[a].vragen)
+    .slice(0, MAX_GEBRUIKERS)
 
   const { data: users } = await supabase
     .from('approved_users')
     .select('user_id, voornaam, achternaam, email')
-    .in('user_id', userIds)
+    .in('user_id', topIds)
 
-  const rows = (users ?? [])
-    .map(u => ({
-      name: [u.voornaam, u.achternaam].filter(Boolean).join(' ') || u.email || u.user_id,
-      email: u.email || '',
-      count: userMap[u.user_id]?.count ?? 0,
-      lastActive: userMap[u.user_id]?.lastActive ?? '',
-    }))
-    .sort((a, b) => b.count - a.count)
+  const naamMap = Object.fromEntries((users ?? []).map(u => [u.user_id, [u.voornaam, u.achternaam].filter(Boolean).join(' ') || u.email]))
 
   // Het venster is een rollende week (laatste 7 dagen), geen kalenderweek. Alleen activiteit
   // van exact de dag van dit cron-moment zelf (zaterdagochtend) toont alleen een tijd, al het
   // overige (verreweg de meeste rijen bij een weekvenster) krijgt datum+tijd.
   const vandaag = now.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })
-  const lines = rows.map((r, i) => {
-    const activiteitDatum = new Date(r.lastActive).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' })
-    const tijd = new Date(r.lastActive).toLocaleTimeString('nl-NL', {
-      timeZone: 'Europe/Amsterdam',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-    const wanneer = activiteitDatum === vandaag
+  const lines = topIds.map((userId, i) => {
+    const { vragen, gesprekken, lastActive } = userMap[userId]
+    const moment = new Date(lastActive)
+    const tijd = moment.toLocaleTimeString('nl-NL', { timeZone: 'Europe/Amsterdam', hour: '2-digit', minute: '2-digit' })
+    const wanneer = moment.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' }) === vandaag
       ? tijd
-      : `${new Date(r.lastActive).toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam', day: 'numeric', month: 'short' })}, ${tijd}`
-    return `${i + 1}. ${r.name} · ${r.count} berichten · ${wanneer}`
+      : `${moment.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam', day: 'numeric', month: 'short' })}, ${tijd}`
+    return `${i + 1}. ${naamMap[userId] || userId}\n${vragen}v · ${gesprekken.size}g · ${analysesTel[userId] || 0}a · ${coachingTel[userId] || 0}c · ${wanneer}`
   })
 
-  const text = `📊 ARNOBOT WEEKACTIVITEIT · ${weekOf}\n\n${userIds.length} gebruiker${userIds.length !== 1 ? 's' : ''} actief in de afgelopen 7 dagen:\n\n${lines.join('\n')}`
+  const aantal = `${activeUsers} gebruiker${activeUsers !== 1 ? 's' : ''} actief in de afgelopen 7 dagen${activeUsers > MAX_GEBRUIKERS ? `, de top ${MAX_GEBRUIKERS}` : ''}:`
+  const text = `${titel}\n\n${aantal}\n\n${lines.join('\n')}\n\nv=vragen  g=gesprekken  a=analyses  c=coaching`
 
-  await sendTelegram(text)
+  if (!await notifyTelegram(text)) throw new Error('telegram_niet_verzonden')
 
-  return NextResponse.json({ ok: true, activeUsers: userIds.length })
+  return NextResponse.json({ ok: true, activeUsers })
   } catch (err) {
     await notifyCronFailure('weekly-activity', err)
     return NextResponse.json({ error: 'cron_error' }, { status: 500 })

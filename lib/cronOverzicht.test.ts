@@ -20,7 +20,6 @@ const VAN_VOOR_INGEPLAND = new Set([
   '/api/cron/feitencontrole',
   '/api/cron/waarheidscontrole',
   '/api/cron/uitdaging-herinnering',
-  '/api/cron/weekly-top-users',
   '/api/cron/auto-analyse',
   '/api/bot/backfill-embeddings',
   '/api/cron/refresh-openers',
