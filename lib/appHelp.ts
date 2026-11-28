@@ -24,7 +24,7 @@ Link plakken: de gebruiker kan een link in de vraag zetten, bijvoorbeeld de webs
 
 Antwoord beoordelen: onder elk antwoord staan een duim omhoog en een duim omlaag, en een knop om het antwoord te kopiëren.
 
-SLUIT: sluit het gesprek af. Er wordt een samenvatting gemaakt die de gebruiker terugvindt in Archief, tab Gesprekken, daarna kan een nieuw gesprek beginnen.
+SLUIT: sluit het gesprek af. Er wordt een samenvatting gemaakt die de gebruiker terugvindt in Archief, tab Gesprekken, daarna kan een nieuw gesprek beginnen. Sluit de gebruiker niet, dan gaat er niets verloren: na ongeveer een half uur stilte maakt de app de samenvatting vanzelf.
 Een gesprek waar meer dan 48 uur niets in is gezegd, begint bij terugkomen als een nieuw gesprek. Het oude gesprek blijft bewaard en is terug te vinden en weer te openen in Archief, tab Gesprekken.
 
 Gesproken antwoorden: het luidsprekertje laat je antwoord voorlezen. Alleen zichtbaar als voice voor het account aanstaat, en niet bij UITGEBREID.

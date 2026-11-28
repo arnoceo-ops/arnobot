@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
 // Bewijst de hele cronroute zonder echte database of model: selectie via de SQL-functie, test-accounts
-// overslaan, aanroep van session-end met het CRON_SECRET, mislukkingen tellen en pas na 3 keer melden.
+// overslaan, aanroep van session-end met het CRON_SECRET, mislukkingen tellen en pas bij de laatste poging melden.
 
 const { mockRpc, mockFrom, mockNotify, state } = vi.hoisted(() => ({
   mockRpc: vi.fn(),
@@ -58,7 +58,7 @@ describe('cron/sessies-afsluiten', () => {
     mockRpc.mockResolvedValue({ data: [kandidaat()], error: null })
     const res = await aanroep('geheim')
     expect(await res.json()).toMatchObject({ ok: true, afgesloten: 1, mislukt: 0 })
-    expect(mockRpc).toHaveBeenCalledWith('sessies_zonder_actuele_synthese', { stil_uur: 12, venster_uur: 36, max_aantal: 36 })
+    expect(mockRpc).toHaveBeenCalledWith('sessies_zonder_actuele_synthese', { stil_uur: 0, venster_uur: 36, max_aantal: 36 })
     const [url, init] = mockFetch.mock.calls[0]
     expect(url).toBe('https://www.arno.bot/api/bot/session-end')
     expect(init.headers.Authorization).toBe('Bearer geheim')
@@ -68,6 +68,15 @@ describe('cron/sessies-afsluiten', () => {
       { role: 'user', content: 'vraag 1' }, { role: 'arno', content: 'antwoord 1' },
       { role: 'user', content: 'vraag 2' }, { role: 'arno', content: 'antwoord 2' },
     ])
+  })
+
+  it('wacht tot een gesprek 30 minuten stil is', async () => {
+    const minutenGeleden = (n: number) => new Date(Date.now() - n * 60_000).toISOString()
+    mockRpc.mockResolvedValue({ data: [{ ...kandidaat(), laatste: minutenGeleden(29) }], error: null })
+    expect(await (await aanroep('geheim')).json()).toMatchObject({ afgesloten: 0 })
+    expect(mockFetch).not.toHaveBeenCalled()
+    mockRpc.mockResolvedValue({ data: [{ ...kandidaat(), laatste: minutenGeleden(31) }], error: null })
+    expect(await (await aanroep('geheim')).json()).toMatchObject({ afgesloten: 1 })
   })
 
   it('houdt een gesprek dat al als community-uitgesloten staat uitgesloten', async () => {
@@ -85,7 +94,7 @@ describe('cron/sessies-afsluiten', () => {
     expect(mockFetch).not.toHaveBeenCalled()
   })
 
-  it('telt een mislukking en meldt pas bij de derde poging', async () => {
+  it('telt een mislukking en meldt pas bij de laatste poging', async () => {
     mockRpc.mockResolvedValue({ data: [kandidaat()], error: null })
     mockFetch.mockResolvedValue({ ok: false, status: 500, json: async () => ({}) })
 
@@ -93,15 +102,15 @@ describe('cron/sessies-afsluiten', () => {
     expect(state.upserts.at(-1)![0]).toMatchObject({ key: 'sessie_afsluit_fail:s1', value: '1' })
     expect(mockNotify).not.toHaveBeenCalled()
 
-    state.metaRijen = [{ key: 'sessie_afsluit_fail:s1', value: '2' }]
+    state.metaRijen = [{ key: 'sessie_afsluit_fail:s1', value: '17' }]
     await aanroep('geheim')
-    expect(state.upserts.at(-1)![0]).toMatchObject({ value: '3' })
+    expect(state.upserts.at(-1)![0]).toMatchObject({ value: '18' })
     expect(mockNotify).toHaveBeenCalledTimes(1)
   })
 
-  it('probeert een sessie die al 3 keer mislukte niet opnieuw', async () => {
+  it('probeert een sessie die al 18 keer mislukte niet opnieuw', async () => {
     mockRpc.mockResolvedValue({ data: [kandidaat()], error: null })
-    state.metaRijen = [{ key: 'sessie_afsluit_fail:s1', value: '3' }]
+    state.metaRijen = [{ key: 'sessie_afsluit_fail:s1', value: '18' }]
     const res = await aanroep('geheim')
     expect(await res.json()).toMatchObject({ afgesloten: 0 })
     expect(mockFetch).not.toHaveBeenCalled()

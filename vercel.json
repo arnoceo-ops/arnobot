@@ -130,7 +130,7 @@
     },
     {
       "path": "/api/cron/sessies-afsluiten",
-      "schedule": "40 * * * *"
+      "schedule": "*/10 * * * *"
     },
     {
       "path": "/api/cron/kennisbank-controle",

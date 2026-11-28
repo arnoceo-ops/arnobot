@@ -1103,6 +1103,11 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     function handleUnload() {
       const sid = sessionIdRef.current
       if (!sid || messages.length === 0) return
+      // Sinds 2026-11-28 alleen nog bij een gesprek dat met een communityvraag begon: elke keer dat de app naar de achtergrond ging
+      // draaide de hele afsluitketen opnieuw (gemeten: 44 keer voor 13 gesprekken). Gewone gesprekken worden na 30 minuten stilte
+      // verwerkt door cron/sessies-afsluiten. Bij een communityvraag legt deze aanroep vast dat er geen toestemming is
+      // (community_excluded): de cron kan de herkomst zonder bestaande rij niet achterhalen.
+      if (!startedFromCommunity) return
       // Niets nieuws sinds de vorige beacon (bv. tab twee keer kort naar de achtergrond zonder
       // dat er tussendoor iets is gezegd): die eerdere aanroep dekt de huidige staat al, dus
       // geen nieuwe synthese-aanroep nodig.
@@ -1110,8 +1115,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       lastAutoSaveCountRef.current = messages.length
       // Geen blokkerende confirm meer: de synthese wordt hierdoor sowieso al gegenereerd en
       // opgeslagen (session-end/route.ts upsert't altijd naar arnobot_blog_sessions), ongeacht
-      // of iemand expliciet op SLUIT klikt. Wie wel klikt ziet 'm meteen in het gesprek, wie
-      // gewoon wegnavigeert vindt 'm terug in zijn sessiehistorie/Bieb.
+      // of iemand expliciet op SLUIT klikt.
       // Community-vraag zonder (nog) bevestigde toestemming: wordt hier altijd opgeslagen (voor
       // ArnoBot's eigen big-data-analyse), session-end/route.ts sluit 'm zelf uit van alles wat
       // op de gebruiker zelf terugslaat zolang communityConsent niet true is.

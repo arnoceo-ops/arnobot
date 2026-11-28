@@ -42,8 +42,11 @@ export async function GET() {
     sessionGroups[log.session_id].push(log)
   }
 
-  // Orphaned: in rds_logs but not yet in blog_sessions
-  const orphaned = Object.entries(sessionGroups).filter(([sid]) => !existingIds.has(sid))
+  // Orphaned: in rds_logs but not yet in blog_sessions. Alleen gesprekken buiten het venster van cron/sessies-afsluiten (36 uur):
+  // deze reparatie vat alleen de eerste 4000 tekens samen en zet message_count op het totaal, waarna de cron het gesprek overslaat.
+  const buitenCronVenster = Date.now() - 36 * 60 * 60 * 1000
+  const orphaned = Object.entries(sessionGroups).filter(([sid, berichten]) =>
+    !existingIds.has(sid) && Date.parse(berichten[berichten.length - 1].created_at) < buitenCronVenster)
 
   if (orphaned.length > 0) {
     await Promise.all(
