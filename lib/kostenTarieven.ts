@@ -31,10 +31,11 @@ export const TARIEVEN = {
   // Een gesprek afsluiten (samenvatting, feiten, geheugentoets, groeibalans, uitdaging, thema's, mailpatroon, entiteiten, labels), $ per
   // gesprek. Gemeten uit arnobot_ai_gebruik, 19 t/m 28 november 2026, zonder testaccounts: $2,30 voor 13 gesprekken met 57 vragen, bij 44
   // verwerkingen, omdat elk wegklikken de keten opnieuw draaide. Sinds 28 november gebeurt dat na 30 minuten stilte. Nagerekend op
-  // dezelfde berichten zijn dat ongeveer 22 verwerkingen, dus de helft: $0,089 per gesprek. SCHATTING op een kleine meting met veel
-  // testdagen: na een paar dagen met de nieuwe werking opnieuw meten (bronnen sessie-*, geheugen-*, groeibalans, mail-patroon,
-  // blog-redenen). Geldt voor alle gebruikers, ook Basic.
-  afsluitKostenPerGesprekUsd: 0.089,
+  // dezelfde berichten zijn dat ongeveer 22 verwerkingen, dus de helft: $0,089 per gesprek. Later op 28 november ging de samenvatting
+  // voor iedereen naar Sonnet 5.5 en kreeg de geheugentoets twee aanroepen: voorzichtig geschat $0,027 extra per verwerking, maal 22 op
+  // 13 gesprekken is $0,046, samen $0,135. SCHATTING op een kleine meting met veel testdagen: na een paar dagen opnieuw meten (bronnen
+  // sessie-*, geheugen-*, groeibalans, mail-patroon, blog-redenen). Geldt voor alle gebruikers, ook Basic.
+  afsluitKostenPerGesprekUsd: 0.135,
   // 57 vragen in 13 gesprekken, dezelfde meting. Over alle gesprekken van echte gebruikers zonder de eigenaar was het 5,5.
   vragenPerGesprek: 4.4,
   // Vangnet voor de overige kleine Anthropic-routes (coaching-precheck, blog-synthese, verfijn, sessies-zoeken), $ per gebruiker/maand.
