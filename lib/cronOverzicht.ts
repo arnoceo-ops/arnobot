@@ -36,6 +36,7 @@ export const CRON_INFO: Record<string, CronInfo> = {
   '/api/cron/model-check': { naam: 'Model-check', wat: 'Modelkwaliteitscheck met live webzoekopdrachten', ontvanger: 'model@arno.bot', soort: 'mij' },
   '/api/cron/competitie': { naam: 'Competitie', wat: 'Competitierapport', ontvanger: 'arno@arno.bot', soort: 'mij' },
   '/api/cron/data-cleanup': { naam: 'Data-cleanup', wat: 'Accounts die 30 of meer dagen geleden zijn beëindigd en waarvan nog data aanwezig is', ontvanger: 'hq@arno.bot', soort: 'mij' },
+  '/api/cron/kosten-alarm': { naam: 'Kostenalarm', wat: 'Meldt een betalende klant die deze maand 80% of 100% heeft gekost van wat die per maand betaalt, elk een keer per maand, anders stil', ontvanger: 'Telegram', soort: 'mij', ingepland: '2026-11-28T14:00:00+01:00' },
   '/api/cron/database-wacht': { naam: 'Database-wacht', wat: 'Meet geheugen en verbindingen van de databaseserver, meldt alleen bij 70% of 90%', ontvanger: 'Telegram', soort: 'mij' },
   '/api/cron/capaciteitswacht': { naam: 'Capaciteitswacht', wat: 'Vergelijkt verbruik met de planlimieten en gebruikersmijlpalen, meldt alleen bij 70% of 90%', ontvanger: 'Telegram', soort: 'mij' },
   '/api/cron/stip-wacht': { naam: 'Stip-wacht', wat: 'Stuurt een pushmelding naar de admin-app als een stip daar oranje of rood wordt of weer groen is, Telegram alleen als de push niet lukt', ontvanger: 'Admin-app', soort: 'mij' },

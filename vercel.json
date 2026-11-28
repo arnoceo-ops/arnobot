@@ -37,6 +37,10 @@
       "schedule": "30 6 * * *"
     },
     {
+      "path": "/api/cron/kosten-alarm",
+      "schedule": "10 6 * * *"
+    },
+    {
       "path": "/api/cron/feitencontrole",
       "schedule": "45 6 * * *"
     },

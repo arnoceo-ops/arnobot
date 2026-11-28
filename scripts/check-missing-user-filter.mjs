@@ -95,6 +95,12 @@ const OWNERSHIP_EQ = /\.(eq|in)\(\s*['"][^'"]*(?:user_id|manager_id|member_id)[^
 // (referral-code, team_id) waarvan de output nooit terug naar de aanroeper lekt.
 // Formaat: 'relatief/pad.ts:tabelnaam'.
 const KNOWN_SAFE_QUERIES = new Set([
+  // De kostenmelding aan Arno (cron kosten-alarm) vergelijkt voor alle betalende klanten de maandbetaling met de gemeten kosten, met
+  // testaccounts eruit. Alleen lezen, alleen via de cron aangeroepen.
+  'lib/kostenAlarmData.ts:arnobot_team_members',
+  'lib/kostenAlarmData.ts:arnobot_subscriptions',
+  'lib/kostenAlarmData.ts:arnobot_payments',
+  'lib/kostenAlarmData.ts:arnobot_elevenlabs_usage',
   // De referralplanner beoordeelt alle referrals (cron en adminoverzicht), testaccounts overgeslagen. Nooit via een
   // gebruikersroute aangeroepen; betalingen en abonnementen leest hij per gebruiker via laadDossier.
   'lib/billing/referralPlanner.ts:arnobot_referrals',
