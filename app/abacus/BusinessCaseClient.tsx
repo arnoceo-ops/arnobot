@@ -6,6 +6,7 @@ import {
   type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit, type Inputs,
 } from '@/lib/kostenTarieven'
 import { TEAM_MIN_TEAMLEDEN } from '@/lib/teamPricing'
+import { benodigdeGebruikersVoorWinst, benodigdeSchaalVoorWinst, MAX_GEBRUIKERS_ZOEKGRENS } from '@/lib/abacusDoelwinst'
 import { cardStyle, cardHeadStyle, dotStyle, statLabel, statValue, headlineValueStyle, statCellStyle, fmtEUR } from './abacusShared'
 import VerloopKaart from './VerloopKaart'
 
@@ -22,85 +23,6 @@ function clamp(v: number, min: number, max = Infinity): number {
 function margePct(omzet: number | null, kosten: number | null): string {
   if (omzet === null || omzet === undefined || !omzet || kosten === null || kosten === undefined) return '-'
   return `${(((omzet - kosten) / omzet) * 100).toFixed(0)}%`
-}
-
-// Binaire zoektocht naar het kleinste aantal gebruikers waarbij de winst de
-// doelwinst haalt, uitgaande van dezelfde tarieven/%-verdeling/betaalprovider-
-// instellingen als het scenarioblok. Winst is niet perfect lineair (staffels
-// bij ElevenLabs/Upstash, vaste kosten per maand), maar wel monotoon stijgend
-// in n, dus binaire zoektocht volstaat, geen closed-form nodig.
-const MAX_GEBRUIKERS_ZOEKGRENS = 2_000_000
-
-// Team-scenario (aantal teamklanten, gemiddelde leden) staat los van n en
-// wordt hier bewust constant gehouden terwijl n wordt gezocht: dezelfde
-// aanpak als billingSplit/verdeling/betaalprovider hierboven, dat zijn ook
-// vaste aannames tijdens het zoeken.
-function winstBijN(
-  n: number, billingSplit: ScenarioBillingSplit,
-  verdeling: TierVerdeling, betaalprovider: Betaalprovider, team: TeamScenario, teamBillingSplit: TeamBillingSplit, inputs: Inputs
-): number {
-  const { basicN, proN, teamLeden, omzetTotaal, betaalproviderKosten } = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, billingSplit, verdeling, betaalprovider, n, SCENARIO_TEAM_PRIJS, team, teamBillingSplit)
-  const kostenEur = computeScenarioKosten(inputs, basicN, proN, teamLeden).totaal / inputs.fxRate
-  return omzetTotaal - kostenEur - betaalproviderKosten
-}
-
-function benodigdeGebruikersVoorWinst(
-  doelWinstEur: number, billingSplit: ScenarioBillingSplit,
-  verdeling: TierVerdeling, betaalprovider: Betaalprovider, team: TeamScenario, teamBillingSplit: TeamBillingSplit, inputs: Inputs
-): number | null {
-  if (winstBijN(MAX_GEBRUIKERS_ZOEKGRENS, billingSplit, verdeling, betaalprovider, team, teamBillingSplit, inputs) < doelWinstEur) return null
-  let lo = 0
-  let hi = MAX_GEBRUIKERS_ZOEKGRENS
-  while (lo < hi) {
-    const mid = Math.floor((lo + hi) / 2)
-    if (winstBijN(mid, billingSplit, verdeling, betaalprovider, team, teamBillingSplit, inputs) >= doelWinstEur) hi = mid
-    else lo = mid + 1
-  }
-  return lo
-}
-
-// Proportionele variant (besloten 2026-08-11, op Arno's verzoek naast de
-// vaste-teamscenario-variant hierboven, niet als vervanging): i.p.v. team
-// vast te houden terwijl alleen solo groeit, schalen solo-aantal én #
-// teamklanten hier met dezelfde factor mee. Gemiddelde teamgrootte
-// (# teamleden) is bewust een vast kenmerk, geen volumeknop, en schaalt niet
-// mee. Zoekt op een continue schaalfactor i.p.v. een geheel aantal, vandaar
-// een vaste-iteratiecount binaire zoektocht i.p.v. de integer-loop hierboven:
-// 60 iteraties is ruim genoeg voor praktische precisie op elke realistische
-// schaal.
-const MAX_SCHAAL_ZOEKGRENS = 10_000_000
-
-function winstBijSchaal(
-  schaal: number, billingSplit: ScenarioBillingSplit, verdeling: TierVerdeling, betaalprovider: Betaalprovider,
-  baseN: number, baseTeam: TeamScenario, teamBillingSplit: TeamBillingSplit, inputs: Inputs
-): number {
-  const team: TeamScenario = { aantalKlanten: baseTeam.aantalKlanten * schaal, gemiddeldeLeden: baseTeam.gemiddeldeLeden }
-  return winstBijN(baseN * schaal, billingSplit, verdeling, betaalprovider, team, teamBillingSplit, inputs)
-}
-
-function benodigdeSchaalVoorWinst(
-  doelWinstEur: number, billingSplit: ScenarioBillingSplit, verdeling: TierVerdeling, betaalprovider: Betaalprovider,
-  baseN: number, baseTeam: TeamScenario, teamBillingSplit: TeamBillingSplit, inputs: Inputs
-): { solo: number; teamKlanten: number; teamLeden: number; totaal: number } | null {
-  // Bij solo=0 én teamklanten=0 kan een factor niets laten groeien (0 x schaal
-  // blijft altijd 0), dus onbepaald i.p.v. eindeloos zoeken.
-  if (baseN <= 0 && baseTeam.aantalKlanten <= 0) return null
-  let hi = 1
-  while (winstBijSchaal(hi, billingSplit, verdeling, betaalprovider, baseN, baseTeam, teamBillingSplit, inputs) < doelWinstEur) {
-    if (hi > MAX_SCHAAL_ZOEKGRENS) return null
-    hi *= 2
-  }
-  let lo = 0
-  for (let i = 0; i < 60; i++) {
-    const mid = (lo + hi) / 2
-    if (winstBijSchaal(mid, billingSplit, verdeling, betaalprovider, baseN, baseTeam, teamBillingSplit, inputs) >= doelWinstEur) hi = mid
-    else lo = mid
-  }
-  const solo = Math.round(baseN * hi)
-  const teamKlanten = Math.round(baseTeam.aantalKlanten * hi)
-  // Personen in teams, de manager per klant meegeteld.
-  const teamLeden = teamKlanten * (baseTeam.gemiddeldeLeden + 1)
-  return { solo, teamKlanten, teamLeden, totaal: solo + teamLeden }
 }
 
 // Identiek aan numberInputStyle in KostenCalculatorClient.tsx
@@ -146,14 +68,27 @@ function NumberField({ label, hint, value, onChange, step = 1, formatThousands =
   )
 }
 
-function TariefField({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+// min: tijdens het typen mag het veld even onder het minimum staan (de 1 van 12). Pas een geldige waarde gaat door, en bij het verlaten
+// van het veld wordt een te lage waarde het minimum. Zonder dit werd "12" intypen bij een minimum van 3 het getal 32.
+function TariefField({ label, value, onChange, min }: { label: string; value: number; onChange: (v: number) => void; min?: number }) {
+  const [concept, setConcept] = useState<string | null>(null)
   return (
     <div>
       <div style={statLabel}>{label}</div>
       <input
         type="number"
-        value={value}
-        onChange={e => onChange(parseFloat(e.target.value) || 0)}
+        value={concept ?? value}
+        onChange={e => {
+          const getal = parseFloat(e.target.value) || 0
+          if (min === undefined) { onChange(getal); return }
+          setConcept(e.target.value)
+          if (getal >= min) onChange(getal)
+        }}
+        onBlur={() => {
+          if (concept === null) return
+          onChange(parseFloat(concept) || 0)
+          setConcept(null)
+        }}
         style={{ ...numberInputStyle, width: 100, height: 44, fontSize: 22, fontWeight: 700, textAlign: 'right', border: editableBorder }}
       />
     </div>
@@ -237,11 +172,11 @@ export default function BusinessCaseClient({
   const teamVolumeWaarschuwing = nGebruikers > 0 && scenario.teamLeden > 0 && teamVsSoloRatio > 5
 
   const benodigdeGebruikers = useMemo(
-    () => benodigdeGebruikersVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario, teamBillingSplit, inputs),
+    () => benodigdeGebruikersVoorWinst(doelWinst, teamScenario, { billingSplit, verdeling: scenarioPct, betaalprovider, teamBillingSplit, inputs }),
     [doelWinst, billingSplit, scenarioPct, betaalprovider, teamScenario, teamBillingSplit, inputs]
   )
   const benodigdeSchaal = useMemo(
-    () => benodigdeSchaalVoorWinst(doelWinst, billingSplit, scenarioPct, betaalprovider, nGebruikers, teamScenario, teamBillingSplit, inputs),
+    () => benodigdeSchaalVoorWinst(doelWinst, nGebruikers, teamScenario, { billingSplit, verdeling: scenarioPct, betaalprovider, teamBillingSplit, inputs }),
     [doelWinst, billingSplit, scenarioPct, betaalprovider, nGebruikers, teamScenario, teamBillingSplit, inputs]
   )
 
@@ -294,12 +229,12 @@ export default function BusinessCaseClient({
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 12 }}>
               <TariefField label="# teamklanten" value={teamScenario.aantalKlanten} onChange={v => setTeamScenario({ ...teamScenario, aantalKlanten: clamp(v, 0, MAX_GEBRUIKERS_ZOEKGRENS) })} />
-              <TariefField label="# leden excl. mgr" value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: clamp(v, TEAM_MIN_TEAMLEDEN, 10000) })} />
+              <TariefField label="# leden excl. mgr" min={TEAM_MIN_TEAMLEDEN} value={teamScenario.gemiddeldeLeden} onChange={v => setTeamScenario({ ...teamScenario, gemiddeldeLeden: clamp(v, TEAM_MIN_TEAMLEDEN, 10000) })} />
               <TariefDisplay label="% team van totaal" value={`${pctTeamVanTotaal.toFixed(0)}%`} />
             </div>
             {teamVolumeWaarschuwing && (
               <p style={{ fontSize: 12, color: '#f59e0b', lineHeight: 1.5, marginBottom: 12 }}>
-                Let op: {scenario.teamLeden.toLocaleString('nl-NL')} gebruikers in teams is {teamVsSoloRatio.toFixed(1)}&times; het aantal solo users hierboven ({nGebruikers.toLocaleString('nl-NL')}). Check of # teamklanten/# teamleden nog bij dit scenario passen.
+                Let op: {scenario.teamLeden.toLocaleString('nl-NL')} gebruikers in teams is {teamVsSoloRatio.toFixed(1)}&times; het aantal solo users hierboven ({nGebruikers.toLocaleString('nl-NL')}). Check of # teamklanten/# leden excl. mgr nog bij dit scenario passen.
               </p>
             )}
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
@@ -359,7 +294,7 @@ export default function BusinessCaseClient({
               Team blijft vast
             </div>
             <div style={{ fontSize: 12, lineHeight: '17px', color: '#6b7280', marginBottom: 12, height: 34 }}>
-              Team-scenario (# teamklanten/# teamleden) blijft tijdens het zoeken op de huidige instelling, alleen solo groeit.
+              Het teamscenario blijft op de huidige instelling, alleen solo groeit. Vanaf dit aantal blijft de winst op of boven het doel.
             </div>
             <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
               <div>

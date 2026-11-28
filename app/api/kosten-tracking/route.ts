@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { TARIEVEN, elevenLabsCost, resendOverageUsd, vasteKostenPerMaand, afsluitKostenUsd, voyageKostenPerBericht, waarheidsControleKostenUsd } from '@/lib/kostenTarieven'
+import { berekenPrognoseKostenUsd, planVerdeling, type Meting, type PlanVerdeling } from '@/lib/trackrecordPrognose'
+import { amsterdamDagStart, amsterdamDatum, datumPlusDagen, isDatum } from '@/lib/amsterdamTijd'
+import { nettoOmzetCentInMaand, type BetalingVoorOmzet } from '@/lib/maandOmzet'
+import { isTesterVoorAbacus } from '@/lib/gebruikerKosten'
+import { isInternalTestUser } from '@/lib/internalTestAccounts'
 import { getLiveFxRateEurUsd } from '@/lib/fxRate'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
@@ -19,26 +23,19 @@ async function checkAuth(): Promise<boolean> {
 // Geen tweede (schrijf)wachtwoord: afsluiten en werkelijke cijfers invullen vallen onder dezelfde paginatoegang als kijken (besluit Arno
 // 2026-11-19: dat extra wachtwoord was nooit gevraagd). ARNOBOT_KOSTEN_WRITE_KEY wordt niet meer gelezen en kan uit Vercel.
 
+// Maanden lopen in Amsterdamse tijd, gelijk aan de tab Gebruikers.
 function maandRange(maand: string): { start: string; eind: string } {
   // maand is 'YYYY-MM-DD' (altijd de eerste van de maand)
-  const start = new Date(maand + 'T00:00:00.000Z')
-  const eind = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1))
-  return { start: start.toISOString(), eind: eind.toISOString() }
+  const volgende = `${datumPlusDagen(maand, 32).slice(0, 8)}01`
+  return { start: amsterdamDagStart(maand), eind: amsterdamDagStart(volgende) }
 }
 
 function huidigeMaandIso(): string {
-  const now = new Date()
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10)
+  return `${amsterdamDatum().slice(0, 8)}01`
 }
 
-type Meting = {
-  gebruikers_count: number
-  berichten_count: number
-  analyses_count: number
-  sparring_sessies_count: number
-  sparring_berichten_count: number
-  voice_interacties_count: number
-  voice_tekens_count: number
+function vorigeMaandIso(maand: string): string {
+  return `${datumPlusDagen(maand, -1).slice(0, 8)}01`
 }
 
 type Omzet = {
@@ -48,102 +45,94 @@ type Omzet = {
   prognose_omzet_eur: number
 }
 
-async function meetGebruikVoorMaand(maand: string): Promise<Meting> {
+// Interne testaccounts en demo-nepleden tellen niet mee, met dezelfde regel als de tab Gebruikers (Arno's handmatige testaccount blijft).
+async function meetGebruikVoorMaand(maand: string): Promise<{ meting: Meting; plannen: PlanVerdeling }> {
   const { start, eind } = maandRange(maand)
 
-  // Berichten en sparringsessies van de hele maand in blokken (lib/haalAlleRijen.ts): een kale select
-  // kapt op 1000 rijen af, waarna het aantal unieke gebruikers (de basis van de kosten per
-  // gebruiker) en het aantal sparringberichten stilletjes te laag uitkwamen.
-  const [berichtenRows, analyses, sparringRows, voice] = await Promise.all([
+  // Alles in blokken (lib/haalAlleRijen.ts): een kale select kapt op 1000 rijen af, waarna het aantal unieke gebruikers (de basis van de
+  // kosten per gebruiker) en de tellingen stilletjes te laag uitkwamen.
+  const [berichtenRows, analyseRows, sparringRows, voiceAlle] = await Promise.all([
     haalAlleRijen<{ user_id: string }>((van, tot) =>
       supabase.from('arnobot_rds_logs').select('user_id').not('user_id', 'is', null).gte('created_at', start).lt('created_at', eind)
         .order('id', { ascending: true }).range(van, tot)),
-    supabase.from('arnobot_analyses').select('id', { count: 'exact', head: true }).gte('created_at', start).lt('created_at', eind),
-    haalAlleRijen<{ message_count: number | null }>((van, tot) =>
-      supabase.from('arnobot_sparring_sessions').select('message_count').gte('created_at', start).lt('created_at', eind)
+    haalAlleRijen<{ user_id: string | null }>((van, tot) =>
+      supabase.from('arnobot_analyses').select('user_id').gte('created_at', start).lt('created_at', eind)
         .order('id', { ascending: true }).range(van, tot)),
-    haalAlleRijen<{ char_count: number | null }>((van, tot) =>
-      supabase.from('arnobot_elevenlabs_usage').select('char_count').neq('user_id', 'admin-voice-test').gte('created_at', start).lt('created_at', eind)
+    haalAlleRijen<{ user_id: string | null; message_count: number | null }>((van, tot) =>
+      supabase.from('arnobot_sparring_sessions').select('user_id, message_count').gte('created_at', start).lt('created_at', eind)
+        .order('id', { ascending: true }).range(van, tot)),
+    haalAlleRijen<{ user_id: string | null; char_count: number | null }>((van, tot) =>
+      supabase.from('arnobot_elevenlabs_usage').select('user_id, char_count').neq('user_id', 'admin-voice-test').gte('created_at', start).lt('created_at', eind)
         .order('id', { ascending: true }).range(van, tot)),
   ])
 
-  const gebruikersUniek = new Set(berichtenRows.map(r => r.user_id)).size
-  const voiceRows = voice
+  const echt = <T extends { user_id: string | null }>(rijen: T[]) => rijen.filter(r => !r.user_id || !isTesterVoorAbacus(r.user_id))
+  const berichten = echt(berichtenRows)
+  const analyses = echt(analyseRows)
+  const sparring = echt(sparringRows)
+  const voice = echt(voiceAlle)
+  const actief = [...new Set(berichten.map(r => r.user_id))]
+
+  const planPerId = new Map<string, string | null>()
+  for (let i = 0; i < actief.length; i += 200) {
+    const { data, error } = await supabase.from('approved_users').select('user_id, plan').in('user_id', actief.slice(i, i + 200))
+    if (error) throw new Error(error.message)
+    for (const u of data ?? []) planPerId.set(u.user_id, u.plan)
+  }
 
   return {
-    gebruikers_count: gebruikersUniek,
-    berichten_count: berichtenRows.length,
-    analyses_count: analyses.count ?? 0,
-    sparring_sessies_count: sparringRows.length,
-    sparring_berichten_count: sparringRows.reduce((s, r) => s + (r.message_count ?? 0), 0),
-    voice_interacties_count: voiceRows.length,
-    voice_tekens_count: voiceRows.reduce((s, r) => s + (r.char_count ?? 0), 0),
+    meting: {
+      gebruikers_count: actief.length,
+      berichten_count: berichten.length,
+      analyses_count: analyses.length,
+      sparring_sessies_count: sparring.length,
+      sparring_berichten_count: sparring.reduce((s, r) => s + (r.message_count ?? 0), 0),
+      voice_interacties_count: voice.length,
+      voice_tekens_count: voice.reduce((s, r) => s + (r.char_count ?? 0), 0),
+    },
+    plannen: planVerdeling(actief, planPerId),
   }
 }
 
-// Puntmeting van de huidige abonneebasis, geen maandfilter: dit is een
-// momentopname (hoeveel betalende gebruikers heb je nu per plan), geen
-// telling van nieuwe aanmeldingen die specifieke maand. Prijzen per plan zijn
-// optioneel overschrijfbaar vanuit de client (los instelbaar op het Business
-// case-tabblad), zodat "sluit maand af" precies vastlegt wat daar te zien was.
-async function meetOmzet(prijzen?: { basis?: number; premium?: number }): Promise<Omzet> {
-  const { data } = await supabase
+// Aantallen: de betalende gebruikers per plan op dit moment (geen maandfilter). Omzet: de echte betalingen uit de administratie, netto en
+// een jaarbetaling gespreid over 12 maanden (lib/maandOmzet.ts, zelfde regel als de tab Gebruikers). Teamfacturen tellen niet mee.
+async function meetOmzet(maand: string): Promise<Omzet> {
+  const { data, error } = await supabase
     .from('approved_users')
-    .select('plan')
+    .select('user_id, plan')
     .not('paid_at', 'is', null)
     .eq('is_active', true)
+  if (error) throw new Error(error.message)
 
-  const rows = (data ?? []) as { plan: string | null }[]
+  const rows = ((data ?? []) as { user_id: string; plan: string | null }[]).filter(r => !isInternalTestUser(r.user_id))
   const tel = (plan: string) => rows.filter(r => r.plan === plan).length
 
-  const basis = tel('basis')
-  const premium = tel('premium')
-  const team = tel('team')
-
-  const prijsBasis = prijzen?.basis ?? TARIEVEN.prijsBasisEur
-  const prijsPremium = prijzen?.premium ?? TARIEVEN.prijsPremiumEur
-
-  const prognoseOmzetEur = basis * prijsBasis + premium * prijsPremium
-  // Command/team heeft geen vlak tarief (staffel per seat), telt niet mee in
-  // de omzetprognose, alleen het aantal wordt getoond.
+  const { eind } = maandRange(maand)
+  // Een jaarbetaling van tot 12 maanden eerder draagt nog bij.
+  const vanaf = amsterdamDagStart(datumPlusDagen(maand, -366))
+  const [betalingen, abonnementen] = await Promise.all([
+    haalAlleRijen<{ user_id: string } & BetalingVoorOmzet>((van, tot) =>
+      supabase.from('arnobot_payments').select('user_id, bedrag_cent, btw_cent, terugbetaald_cent, betaald_at, subscription_id')
+        .eq('status', 'paid').gte('betaald_at', vanaf).lt('betaald_at', eind).order('id', { ascending: true }).range(van, tot)),
+    haalAlleRijen<{ id: string; cyclus: string }>((van, tot) =>
+      supabase.from('arnobot_subscriptions').select('id, cyclus').order('id', { ascending: true }).range(van, tot)),
+  ])
+  const aboPerId = new Map(abonnementen.map(a => [a.id, a]))
+  const omzetCent = betalingen
+    .filter(b => !isInternalTestUser(b.user_id))
+    .reduce((s, b) => s + nettoOmzetCentInMaand(b, b.subscription_id ? aboPerId.get(b.subscription_id) : undefined, maand.slice(0, 7)), 0)
 
   return {
-    basis_gebruikers: basis,
-    premium_gebruikers: premium,
-    team_gebruikers: team,
-    prognose_omzet_eur: prognoseOmzetEur,
+    basis_gebruikers: tel('basis'),
+    premium_gebruikers: tel('premium'),
+    team_gebruikers: tel('team'),
+    prognose_omzet_eur: Math.round(omzetCent) / 100,
   }
-}
-
-function berekenPrognoseKostenUsd(m: Meting, fxRate: number): number {
-  const anthropicKosten = m.berichten_count * TARIEVEN.anthropicPerBericht
-  const voyageKosten = m.berichten_count * voyageKostenPerBericht()
-  const analysesKosten = m.analyses_count * TARIEVEN.kostenPerAnalyse
-  const fable5Kosten = m.gebruikers_count * (
-    TARIEVEN.coachingPerGebruikerPerMaand * TARIEVEN.coachingKostenPerSynthese
-    + TARIEVEN.uitdagingPerGebruikerPerMaand * TARIEVEN.uitdagingKostenPerStuk
-  )
-  const sparringKosten = m.sparring_berichten_count * TARIEVEN.kostenPerSparringBericht
-    + m.sparring_sessies_count * TARIEVEN.kostenPerDebrief
-  const overigeAnthropicKosten = m.gebruikers_count * TARIEVEN.overigeAnthropicPerGebruikerPerMaand
-
-  const creditsNodig = m.voice_tekens_count * TARIEVEN.creditPerTeken
-  const eleven = elevenLabsCost(creditsNodig, TARIEVEN.tiers)
-  const whisperKosten = m.voice_interacties_count * TARIEVEN.kostenPerVoiceInteractie
-
-  const upstashCommands = m.berichten_count * TARIEVEN.upstashPerBericht
-  const upstashOverage = Math.max(0, upstashCommands - TARIEVEN.upstashFreeLimit)
-  const upstashKosten = (upstashOverage / 100000) * TARIEVEN.upstashPricePer100k
-
-  return vasteKostenPerMaand(m.gebruikers_count, fxRate) + anthropicKosten + voyageKosten + analysesKosten + fable5Kosten
-    + sparringKosten + overigeAnthropicKosten + afsluitKostenUsd(m.berichten_count) + eleven.price + whisperKosten + upstashKosten
-    + resendOverageUsd(m.gebruikers_count)
-    + waarheidsControleKostenUsd(m.berichten_count)
 }
 
 type PlatformRij = { bron: string; usd: number; aanroepen: number }
 
-// Gemeten AI-kosten zonder gebruiker (crons, admin) per maand, per bron. Sleutel is 'YYYY-MM', met dezelfde maandgrenzen (UTC) als de rest
+// Gemeten AI-kosten zonder gebruiker (crons, admin) per maand, per bron. Sleutel is 'YYYY-MM', met dezelfde maandgrenzen (Amsterdam) als de rest
 // van dit tabblad. Onderdeel van de werkelijke kosten, niet opgeteld bij de prognose.
 async function platformPerMaand(vanafMaand: string): Promise<Record<string, PlatformRij[]>> {
   const rijen = await haalAlleRijen<{ bron: string; kosten_usd: number | string | null; created_at: string }>((van, tot) =>
@@ -151,7 +140,7 @@ async function platformPerMaand(vanafMaand: string): Promise<Record<string, Plat
       .order('id', { ascending: true }).range(van, tot))
   const perMaand = new Map<string, Map<string, PlatformRij>>()
   for (const r of rijen) {
-    const maand = new Date(r.created_at).toISOString().slice(0, 7)
+    const maand = amsterdamDatum(new Date(r.created_at)).slice(0, 7)
     const bronnen = perMaand.get(maand) ?? perMaand.set(maand, new Map()).get(maand)!
     const rij = bronnen.get(r.bron) ?? bronnen.set(r.bron, { bron: r.bron, usd: 0, aanroepen: 0 }).get(r.bron)!
     rij.usd += Number(r.kosten_usd ?? 0)
@@ -174,14 +163,14 @@ export async function GET() {
   }
 
   const huidigeMaand = huidigeMaandIso()
-  const alAfgesloten = (geschiedenis ?? []).some(r => r.maand === huidigeMaand)
+  const vorigeMaand = vorigeMaandIso(huidigeMaand)
+  const afgesloten = new Set((geschiedenis ?? []).map(r => r.maand as string))
 
-  let liveHuidigeMaand = null
-  if (!alAfgesloten) {
-    const [meting, omzet, fxRate] = await Promise.all([meetGebruikVoorMaand(huidigeMaand), meetOmzet(), getLiveFxRateEurUsd()])
-    const prognoseKostenUsd = berekenPrognoseKostenUsd(meting, fxRate.rate)
-    liveHuidigeMaand = {
-      maand: huidigeMaand,
+  async function live(maand: string) {
+    const [{ meting, plannen }, omzet, fxRate] = await Promise.all([meetGebruikVoorMaand(maand), meetOmzet(maand), getLiveFxRateEurUsd()])
+    const prognoseKostenUsd = berekenPrognoseKostenUsd(meting, plannen, fxRate.rate)
+    return {
+      maand,
       ...meting,
       ...omzet,
       prognose_usd: prognoseKostenUsd,
@@ -190,33 +179,50 @@ export async function GET() {
     }
   }
 
+  let liveHuidigeMaand: Awaited<ReturnType<typeof live>> | null = null
+  let openVorigeMaand: Awaited<ReturnType<typeof live>> | null = null
+  try {
+    const [huidig, vorig] = await Promise.all([
+      afgesloten.has(huidigeMaand) ? null : live(huidigeMaand),
+      afgesloten.has(vorigeMaand) ? null : live(vorigeMaand),
+    ])
+    liveHuidigeMaand = huidig
+    // Zonder een enkel bericht valt er over die maand niets af te sluiten.
+    openVorigeMaand = vorig && vorig.berichten_count > 0 ? vorig : null
+  } catch (err) {
+    console.error('[kosten-tracking live]', err instanceof Error ? err.message : err)
+    return NextResponse.json({ error: 'Ophalen mislukt' }, { status: 500 })
+  }
+
   // Een fout hier mag het trackrecord zelf niet blokkeren: dan ontbreekt alleen het blok met platformwerk.
-  const oudsteMaand = [huidigeMaand, ...(geschiedenis ?? []).map(r => r.maand as string)].sort()[0]
+  const oudsteMaand = [vorigeMaand, ...(geschiedenis ?? []).map(r => r.maand as string)].sort()[0]
   const platform = await platformPerMaand(oudsteMaand).catch(err => {
     console.error('[kosten-tracking platformwerk]', err)
     return null
   })
 
-  return NextResponse.json({ geschiedenis: geschiedenis ?? [], liveHuidigeMaand, platform })
+  return NextResponse.json({ geschiedenis: geschiedenis ?? [], liveHuidigeMaand, openVorigeMaand, platform })
 }
 
 export async function POST(req: NextRequest) {
   if (!(await checkAuth())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
-  const { action, maand, werkelijkeKosten, werkelijkeOmzet, prijsBasis, prijsPremium } = body as {
+  const { action, maand, werkelijkeKosten, werkelijkeOmzet } = body as {
     action?: string; maand?: string; werkelijkeKosten?: number; werkelijkeOmzet?: number
-    prijsBasis?: number; prijsPremium?: number
   }
 
   if (action === 'afsluiten') {
     const doelMaand = typeof maand === 'string' && maand ? maand : huidigeMaandIso()
-    const [meting, omzet, fxRate] = await Promise.all([
+    if (!isDatum(doelMaand) || !doelMaand.endsWith('-01') || doelMaand > huidigeMaandIso()) {
+      return NextResponse.json({ error: 'Ongeldige maand' }, { status: 400 })
+    }
+    const [{ meting, plannen }, omzet, fxRate] = await Promise.all([
       meetGebruikVoorMaand(doelMaand),
-      meetOmzet({ basis: prijsBasis, premium: prijsPremium }),
+      meetOmzet(doelMaand),
       getLiveFxRateEurUsd(),
     ])
-    const prognose = berekenPrognoseKostenUsd(meting, fxRate.rate)
+    const prognose = berekenPrognoseKostenUsd(meting, plannen, fxRate.rate)
 
     const { error } = await supabase.from('arnobot_kosten_tracking').upsert({
       maand: doelMaand,

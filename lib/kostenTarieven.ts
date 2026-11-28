@@ -1,4 +1,4 @@
-// Gedeelde tariefaannames voor de kostencalculator (app/kosten). Eén bron van
+// Gedeelde tariefaannames voor de kostencalculator (app/abacus). Eén bron van
 // waarheid voor zowel de interactieve calculator (KostenCalculatorClient.tsx,
 // forward-looking, met instelbare volume-aannames) als de trackrecord-route
 // (api/kosten-tracking, backward-looking, rekent met écht gemeten volumes uit
@@ -15,8 +15,9 @@ export const TARIEVEN = {
   // echte gebruikers van 24 t/m 28 november gemiddeld $0,088. Vanaf 19 november (59 vragen) was het $0,117. Kleine meting, bewust niet
   // te gunstig. Bij meer verkeer kan het lager uitvallen doordat de vaste instructie vaker uit de cache komt, hoeveel is niet gemeten.
   anthropicPerBericht: 0.09,
-  // Analyses (voorheen "BIEB", app/api/bot/coaching-analyse, Sonnet 4.6)
-  kostenPerAnalyse: 0.007,
+  // Analyses (voorheen "BIEB", app/api/bot/coaching-analyse, Sonnet 4.6). Was 0,007 (schatting uit juli). Op 28 november 2026 stond er een
+  // gemeten analyse in arnobot_ai_gebruik (cron-auto-analyse, zelfde model en uitvoergrens): $0,018. Een meting, opnieuw meten.
+  kostenPerAnalyse: 0.018,
   // Fable 5.1: coaching-hoofdsynthese + uitdaging. Geen event-log voor deze
   // twee (arnobot_coaching is één rij per gebruiker, geen append-log), dus
   // blijft een aanname, ook in de trackrecord-berekening. Prijs ongewijzigd
@@ -24,8 +25,10 @@ export const TARIEVEN = {
   coachingPerGebruikerPerMaand: 2,
   coachingKostenPerSynthese: 0.18,
   uitdagingPerGebruikerPerMaand: 10,
-  uitdagingKostenPerStuk: 0.025,
-  // Sparring (Sonnet 4.6), $ per bericht + $ per debrief
+  // Was 0,025. Gemeten op 27 november 2026, twee aanroepen (bron uitdaging): gemiddeld $0,067 (2.640 tokens in, 818 uit). De synthese
+  // zelf is sinds de meting nog niet gedraaid en blijft een aanname.
+  uitdagingKostenPerStuk: 0.067,
+  // Sparring (Sonnet 4.6), $ per bericht van de gebruiker (een aanroep) + $ per debrief. Sinds de meting (19 november) geen sessies gemeten.
   kostenPerSparringBericht: 0.006,
   kostenPerDebrief: 0.015,
   // Een gesprek afsluiten (samenvatting, feiten, geheugentoets, groeibalans, uitdaging, thema's, mailpatroon, entiteiten, labels), $ per
@@ -46,6 +49,11 @@ export const TARIEVEN = {
   // waarheidscontrole en waarheidscontrole-taal in Abacus (tab Trackrecord). De grens per run gebruikt de controle zelf ook.
   waarheidsControlePerAntwoordUsd: 0.052,
   waarheidsControleMaxPerWeek: 120,
+  // Dagelijkse feitencontrole (app/api/cron/feitencontrole, Sonnet 4.6, bijlagen gaan mee). Gemeten uit arnobot_ai_gebruik, 20 t/m 28
+  // november 2026, zonder testaccounts: 35 beoordelingen op 59 chatvragen, gemiddeld $0,0198. Hooguit 60 beoordelingen per dagelijkse run.
+  feitenControleAandeelPct: 59,
+  feitenControlePerBeoordelingUsd: 0.02,
+  feitenControleMaxPerDag: 60,
   // ElevenLabs: credits per teken (Flash v2.5). ElevenLabs zelf bevestigt alleen
   // een bereik van 0,5-1, dit is de veilige kant van dat bereik.
   creditPerTeken: 1.0,
@@ -71,7 +79,12 @@ export const TARIEVEN = {
   sonnetInvoerPerMiljoenUsd: 3,
   sonnetUitvoerPerMiljoenUsd: 15,
   // Documenten in de chat (docs/DOCUMENTEN_PLAN.md, live sinds 2026-11-18). Het hele bestand gaat bij ELKE beurt van
-  // het gesprek opnieuw als invoer mee (tot 48 uur na het laatste bericht). Een PDF kost ruwweg 1.500 tot 3.000 tokens
+  // het gesprek opnieuw als invoer mee (tot 48 uur na het laatste bericht). LET OP: sinds 19 november kunnen PDF's en grotere
+  // Word- en tekstbestanden via de documentlezer lopen (lib/documentLezer.ts, Haiku met cache, schakelaar DOCUMENT_LEZER_OPEN).
+  // Deze post rekent nog de oude, duurdere weg. Meting 19 t/m 23 november: een vraag met bijlage kostte aan chat gemiddeld
+  // $0,17 tegen $0,09 zonder (21 en 38 vragen), dus ongeveer $0,08 extra tegen $0,16 hier. Te weinig om te verlagen, en de
+  // lezer is maar een keer gemeten. In de 34 vragen achter anthropicPerBericht zat geen bijlage: geen dubbeltelling.
+  // Een PDF kost ruwweg 1.500 tot 3.000 tokens
   // per pagina (bron: Anthropic pdf-support, in DOCUMENTEN_PLAN gelezen 2026-11-18), harde grens 50 pagina's per PDF (was 100, herzien 2026-11-19)
   // en 20 MB. ALLES HIERONDER IS AANNAME: gemeten zijn alleen 10 documenten van 4 gebruikers in twee dagen
   // (mediaan 4 MB, 7 pdf, 1 afbeelding, 2 audio). Bijwerken zodra er een maand echt gebruik is (arnobot_documenten).
@@ -87,7 +100,7 @@ export const TARIEVEN = {
   // Samenvattingen terugbrengen in het geheugen (3 stuks van ongeveer 400 tokens) bij een deel van de berichten van wie documenten bewaart.
   samenvattingBerichtenPerGebruiker: 20,
   samenvattingTokensPerBericht: 1200,
-  // Profiel uit een andere AI (lib/historieImport.ts, achter HISTORIE_IMPORT_OPEN): omzetting eenmalig met Haiku
+  // Profiel uit een andere AI (lib/historieImport.ts, live voor iedereen sinds 18 november 2026): omzetting eenmalig met Haiku
   // (maximaal 20.000 tekens in, 4.500 tokens uit, ruim 2 cent), en het profiel gaat daarna bij elk bericht mee in het
   // niet-gecachete deel van de systeemprompt (maximaal 6.800 tekens per profiel, ongeveer 2.000 tokens).
   pctHistorieImport: 20,
@@ -188,7 +201,8 @@ export const TARIEVEN = {
   // ~1,7% te hoog, wat elke USD-kostenpost (Vercel, Supabase, Clerk, Porkbun)
   // structureel iets te hoog omrekende naar EUR. Vorige update 2026-09-17: was
   // toen 1.08, ~7% te laag.
-  fxRateEurUsd: 1.135,
+  // 28 november 2026: 1,0969 (live koers van dezelfde bron als lib/fxRate.ts), was 1,135.
+  fxRateEurUsd: 1.0969,
   domeinPerJaarUsd: 52,
   upstashFreeLimit: 500000,
   upstashPerBericht: 10,
@@ -263,6 +277,15 @@ export function waarheidsControleKostenUsd(chatberichtenPerMaand: number, perAnt
   return Math.min(chatberichtenPerMaand, TARIEVEN.waarheidsControleMaxPerWeek * 52 / 12) * perAntwoordUsd
 }
 
+/** De dagelijkse feitencontrole: een deel van de chatvragen wordt beoordeeld, tot de grens per run. Een maand is 365/12 runs. */
+export function feitenControleKostenUsd(
+  chatberichtenPerMaand: number,
+  aandeelPct: number = TARIEVEN.feitenControleAandeelPct,
+  perBeoordelingUsd: number = TARIEVEN.feitenControlePerBeoordelingUsd,
+): number {
+  return Math.min(chatberichtenPerMaand * (aandeelPct / 100), TARIEVEN.feitenControleMaxPerDag * 365 / 12) * perBeoordelingUsd
+}
+
 export function afsluitKostenUsd(vragen: number, vragenPerGesprek: number = TARIEVEN.vragenPerGesprek, perGesprekUsd: number = TARIEVEN.afsluitKostenPerGesprekUsd): number {
   return vragenPerGesprek > 0 ? (vragen / vragenPerGesprek) * perGesprekUsd : 0
 }
@@ -309,6 +332,8 @@ export type Inputs = {
   vragenPerGesprek: number
   afsluitKostenPerGesprek: number
   waarheidsControlePerAntwoord: number
+  feitenControleAandeelPct: number
+  feitenControlePerBeoordeling: number
   pctVoice: number
   voiceInteracties: number
   tekensPerAntwoord: number
@@ -365,8 +390,8 @@ export const DEFAULT_INPUTS: Inputs = {
   // door Arno (2026-07-29).
   analysesPerGebruiker: 8,
   kostenPerAnalyse: TARIEVEN.kostenPerAnalyse,
-  // Fable 5 ($10 in / $50 uit per 1M tokens), gebruikt in coaching-hoofdsynthese
-  // (max_tokens 4000) en de uitdaging-route (max_tokens 600).
+  // Fable 5.1 ($10 in / $50 uit per 1M tokens), gebruikt in coaching-hoofdsynthese
+  // en de uitdaging-route (allebei max_tokens 4000).
   coachingPerGebruiker: TARIEVEN.coachingPerGebruikerPerMaand,
   coachingKostenPerSynthese: TARIEVEN.coachingKostenPerSynthese,
   uitdagingPerGebruiker: TARIEVEN.uitdagingPerGebruikerPerMaand,
@@ -385,6 +410,10 @@ export const DEFAULT_INPUTS: Inputs = {
   // elke route apart te modelleren.
   overigeAnthropicPerGebruiker: TARIEVEN.overigeAnthropicPerGebruikerPerMaand,
   waarheidsControlePerAntwoord: TARIEVEN.waarheidsControlePerAntwoordUsd,
+  feitenControleAandeelPct: TARIEVEN.feitenControleAandeelPct,
+  feitenControlePerBeoordeling: TARIEVEN.feitenControlePerBeoordelingUsd,
+  // Voice is een lanceerscenario: gesproken antwoorden staan nu alleen aan voor twee eigen accounts (VOICE_LAUNCH_RESTRICTED in
+  // lib/voice.ts). 30% bewust laten staan (Arno, 28 november 2026): de business case kijkt vooruit.
   pctVoice: 30,
   voiceInteracties: 100,
   tekensPerAntwoord: TARIEVEN.tekensPerVoiceAntwoord,
@@ -429,7 +458,9 @@ export const DEFAULT_INPUTS: Inputs = {
   // Bevestigd 2026-08-10 daadwerkelijk geüpgraded. Sinds 2026-08-11 (audit)
   // niet meer los hardgecodeerd, maar dezelfde bron als vasteKostenPerMaand().
   supabasePro: TARIEVEN.supabaseProActief,
-  clerkPro: TARIEVEN.clerkProActief,
+  // In scenario's aan: besluit 24 november 2026 is Clerk Pro nemen bij 10 betalende gebruikers. TARIEVEN.clerkProActief zegt of het
+  // vandaag al wordt betaald (Trackrecord).
+  clerkPro: true,
   resendPro: TARIEVEN.resendProActief,
   resendMailsPerGebruiker: TARIEVEN.resendMailsPerGebruikerPerMaand,
   moneybirdEur: TARIEVEN.moneybirdEur,
@@ -453,7 +484,7 @@ export const DEFAULT_INPUTS: Inputs = {
 // - Analyses: wel toegang, maar hard gelimiteerd tot 1x/dag
 //   (coaching-analyse/route.ts), dus een veel lagere maandaanname dan Pro's
 //   instelbare aantal.
-// - Sparren: geen tier-check gevonden in de routes, dus gelijk voor beide.
+// - Sparren: Basic hooguit 1 sessie per dag (app/api/sparring/open); hier voor beide hetzelfde maandgebruik.
 // Vaste kosten tellen maar één keer mee, de voice/coaching/analyses-termen
 // gebruiken per tier een andere N (proEffectief vs. basicN, zie hieronder).
 const BASIC_ANALYSES_PER_MAAND = 4
@@ -487,7 +518,7 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
     + totaalSparringSessies * inputs.kostenPerDebrief
 
   // Bundelt coaching-gerelateerde (precheck, blog-synthese) en niet-
-  // gerelateerde (session-end, verfijn, sessies-zoeken) routes, verwaarloosbaar
+  // gerelateerde (verfijn, sessies-zoeken) routes, verwaarloosbaar
   // bedrag, hier niet verder uitgesplitst, toegepast op Pro (grootste overlap
   // met coaching-routes).
   const overigeAnthropicKosten = proEffectief * inputs.overigeAnthropicPerGebruiker
@@ -535,6 +566,8 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
 
   const waarheidsControleKosten = waarheidsControleKostenUsd(totaalBerichten, inputs.waarheidsControlePerAntwoord)
 
+  const feitenControleKosten = feitenControleKostenUsd(totaalBerichten, inputs.feitenControleAandeelPct, inputs.feitenControlePerBeoordeling)
+
   const upstashCommands = totaalBerichten * inputs.upstashPerBericht
   const upstashOverage = Math.max(0, upstashCommands - inputs.upstashFreeLimit)
   const upstashKosten = (upstashOverage / 100000) * inputs.upstashPrice
@@ -557,12 +590,12 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
     + domeinPerMaand
 
   const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten + afsluitKosten
-    + voyageKosten + eleven.price + whisperKosten + dicteerKosten + audioAnalyseKosten + documentKosten + historieImportKosten + upstashKosten + resendOverageKosten + teamOverheadKosten + waarheidsControleKosten
+    + voyageKosten + eleven.price + whisperKosten + dicteerKosten + audioAnalyseKosten + documentKosten + historieImportKosten + upstashKosten + resendOverageKosten + teamOverheadKosten + waarheidsControleKosten + feitenControleKosten
 
   return {
     vastKosten, anthropicKosten, voyageKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten, afsluitKosten,
     elevenPrice: eleven.price, elevenName: eleven.name,
-    whisperKosten, dicteerKosten, audioAnalyseKosten, documentKosten, documentBeurtKosten, samenvattingKosten, samenvattingGeheugenKosten, historieImportKosten, upstashKosten, resendOverageKosten, teamOverheadKosten, waarheidsControleKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
+    whisperKosten, dicteerKosten, audioAnalyseKosten, documentKosten, documentBeurtKosten, samenvattingKosten, samenvattingGeheugenKosten, historieImportKosten, upstashKosten, resendOverageKosten, teamOverheadKosten, waarheidsControleKosten, feitenControleKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }
 }
 
@@ -706,12 +739,15 @@ export function berekenScenarioOmzetEnBetaalprovider(
   // SEPA-incasso (sepaPct/sepaFixed, niet langer €0 zoals de oude
   // kaart-only-formule aannam), Team apart tegen het vlakke SEPA-
   // overschrijvingstarief.
+  // Het vaste bedrag per transactie valt bij een jaarbetaling een keer per jaar, dus voor 1/12 per maand.
+  const transactiesPerMaand = (aantal: number, pctJaarlijks: number) => aantal * (1 - pctJaarlijks / 100 + pctJaarlijks / 100 / 12)
+  const soloTransacties = transactiesPerMaand(basicN, billingSplit.basicPctJaarlijks) + transactiesPerMaand(proN, billingSplit.proPctJaarlijks)
   const aandeel = betaalprovider.pctCreditcard / 100
   const kaartKosten = omzet * aandeel * (betaalprovider.mdrPct / 100)
-    + (basicN + proN) * aandeel * betaalprovider.mdrFixed
+    + soloTransacties * aandeel * betaalprovider.mdrFixed
   const sepaKosten = omzet * (1 - aandeel) * (betaalprovider.sepaPct / 100)
-    + (basicN + proN) * (1 - aandeel) * betaalprovider.sepaFixed
-  const teamBetaalKosten = team.aantalKlanten * betaalprovider.teamFixed
+    + soloTransacties * (1 - aandeel) * betaalprovider.sepaFixed
+  const teamBetaalKosten = transactiesPerMaand(team.aantalKlanten, teamBillingSplit.pctJaarlijks) * betaalprovider.teamFixed
   const betaalproviderKosten = kaartKosten + sepaKosten + teamBetaalKosten
   return { basicN, proN, omzet, teamLeden, teamOmzet, omzetTotaal, betaalproviderKosten, basicPrijsGemiddeld, proPrijsGemiddeld, teamBasisGemiddeld, teamPerGebruikerGemiddeld }
 }

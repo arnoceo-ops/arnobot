@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { DEFAULT_PRIJZEN } from '@/lib/kostenTarieven'
 import PlatformTabel, { type PlatformRij } from './PlatformTabel'
 
 type Meting = {
@@ -57,9 +56,16 @@ const numberInputStyle: React.CSSProperties = {
   fontVariantNumeric: 'tabular-nums',
 }
 
+const afsluitKnopStyle = (bezig: boolean): React.CSSProperties => ({
+  fontFamily: 'inherit', fontSize: 13, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
+  padding: '10px 20px', borderRadius: 999, border: 'none', cursor: bezig ? 'not-allowed' : 'pointer',
+  background: bezig ? '#2d3a4f' : '#f59e0b', color: '#111827',
+})
+
 export default function TrackrecordClient() {
   const [geschiedenis, setGeschiedenis] = useState<Meting[]>([])
   const [liveHuidigeMaand, setLiveHuidigeMaand] = useState<Meting | null>(null)
+  const [openVorigeMaand, setOpenVorigeMaand] = useState<Meting | null>(null)
   const [platform, setPlatform] = useState<Record<string, PlatformRij[]> | null>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -76,6 +82,7 @@ export default function TrackrecordClient() {
       const data = await res.json()
       setGeschiedenis(data.geschiedenis ?? [])
       setLiveHuidigeMaand(data.liveHuidigeMaand ?? null)
+      setOpenVorigeMaand(data.openVorigeMaand ?? null)
       setPlatform(data.platform ?? null)
     } catch {
       setError('Kon trackrecord niet laden.')
@@ -86,7 +93,7 @@ export default function TrackrecordClient() {
 
   useEffect(() => { laadData() }, [])
 
-  async function handleAfsluiten() {
+  async function handleAfsluiten(maand: string) {
     setAfsluiten(true)
     try {
       const res = await fetch('/api/kosten-tracking', {
@@ -94,8 +101,7 @@ export default function TrackrecordClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'afsluiten',
-          prijsBasis: DEFAULT_PRIJZEN.basis,
-          prijsPremium: DEFAULT_PRIJZEN.premium,
+          maand,
         }),
       })
       if (res.ok) await laadData()
@@ -138,6 +144,19 @@ export default function TrackrecordClient() {
       {error && <p style={{ color: '#cc2200', fontSize: 13, marginBottom: 16 }}>{error}</p>}
       {platform === null && <p style={{ color: '#cc2200', fontSize: 13, marginBottom: 16 }}>Kon het platformwerk niet laden.</p>}
 
+      {openVorigeMaand && (
+        <div style={{ ...cardStyle, border: '1px solid rgba(245,158,11,0.35)' }}>
+          <div style={{ ...cardHeadStyle, color: '#f59e0b' }}><span style={dotStyle} />Nog niet afgesloten: {fmtMaand(openVorigeMaand.maand)}</div>
+          <p style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 12 }}>
+            {openVorigeMaand.gebruikers_count} users, {openVorigeMaand.berichten_count} berichten, {openVorigeMaand.analyses_count} analyses, {openVorigeMaand.sparring_sessies_count} sparringsessies, {openVorigeMaand.voice_interacties_count} voice-interacties.
+          </p>
+          <div style={headlineValueStyle}>{fmtUSD(openVorigeMaand.prognose_usd)}</div>
+          <button onClick={() => handleAfsluiten(openVorigeMaand.maand)} disabled={afsluiten} style={afsluitKnopStyle(afsluiten)}>
+            {afsluiten ? 'BEZIG...' : `SLUIT ${fmtMaand(openVorigeMaand.maand).toUpperCase()} AF`}
+          </button>
+        </div>
+      )}
+
       {liveHuidigeMaand && (
         <div style={{ ...cardStyle, background: 'linear-gradient(180deg, rgba(245,158,11,0.08), rgba(245,158,11,0.02))', border: '1px solid rgba(245,158,11,0.35)' }}>
           <div style={{ ...cardHeadStyle, color: '#f59e0b' }}><span style={dotStyle} />Lopende maand: {fmtMaand(liveHuidigeMaand.maand)}</div>
@@ -150,15 +169,7 @@ export default function TrackrecordClient() {
           {liveHuidigeMaand.fx_rate_live === false && (
             <p style={{ fontSize: 11.5, color: '#6b7280', marginTop: 4 }}>Live EUR/USD-koers ophalen mislukt, fallback-waarde gebruikt voor de EUR-omrekening.</p>
           )}
-          <button
-            onClick={handleAfsluiten}
-            disabled={afsluiten}
-            style={{
-              fontFamily: 'inherit', fontSize: 13, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
-              padding: '10px 20px', borderRadius: 999, border: 'none', cursor: afsluiten ? 'not-allowed' : 'pointer',
-              background: afsluiten ? '#2d3a4f' : '#f59e0b', color: '#111827',
-            }}
-          >
+          <button onClick={() => handleAfsluiten(liveHuidigeMaand.maand)} disabled={afsluiten} style={afsluitKnopStyle(afsluiten)}>
             {afsluiten ? 'BEZIG...' : 'SLUIT DEZE MAAND AF'}
           </button>
           <p style={{ fontSize: 12, color: '#6b7280', marginTop: 10 }}>

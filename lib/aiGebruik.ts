@@ -37,7 +37,9 @@ const PRIJZEN_PER_MILJOEN: Record<string, { invoer: number; uitvoer: number; cac
   'claude-haiku-5-5': { invoer: 0.1, uitvoer: 0.5 },
   'claude-sonnet-4-6': { invoer: 3, uitvoer: 15 },
   'claude-haiku-4-5-20251001': { invoer: 1, uitvoer: 5 },
-  'claude-fable-5-1': { invoer: 10, uitvoer: 50 },
+  'claude-fable-5-1': { invoer: 10, uitvoer: 50, cacheLezen: 0.25 },
+  // coaching-precheck (app/api/bot/coaching). Prijs van platform.claude.com/docs/en/about-claude/pricing, gelezen 2026-11-28.
+  'claude-sonnet-5': { invoer: 2, uitvoer: 10 },
 }
 
 /** Cache schrijven (5 minuten) kost 1,25 keer de invoerprijs, cache lezen 0,1 keer. */

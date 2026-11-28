@@ -229,7 +229,7 @@ export default function GebruikersKostenClient() {
           </p>
           {data.testers.aantal > 0 && (
             <p style={{ fontSize: 12.5, color: '#6b7280', marginBottom: 14 }}>
-              Niet getoond: {data.testers.aantal} testers en testaccounts ({data.testers.berichten} berichten), samen {fmtUsd(data.testers.totaalUsd)} aan kosten. Die tellen niet mee in het totaal hierboven, maar wel in de Anthropic-Console.
+              Niet getoond: {data.testers.aantal} testaccounts ({data.testers.berichten} berichten), samen {fmtUsd(data.testers.totaalUsd)} aan kosten. Die tellen niet mee in het totaal hierboven, maar wel in de Anthropic-Console.
             </p>
           )}
           <div style={{ overflowX: 'auto' }}>

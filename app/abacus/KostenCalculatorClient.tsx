@@ -175,7 +175,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
           <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#f59e0b', marginBottom: 8 }}>ArnoBot &middot; Interne businesscase</p>
           <h1 style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 700, letterSpacing: '-0.01em', marginBottom: 8 }}>Kostencalculator per user</h1>
           <p style={{ color: '#94a3b8', fontSize: 14, maxWidth: 640 }}>
-            Alle aannames zijn los instelbaar: gebruiksvolume, Voice-adoptie, ElevenLabs-tiers en vaste infrastructuurkosten. Gelden voor Pro-users; Basic krijgt automatisch nul coaching/voice en een vaste lage analyses-aanname, dezelfde %-verdeling als tab 3 (Business case). Alles herberekent live.
+            Alle aannames zijn los instelbaar: gebruiksvolume, Voice-adoptie, ElevenLabs-tiers en vaste infrastructuurkosten. Coaching, voice, audio en overige routes gelden voor Pro en Team, Basic krijgt een vaste lage analyses-aanname, de rest geldt voor iedereen. Dezelfde %-verdeling als tab 3 (Business case). Alles herberekent live.
           </p>
         </div>
 
@@ -191,22 +191,22 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Analyses</div>
               <NumberField label="Analyses per user per maand" hint="app/api/bot/coaching-analyse, heet /bot/analyses in de app, was BIEB" value={inputs.analysesPerGebruiker} onChange={v => set('analysesPerGebruiker', v)} />
-              <NumberField label="Kosten per analyse ($)" hint="juli 2026 gemeten output ~1263 tekens + geschatte input" value={inputs.kostenPerAnalyse} step={0.001} onChange={v => set('kostenPerAnalyse', v)} />
+              <NumberField label="Kosten per analyse ($)" hint="een gemeten analyse op 28 november 2026" value={inputs.kostenPerAnalyse} step={0.001} onChange={v => set('kostenPerAnalyse', v)} />
             </div>
 
             <div style={cardStyle}>
-              <div style={cardHeadStyle}><span style={dotStyle} />Fable 5 (coaching-synthese &amp; uitdaging)</div>
+              <div style={cardHeadStyle}><span style={dotStyle} />Fable 5.1 (coaching-synthese &amp; uitdaging)</div>
               <NumberField label="Coaching-syntheses per user/maand" hint="app/api/bot/coaching/route.ts, hoofdsynthese" value={inputs.coachingPerGebruiker} onChange={v => set('coachingPerGebruiker', v)} />
               <NumberField label="Kosten per coaching-synthese ($)" hint="max_tokens 4000, thinking telt mee" value={inputs.coachingKostenPerSynthese} step={0.01} onChange={v => set('coachingKostenPerSynthese', v)} />
               <NumberField label="Uitdagingen per user/maand" hint="app/api/bot/uitdaging/route.ts" value={inputs.uitdagingPerGebruiker} onChange={v => set('uitdagingPerGebruiker', v)} />
-              <NumberField label="Kosten per uitdaging ($)" hint="max_tokens 600" value={inputs.uitdagingKostenPerStuk} step={0.005} onChange={v => set('uitdagingKostenPerStuk', v)} />
+              <NumberField label="Kosten per uitdaging ($)" hint="max_tokens 4000, gemeten op twee uitdagingen op 27 november" value={inputs.uitdagingKostenPerStuk} step={0.005} onChange={v => set('uitdagingKostenPerStuk', v)} />
             </div>
 
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Sparring</div>
               <NumberField label="% users dat sparring gebruikt" hint="aanname, geen harde data" value={inputs.pctSparring} max={100} onChange={v => set('pctSparring', v)} />
               <NumberField label="Sessies per sparring-user/maand" hint="juli 2026 gemeten: 9 sessies/2 users ≈ 4,5" value={inputs.sparringSessiesPerGebruiker} onChange={v => set('sparringSessiesPerGebruiker', v)} />
-              <NumberField label="Berichten per sparringsessie" hint="juli 2026 gemeten: 17,7" value={inputs.berichtenPerSparringSessie} onChange={v => set('berichtenPerSparringSessie', v)} />
+              <NumberField label="Berichten per sparringsessie" hint="aanname: eigen berichten van de gebruiker" value={inputs.berichtenPerSparringSessie} onChange={v => set('berichtenPerSparringSessie', v)} />
               <NumberField label="Kosten per sparringbericht ($)" hint="app/api/sparring/chat, Sonnet 4.6, geen RAG" value={inputs.kostenPerSparringBericht} step={0.001} onChange={v => set('kostenPerSparringBericht', v)} />
               <NumberField label="Kosten per debrief ($)" hint="app/api/sparring/debrief, volledig transcript als input" value={inputs.kostenPerDebrief} step={0.001} onChange={v => set('kostenPerDebrief', v)} />
             </div>
@@ -231,7 +231,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
             </div>
 
             <div style={cardStyle}>
-              <div style={cardHeadStyle}><span style={dotStyle} />Voice (ElevenLabs + transcriptie)</div>
+              <div style={cardHeadStyle}><span style={dotStyle} />Voice als lanceerscenario (nog niet open voor klanten)</div>
               <NumberField label="% users met Voice actief" hint="aanname, geen harde data" value={inputs.pctVoice} max={100} onChange={v => set('pctVoice', v)} />
               <NumberField label="Interacties per Voice-user/maand" value={inputs.voiceInteracties} onChange={v => set('voiceInteracties', v)} />
               <NumberField label="Tekens per gesproken antwoord" hint="doellengte buildVoiceSystemPrompt: 400-600" value={inputs.tekensPerAntwoord} step={10} onChange={v => set('tekensPerAntwoord', v)} />
@@ -265,6 +265,12 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
             </div>
 
             <div style={cardStyle}>
+              <div style={cardHeadStyle}><span style={dotStyle} />Feitencontrole (dagelijks)</div>
+              <NumberField label="% chatvragen dat wordt beoordeeld" hint="20 t/m 28 november gemeten: 35 op 59" value={inputs.feitenControleAandeelPct} max={100} onChange={v => set('feitenControleAandeelPct', v)} />
+              <NumberField label="Kosten per beoordeling ($)" hint={`Sonnet 4.6, bijlagen gaan mee. Elke dag maximaal ${TARIEVEN.feitenControleMaxPerDag} beoordelingen`} value={inputs.feitenControlePerBeoordeling} step={0.001} onChange={v => set('feitenControlePerBeoordeling', v)} />
+            </div>
+
+            <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Audiobijlage-analyse (AssemblyAI)</div>
               <NumberField label="% Pro/Team-users dat audio uploadt" hint="hidden feature, geen aankondiging, geen gemeten data: voorzichtige aanname" value={inputs.pctAudioAnalyse} max={100} onChange={v => set('pctAudioAnalyse', v)} />
               <NumberField label="Audiominuten per gebruiker/maand" hint="gemiddeld over wie het gebruikt" value={inputs.audioMinutenPerGebruiker} onChange={v => set('audioMinutenPerGebruiker', v)} />
@@ -276,7 +282,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
               <NumberField label="% gebruikers dat documenten uploadt" hint="alle plannen, aanname: gemeten zijn 10 documenten van 4 gebruikers" value={inputs.pctDocumentGebruikers} max={100} onChange={v => set('pctDocumentGebruikers', v)} />
               <NumberField label="Documenten per uploader/maand" hint="aanname" value={inputs.documentenPerGebruiker} onChange={v => set('documentenPerGebruiker', v)} />
               <NumberField label="Tokens per document" hint="PDF ongeveer 1.500 tot 3.000 per pagina, max 50 pagina's: 40.000 is ruim 20 pagina's" value={inputs.tokensPerDocument} step={1000} onChange={v => set('tokensPerDocument', v)} />
-              <NumberField label="Beurten per document" hint="het hele bestand gaat bij elke beurt opnieuw mee, zonder caching" value={inputs.beurtenPerDocument} onChange={v => set('beurtenPerDocument', v)} />
+              <NumberField label="Beurten per document" hint="rekent het hele bestand bij elke beurt; met de documentlezer kan het goedkoper zijn" value={inputs.beurtenPerDocument} onChange={v => set('beurtenPerDocument', v)} />
               <NumberField label="Factor vervolgrondes (tools)" hint="rekentool, tabeltool en groeidoel sturen de bijlage opnieuw mee" value={inputs.toolRondeFactor} step={0.05} onChange={v => set('toolRondeFactor', v)} />
               <NumberField label="% documenten bewaard (samenvatting)" hint="het vinkje staat standaard aan" value={inputs.pctDocumentenBewaard} max={100} onChange={v => set('pctDocumentenBewaard', v)} />
               <NumberField label="Uitvoertokens per samenvatting" value={inputs.samenvattingUitvoerTokens} step={50} onChange={v => set('samenvattingUitvoerTokens', v)} />
@@ -287,7 +293,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
 
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Profiel uit een andere AI (Haiku, bij elk bericht mee)</div>
-              <NumberField label="% gebruikers dat een profiel overneemt" hint="aanname, nog niet voor iedereen open" value={inputs.pctHistorieImport} max={100} onChange={v => set('pctHistorieImport', v)} />
+              <NumberField label="% gebruikers dat een profiel overneemt" hint="aanname, open voor iedereen sinds 18 november" value={inputs.pctHistorieImport} max={100} onChange={v => set('pctHistorieImport', v)} />
               <NumberField label="Tokens van het profiel per bericht" hint="maximaal 6.800 tekens per profiel, ongeveer 2.000 tokens, niet gecachet" value={inputs.tokensHistorieProfiel} step={100} onChange={v => set('tokensHistorieProfiel', v)} />
               <NumberField label="Omzetting eenmalig ($)" hint="Haiku, maximaal 20.000 tekens in en 4.500 tokens uit" value={inputs.kostenPerHistorieImport} step={0.005} onChange={v => set('kostenPerHistorieImport', v)} />
             </div>
@@ -310,7 +316,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <div>
                   <div style={fieldLabelStyle}>Clerk Pro (${TARIEVEN.clerkProUsd}/maand)</div>
-                  <div style={fieldHintStyle}>alleen nodig voor inactivity-timeout, niet voor aantal users (Free dekt tot 50.000 MRU)</div>
+                  <div style={fieldHintStyle}>besluit 24 november: nemen bij 10 betalende gebruikers, vooral voor een langere sessieduur</div>
                 </div>
                 <Toggle checked={inputs.clerkPro} onChange={v => set('clerkPro', v)} />
               </div>
@@ -367,11 +373,12 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Anthropic hoofdchat</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.anthropicKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Voyage AI (rerank)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.voyageKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Analyses</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.analysesKosten)}</span></div>
-                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Fable 5 (coaching + uitdaging)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.fable5Kosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Fable 5.1 (coaching + uitdaging)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.fable5Kosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Sparring</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.sparringKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Gesprekken afsluiten</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.afsluitKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Overige Anthropic-routes</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.overigeAnthropicKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Waarheidscontrole (wekelijkse mail)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.waarheidsControleKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Feitencontrole (dagelijks)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.feitenControleKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>ElevenLabs ({result.elevenName})</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.elevenPrice)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Transcriptie + Anthropic-voice</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.whisperKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Dicteren (OpenAI spraak naar tekst)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.dicteerKosten)}</span></div>

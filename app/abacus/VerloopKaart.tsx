@@ -2,39 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import {
-  computeScenarioKosten, berekenScenarioOmzetEnBetaalprovider, SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS,
   type ScenarioBillingSplit, type TierVerdeling, type Betaalprovider, type TeamScenario, type TeamBillingSplit, type Inputs,
 } from '@/lib/kostenTarieven'
+import { berekenVerloop, VERLOOP_MAANDEN as MAANDEN, type Groeicurve, type VerloopMaand } from '@/lib/abacusVerloop'
 import { cardStyle, cardHeadStyle, dotStyle, statLabel, statValue, headlineValueStyle, statCellStyle, fmtEUR } from './abacusShared'
-
-const MAANDEN = 12
-
-type Groeicurve = 'lineair' | 'versnellend'
-type VerloopMaand = { maand: number; users: number; omzet: number; kosten: number; winst: number }
-
-// Het scenario op de Business case-tab is het EINDPUNT na maand 12: maand 12
-// levert exact de scenariocijfers op (controleerbaar tegen het blok erboven).
-// Solo-users en teamklanten groeien met dezelfde factor mee, zoals de variant
-// "Team schaalt mee" bij de doelwinst. Solo wordt afgerond op hele users,
-// teamklanten blijven fractioneel (verwachtingswaarde), zodat de lijn bij een
-// klein aantal teamklanten niet in sprongen loopt. Kosten zijn één totaal
-// (AI/infra incl. vaste kosten en staffels, plus betaalprovider).
-function berekenVerloop(
-  curve: Groeicurve, soloEind: number, verdeling: TierVerdeling, billingSplit: ScenarioBillingSplit,
-  betaalprovider: Betaalprovider, team: TeamScenario, teamBillingSplit: TeamBillingSplit, inputs: Inputs
-): VerloopMaand[] {
-  return Array.from({ length: MAANDEN }, (_, i) => {
-    const maand = i + 1
-    const lineair = maand / MAANDEN
-    const factor = curve === 'lineair' ? lineair : lineair * lineair
-    const teamM: TeamScenario = { aantalKlanten: team.aantalKlanten * factor, gemiddeldeLeden: team.gemiddeldeLeden }
-    const r = berekenScenarioOmzetEnBetaalprovider(
-      SCENARIO_PRIJZEN, billingSplit, verdeling, betaalprovider, Math.round(soloEind * factor), SCENARIO_TEAM_PRIJS, teamM, teamBillingSplit
-    )
-    const kosten = computeScenarioKosten(inputs, r.basicN, r.proN, r.teamLeden).totaal / inputs.fxRate + r.betaalproviderKosten
-    return { maand, users: Math.round(r.basicN + r.proN + r.teamLeden), omzet: r.omzetTotaal, kosten, winst: r.omzetTotaal - kosten }
-  })
-}
 
 function niceStep(range: number, ticks: number): number {
   const raw = range / ticks
@@ -121,11 +92,12 @@ export default function VerloopKaart({ nGebruikers, verdeling, billingSplit, bet
   const [hover, setHover] = useState(MAANDEN - 1)
 
   const data = useMemo(
-    () => berekenVerloop(curve, nGebruikers, verdeling, billingSplit, betaalprovider, team, teamBillingSplit, inputs),
+    () => berekenVerloop(curve, nGebruikers, team, { verdeling, billingSplit, betaalprovider, teamBillingSplit, inputs }),
     [curve, nGebruikers, verdeling, billingSplit, betaalprovider, team, teamBillingSplit, inputs]
   )
 
   const cumulatief = data.reduce((s, d) => s + d.winst, 0)
+  const inKas = data.reduce((s, d) => s + d.kas, 0)
   const laatsteNegatief = data.reduce((acc, d, i) => (d.winst < 0 ? i : acc), -1)
   const breakEven = laatsteNegatief === MAANDEN - 1 ? 'Niet binnen 12 mnd' : `Maand ${laatsteNegatief + 2}`
   const h = data[hover] ?? data[MAANDEN - 1]
@@ -136,6 +108,7 @@ export default function VerloopKaart({ nGebruikers, verdeling, billingSplit, bet
       <div style={{ fontSize: 12.5, color: '#94a3b8', marginBottom: 14 }}>
         <div>Het scenario hierboven is het eindpunt: na maand 12 zit je op die aantallen. Teamklanten groeien proportioneel mee.</div>
         <div>Kosten zijn één totaal: AI, infra, vaste kosten en betaalprovider.</div>
+        <div>Ontvangen telt een jaarabonnement in één keer bij aanmelding, zonder btw.</div>
       </div>
 
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
@@ -155,9 +128,10 @@ export default function VerloopKaart({ nGebruikers, verdeling, billingSplit, bet
 
       <Grafiek data={data} hover={hover} setHover={setHover} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginTop: 14, maxWidth: 520 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginTop: 14, maxWidth: 700 }}>
         <div style={statCellStyle}><div style={statLabel}>Winst maand 12</div><div style={headlineValueStyle}>{fmtEUR(data[MAANDEN - 1].winst)}</div></div>
         <div style={statCellStyle}><div style={statLabel}>Cumulatief 12 mnd</div><div style={statValue}>{fmtEUR(cumulatief)}</div></div>
+        <div style={statCellStyle}><div style={statLabel}>In kas na 12 mnd</div><div style={headlineValueStyle}>{fmtEUR(inKas)}</div></div>
         <div style={statCellStyle}><div style={statLabel}>Break-even</div><div style={{ ...statValue, fontSize: breakEven.length > 8 ? 15 : 22 }}>{breakEven}</div></div>
       </div>
 
@@ -170,11 +144,11 @@ export default function VerloopKaart({ nGebruikers, verdeling, billingSplit, bet
             </tr>
           </thead>
           <tbody>
-            {([['Users', (d: VerloopMaand) => d.users.toLocaleString('nl-NL')], ['Omzet', (d: VerloopMaand) => fmtEUR(d.omzet)], ['Kosten', (d: VerloopMaand) => fmtEUR(d.kosten)], ['Winst', (d: VerloopMaand) => fmtEUR(d.winst)]] as const).map(([naam, f]) => (
+            {([['Users', (d: VerloopMaand) => d.users.toLocaleString('nl-NL')], ['Omzet', (d: VerloopMaand) => fmtEUR(d.omzet)], ['Kosten', (d: VerloopMaand) => fmtEUR(d.kosten)], ['Winst', (d: VerloopMaand) => fmtEUR(d.winst)], ['Ontvangen', (d: VerloopMaand) => fmtEUR(d.ontvangen)], ['Kasoverschot', (d: VerloopMaand) => fmtEUR(d.kas)]] as const).map(([naam, f]) => (
               <tr key={naam} style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 <td style={{ ...statLabel, padding: '6px 8px', whiteSpace: 'nowrap' }}>{naam}</td>
                 {data.map(d => (
-                  <td key={d.maand} style={{ textAlign: 'right', padding: '6px 8px', color: naam === 'Winst' && d.winst < 0 ? '#ef4444' : '#cbd5e1', whiteSpace: 'nowrap' }}>{f(d)}</td>
+                  <td key={d.maand} style={{ textAlign: 'right', padding: '6px 8px', color: (naam === 'Winst' && d.winst < 0) || (naam === 'Kasoverschot' && d.kas < 0) ? '#ef4444' : '#cbd5e1', whiteSpace: 'nowrap' }}>{f(d)}</td>
                 ))}
               </tr>
             ))}

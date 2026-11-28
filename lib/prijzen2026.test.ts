@@ -48,7 +48,7 @@ describe('Abacus standaardscenario: 300 solo users en 10 teams van een manager p
     const kosten = computeScenarioKosten({ ...DEFAULT_INPUTS, fxRate: fx }, r.basicN, r.proN, r.teamLeden).totaal / fx
     // Marge van 25 euro: wijzigt een kostenaanname, dan is dat geen prijsfout. Op 28 november 2026 van 6609 naar 6290: het afsluiten
     // van gesprekken staat sindsdien als eigen kostenpost in Abacus. Daarna naar 5815: chat en rerank op gemeten tarieven. Daarna naar 5657: Sonnet voor de samenvatting van iedereen.
-    // Later die dag een nieuw standaardscenario (Arno), daarmee 8362.
-    expect(Math.abs(r.omzetTotaal - kosten - r.betaalproviderKosten - 8362)).toBeLessThan(25)
+    // Later die dag een nieuw standaardscenario (Arno), daarmee 8362. Daarna 8247: gemeten tarieven voor uitdaging en analyses, de feitencontrole erbij, Clerk Pro aan, en Mollie bij jaarklanten een keer per jaar.
+    expect(Math.abs(r.omzetTotaal - kosten - r.betaalproviderKosten - 8247)).toBeLessThan(5)
   })
 })
