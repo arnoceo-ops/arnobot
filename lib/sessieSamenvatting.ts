@@ -37,24 +37,20 @@ export function gebruikersBron(berichten: { role: string; content: string }[]): 
     .join('\n\n')
 }
 
-export const SAMENVATTING_MODEL = 'claude-haiku-4-5-20251001'
-export const SAMENVATTING_MODEL_EIGENAAR = 'claude-sonnet-5-5'
+// Sinds 28 november 2026 schrijft Sonnet 5.5 de samenvatting. Haiku 4.5 gaf een advies van ArnoBot verkeerd weer ("te defensief" kwam
+// in het antwoord niet voor). De opdracht zelf is bij de wissel gelijk gebleven. Haiku is alleen nog de terugval bij een lege uitkomst.
+export const SAMENVATTING_MODEL = 'claude-sonnet-5-5'
+export const SAMENVATTING_TERUGVAL_MODEL = 'claude-haiku-4-5-20251001'
 const SAMENVATTING_TEKENS = 300
 // Sonnet 5.5 denkt eerst na en die tokens tellen mee in max_tokens: zonder eigen ruimte kan er geen tekst overblijven.
 const SAMENVATTING_DENKRUIMTE = 4000
 
-// Proef sinds 2026-11-28: alleen voor de eigenaar schrijft Sonnet 5.5 de samenvatting. Aanleiding: Haiku 4.5 gaf een advies van
-// ArnoBot verkeerd weer ("te defensief" kwam in het antwoord niet voor). De opdracht zelf is bewust gelijk gebleven.
-export function isSamenvattingProef(userId?: string | null): boolean {
-  const eigenaar = process.env.ARNOBOT_OWNER_USER_ID
-  return !!eigenaar && userId === eigenaar
-}
-
-function samenvattingModelOpties(userId?: string | null) {
-  return isSamenvattingProef(userId)
-    ? { model: SAMENVATTING_MODEL_EIGENAAR, max_tokens: SAMENVATTING_TEKENS + SAMENVATTING_DENKRUIMTE, thinking: { type: 'adaptive' as const }, output_config: { effort: 'low' as const } }
-    : { model: SAMENVATTING_MODEL, max_tokens: SAMENVATTING_TEKENS }
-}
+const samenvattingModelOpties = () => ({
+  model: SAMENVATTING_MODEL,
+  max_tokens: SAMENVATTING_TEKENS + SAMENVATTING_DENKRUIMTE,
+  thinking: { type: 'adaptive' as const },
+  output_config: { effort: 'low' as const },
+})
 
 const SAMENVATTING_SYSTEEM = `Je bent Arno Diepeveen. Oprichter Royal Dutch Sales. Direct, ongefilterd, geen bullshit. Geen corporate taal. Geen accenten op woorden voor nadruk. Gebruik NOOIT markdown-opmaak zoals **tekst** of *tekst*. Gebruik NOOIT een streepje als leesteken (—, –, of een losstaand koppelteken). Herschrijf zinnen zonder streepjes.
 
@@ -68,19 +64,19 @@ ${BRONDATA_REGEL}
 
 ${GEBRUIKER_BRON_REGEL} Wat ArnoBot voorstelde of uitwerkte beschrijf je als voorstel van ArnoBot ("ik stelde voor"), nooit als iets dat de gebruiker al heeft of al bepaald heeft.`
 
-export const samenvattingParams = (conversationText: string, vermijd: string[] = [], userId?: string | null): Anthropic.MessageCreateParamsNonStreaming => ({
-  ...samenvattingModelOpties(userId),
+export const samenvattingParams = (conversationText: string, terugval = false): Anthropic.MessageCreateParamsNonStreaming => ({
+  ...(terugval ? { model: SAMENVATTING_TERUGVAL_MODEL, max_tokens: SAMENVATTING_TEKENS } : samenvattingModelOpties()),
   system: SAMENVATTING_SYSTEEM,
   messages: [{
     role: 'user',
-    content: `${gesprekBlok(conversationText)}${vermijd.length ? `\n\nDeze beweringen staan alleen in woorden van ARNO en zijn geen feit over de gebruiker. Noem ze NIET, ook niet binnen een advies of voorstel, en schrijf het advies zonder die bewering: ${vermijd.join(' | ')}` : ''}\n\nSchrijf een feitelijke terugblik op het gesprek hierboven in 2 tot 3 volledige zinnen. Bij één centraal thema volstaan 2 zinnen. Elke zin moet een volledig afgeronde gedachte zijn. Nooit halverwege afbreken. Beschrijf alleen wat er besproken is: het onderwerp en de richting van het gesprek. Geen analyse, geen oordelen, geen "ik heb uitgewerkt" of "ik heb geconcludeerd". Alleen wat er aan de orde was. Spreek de gebruiker direct aan met "je" of "jij", nooit als "de gebruiker". Je schrijft als Arno, direct tegen de persoon met wie je gesproken hebt. Begin niet met een bevestiging of een reactie, maar direct met het onderwerp.`
+    content: `${gesprekBlok(conversationText)}\n\nSchrijf een feitelijke terugblik op het gesprek hierboven in 2 tot 3 volledige zinnen. Bij één centraal thema volstaan 2 zinnen. Elke zin moet een volledig afgeronde gedachte zijn. Nooit halverwege afbreken. Beschrijf alleen wat er besproken is: het onderwerp en de richting van het gesprek. Geen analyse, geen oordelen, geen "ik heb uitgewerkt" of "ik heb geconcludeerd". Alleen wat er aan de orde was. Spreek de gebruiker direct aan met "je" of "jij", nooit als "de gebruiker". Je schrijft als Arno, direct tegen de persoon met wie je gesproken hebt. Begin niet met een bevestiging of een reactie, maar direct met het onderwerp.`
   }]
 })
 
-// Herschrijven na de geheugentoets (proef): alleen de afgekeurde passages aanpassen. Opnieuw samenvatten liet ook inhoud verdwijnen die
+// Herschrijven na de geheugentoets: alleen de afgekeurde passages aanpassen. Opnieuw samenvatten liet ook inhoud verdwijnen die
 // niet was afgekeurd (gemeten 28 november 2026, vijf van vijf rondes herschreven).
-export const gerichtHerstelParams = (samenvatting: string, vermijd: string[], userId?: string | null): Anthropic.MessageCreateParamsNonStreaming => ({
-  ...samenvattingModelOpties(userId),
+export const gerichtHerstelParams = (samenvatting: string, vermijd: string[]): Anthropic.MessageCreateParamsNonStreaming => ({
+  ...samenvattingModelOpties(),
   system: SAMENVATTING_SYSTEEM,
   messages: [{
     role: 'user',

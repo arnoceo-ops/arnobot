@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { samenvattingParams, feitenParams, gebruikersBron, GEBRUIKER_BRON_REGEL } from '@/lib/sessieSamenvatting'
 import { RULE_NO_DASH } from '@/lib/systemPrompt'
 
@@ -15,14 +15,11 @@ describe('sessieSamenvatting', () => {
     expect(String(feitenParams('x').system)).toContain(GEBRUIKER_BRON_REGEL)
     expect(String(samenvattingParams('x').system)).toContain(GEBRUIKER_BRON_REGEL)
   })
-  it('gebruikt Sonnet 5.5 met denkruimte alleen voor de eigenaar', () => {
-    vi.stubEnv('ARNOBOT_OWNER_USER_ID', 'user_eigenaar')
-    expect(samenvattingParams('x', [], 'user_eigenaar')).toMatchObject({ model: 'claude-sonnet-5-5', output_config: { effort: 'low' } })
-    expect(samenvattingParams('x', [], 'user_eigenaar').max_tokens).toBeGreaterThan(300)
-    expect(samenvattingParams('x', [], 'user_ander')).toMatchObject({ model: 'claude-haiku-4-5-20251001', max_tokens: 300 })
-    vi.stubEnv('ARNOBOT_OWNER_USER_ID', '')
-    expect(samenvattingParams('x', [], '').model).toBe('claude-haiku-4-5-20251001')
-    vi.unstubAllEnvs()
+  it('gebruikt Sonnet 5.5 met eigen denkruimte, en Haiku alleen als terugval', () => {
+    expect(samenvattingParams('x')).toMatchObject({ model: 'claude-sonnet-5-5', output_config: { effort: 'low' } })
+    expect(samenvattingParams('x').max_tokens).toBeGreaterThan(300)
+    expect(samenvattingParams('x', true)).toMatchObject({ model: 'claude-haiku-4-5-20251001', max_tokens: 300 })
+    expect(samenvattingParams('x', true)).not.toHaveProperty('thinking')
   })
   it('gebruikersBron houdt gebruikersbeurten volledig en kort ARNO in', () => {
     const lang = 'A'.repeat(150) + 'MIDDEN'.repeat(100) + 'Z'.repeat(250)

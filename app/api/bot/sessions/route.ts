@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
-import { samenvattingParams, gerichtHerstelParams, isSamenvattingProef, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
+import { samenvattingParams, gerichtHerstelParams, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
 import { toetsGeheugen, herstelSamenvatting } from '@/lib/geheugenToets'
 import { embedSessionText } from '@/lib/rag'
 import { extractAndStoreEntities, pruneEntitiesForDeletedSessions } from '@/lib/memoryEntities'
@@ -69,23 +69,19 @@ export async function GET() {
         let feiten = ''
         try {
           const [summaryRes, feitenRes] = await Promise.all([
-            anthropic.messages.create(samenvattingParams(conversationText, [], userId), aiContext(userId, 'sessie-samenvatting')),
+            anthropic.messages.create(samenvattingParams(conversationText), aiContext(userId, 'sessie-samenvatting')),
             anthropic.messages.create(feitenParams(bronTekst), aiContext(userId, 'sessie-feiten')),
           ])
           summary = getText(summaryRes.content)
+          if (!summary) summary = getText((await anthropic.messages.create(samenvattingParams(conversationText, true), aiContext(userId, 'sessie-samenvatting'))).content)
           feiten = getText(feitenRes.content)
-          const proef = isSamenvattingProef(userId)
-          const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten, volledig: proef ? conversationText : undefined }, userId).catch(() => null)
+          const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten, volledig: conversationText }, userId).catch(() => null)
           if (t?.ingegrepen) {
             feiten = t.feiten
             if (t.vermijd.length) {
               const nieuw = await herstelSamenvatting(anthropic, {
-                volledigGesprek: conversationText, bron: bronTekst, vermijd: t.vermijd,
-                schrijf: async (gesprek, vermijd) => getText((await anthropic.messages.create(samenvattingParams(gesprek, vermijd, userId), aiContext(userId, 'sessie-samenvatting-herstel'))).content),
-                gericht: proef ? {
-                  samenvatting: summary,
-                  pasAan: async (tekst, vermijd) => getText((await anthropic.messages.create(gerichtHerstelParams(tekst, vermijd, userId), aiContext(userId, 'sessie-samenvatting-herstel'))).content),
-                } : undefined,
+                volledigGesprek: conversationText, bron: bronTekst, samenvatting: summary, vermijd: t.vermijd,
+                pasAan: async (tekst, vermijd) => getText((await anthropic.messages.create(gerichtHerstelParams(tekst, vermijd), aiContext(userId, 'sessie-samenvatting-herstel'))).content),
               }, userId)
               if (nieuw) summary = nieuw
             }

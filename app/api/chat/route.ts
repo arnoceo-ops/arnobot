@@ -512,9 +512,8 @@ export async function POST(req: NextRequest) {
         // welke passen, documenten die al in dit gesprek staan lees je volledig en blijven hier buiten.
         if (samenvattenBeschikbaarVoor(userId)) {
           try {
-            // Proef, alleen de eigenaar: noemt de vraag een bewaard bestand, dan zet de app zelf de melding boven het antwoord.
-            documentGeheugen += await haalDocumentSamenvattingen(supabase, userId, question, rijen.map(r => r.id),
-              userId === process.env.ARNOBOT_OWNER_USER_ID ? m => { bestandsmelding = m } : undefined)
+            // Noemt de vraag een bewaard bestand, dan zet de app zelf de melding boven het antwoord.
+            documentGeheugen += await haalDocumentSamenvattingen(supabase, userId, question, rijen.map(r => r.id), m => { bestandsmelding = m })
           } catch (e) {
             Sentry.captureException(e, { tags: { onderdeel: 'document-samenvattingen' }, level: 'warning' })
           }

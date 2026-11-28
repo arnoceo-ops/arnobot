@@ -10,7 +10,7 @@ import { extractAndStoreEntities } from '@/lib/memoryEntities'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { THEMA_LABELS, parseThemaClassificatie } from '@/lib/themas'
 import { recomputeGroeibalans } from '@/lib/groeibalansServer'
-import { BRONDATA_REGEL, gesprekBlok, samenvattingParams, gerichtHerstelParams, isSamenvattingProef, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
+import { BRONDATA_REGEL, gesprekBlok, samenvattingParams, gerichtHerstelParams, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
 import { toetsGeheugen, herstelSamenvatting } from '@/lib/geheugenToets'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 import { schoonUitdaging } from '@/lib/actiePatroon'
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
   let excuustaal = false
 
 
-  const callSummaryModel = (voorUserId: string | null = userId) => anthropic.messages.create(samenvattingParams(conversationText, [], voorUserId), aiContext(userId, 'sessie-samenvatting'))
+  const callSummaryModel = (terugval = false) => anthropic.messages.create(samenvattingParams(conversationText, terugval), aiContext(userId, 'sessie-samenvatting'))
   // Feiten en entiteiten komen alleen uit wat de gebruiker zelf zegt (ARNO ingekort als context).
   const bronTekst = gebruikersBron(messages as { role: string; content: string }[])
   const callFeitenModel = () => anthropic.messages.create(feitenParams(bronTekst), aiContext(userId, 'sessie-feiten'))
@@ -331,8 +331,8 @@ ${BRONDATA_REGEL}`,
 
     if (!summary) {
       console.error(`[session-end] lege summary, retry (sessie ${sessionId})`)
-      // De herkansing gaat altijd naar het standaardmodel: levert het proefmodel niets op, dan is er toch een samenvatting.
-      const retryRes = await callSummaryModel(null)
+      // De herkansing gaat naar het terugvalmodel: levert het eerste model niets op, dan is er toch een samenvatting.
+      const retryRes = await callSummaryModel(true)
       summary = schoonSamenvatting(getText(retryRes.content), retryRes.stop_reason)
     }
     if (!feiten) {
@@ -438,25 +438,17 @@ ${BRONDATA_REGEL}`,
     let samenvattingDef = summary
     let feitenDef = feiten
     try {
-      const proef = isSamenvattingProef(userId)
-      const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten, volledig: proef ? conversationText : undefined }, userId)
+      const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten, volledig: conversationText }, userId)
       if (t.ingegrepen) {
         console.warn(`[session-end] geheugentoets greep in (sessie ${sessionId}): ${t.vermijd.length} samenvattingsclaims, feiten ${feiten === t.feiten ? 'ongewijzigd' : 'aangepast'}`)
         feitenDef = t.feiten
         if (t.vermijd.length) {
           const nieuw = await herstelSamenvatting(anthropic, {
-            volledigGesprek: conversationText, bron: bronTekst, vermijd: t.vermijd,
-            schrijf: async (gesprek, vermijd) => {
-              const res = await anthropic.messages.create(samenvattingParams(gesprek, vermijd, userId), aiContext(userId, 'sessie-samenvatting-herstel'))
+            volledigGesprek: conversationText, bron: bronTekst, samenvatting: summary, vermijd: t.vermijd,
+            pasAan: async (tekst, vermijd) => {
+              const res = await anthropic.messages.create(gerichtHerstelParams(tekst, vermijd), aiContext(userId, 'sessie-samenvatting-herstel'))
               return schoonSamenvatting(getText(res.content), res.stop_reason)
             },
-            gericht: proef ? {
-              samenvatting: summary,
-              pasAan: async (tekst, vermijd) => {
-                const res = await anthropic.messages.create(gerichtHerstelParams(tekst, vermijd, userId), aiContext(userId, 'sessie-samenvatting-herstel'))
-                return schoonSamenvatting(getText(res.content), res.stop_reason)
-              },
-            } : undefined,
           }, userId)
           if (nieuw) samenvattingDef = nieuw
         }
