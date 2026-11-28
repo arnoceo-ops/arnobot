@@ -467,6 +467,7 @@ export async function POST(req: NextRequest) {
     let lezerBron: LezerBron | null = null
     // Wat er eerder over de gekozen bewaarde bestanden is besproken (samenvattingen, alleen voor ArnoBot en nergens zichtbaar), onderdeel van het geheugen hieronder.
     let documentGeheugen = ''
+    let bestandsmelding = ''
 
     // Nieuwe documentenfunctie (docs/DOCUMENTEN_PLAN.md), alleen voor wie documentenBeschikbaarVoor toestaat; voor
     // iedereen anders blijft het oude gedrag hierboven ongewijzigd. Pas hier, na de inlog-, limiet-, dubbele-sessie-
@@ -511,7 +512,9 @@ export async function POST(req: NextRequest) {
         // welke passen, documenten die al in dit gesprek staan lees je volledig en blijven hier buiten.
         if (samenvattenBeschikbaarVoor(userId)) {
           try {
-            documentGeheugen += await haalDocumentSamenvattingen(supabase, userId, question, rijen.map(r => r.id))
+            // Proef, alleen de eigenaar: noemt de vraag een bewaard bestand, dan zet de app zelf de melding boven het antwoord.
+            documentGeheugen += await haalDocumentSamenvattingen(supabase, userId, question, rijen.map(r => r.id),
+              userId === process.env.ARNOBOT_OWNER_USER_ID ? m => { bestandsmelding = m } : undefined)
           } catch (e) {
             Sentry.captureException(e, { tags: { onderdeel: 'document-samenvattingen' }, level: 'warning' })
           }
@@ -637,6 +640,7 @@ export async function POST(req: NextRequest) {
     const readable = new ReadableStream({
       async start(controller) {
         try {
+          if (bestandsmelding) controller.enqueue(encoder.encode(`${bestandsmelding}\n\n`))
           // Tekst vóór een hulpmiddel (bijvoorbeeld "laat me de tabel overschrijven") is werkruis en wordt niet getoond: zie streamRonde.
           let laatsteRondeVerborgen = false
           let laatsteWeggegooid = ''
@@ -807,6 +811,8 @@ export async function POST(req: NextRequest) {
             ...lezerUitvoeren.map(t => `UIT HET DOCUMENT (leesstap):\n${t}`),
             ...opgehaald.map(p => `OPGEHAALDE PAGINA (${p.url}):\n${p.tekst}`)]
             .filter(Boolean).join('\n\n---\n\n').slice(0, 250000)
+          // Opgeslagen tekst = getoonde tekst, dus inclusief de vaste bestandsmelding.
+          if (bestandsmelding) answer = `${bestandsmelding}\n\n${answer}`
           const basisLog = { question, answer, ip, session_id: sessionId, user_id: userId }
           let { data: logRow, error: logFout } = await supabase
             .from('arnobot_rds_logs')

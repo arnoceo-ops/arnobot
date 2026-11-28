@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 
 vi.mock('./rag', () => ({ embedSessionQuery: vi.fn(), embedSessionText: vi.fn() }))
 vi.mock('./documenten', () => ({ laadBijlage: vi.fn() }))
-import { parseSamenvatting, vraagtOmAlleBestanden, bouwSamenvattingenBlok, bouwWachtBlok, samenvattingSysteem } from './documentSamenvatting'
+import { parseSamenvatting, vraagtOmAlleBestanden, bouwSamenvattingenBlok, bouwWachtBlok, samenvattingSysteem, noemtBestand, vasteBestandsmelding } from './documentSamenvatting'
 import { samenvattenBeschikbaarVoor } from './documentenRegels'
 
 const GOED = 'SOORT: Jaarplan voor een salesafdeling\nKERN: Het plan zet drie doelen voor 2027.\nDETAILS: Omzetdoel 1,2 miljoen (pagina 2)\nTeamgrootte 6 (pagina 3)'
@@ -102,5 +102,25 @@ describe('samenvattenBeschikbaarVoor', () => {
   })
   it('is dicht zonder gebruiker', () => {
     expect(samenvattenBeschikbaarVoor(null)).toBe(false)
+  })
+})
+
+describe('vaste bestandsmelding', () => {
+  it('herkent een bestand dat bij naam wordt genoemd, ongeacht streepjes en hoofdletters', () => {
+    expect(noemtBestand('Laat me weten wat je vindt van het document the Revenue Blueprint.', 'The_Revenue_Blueprint.pdf')).toBe(true)
+    expect(noemtBestand('Hoe maak ik een blueprint voor mijn omzet?', 'The_Revenue_Blueprint.pdf')).toBe(false)
+    expect(noemtBestand('Hoe schrijf ik een goede offerte?', 'offerte.pdf')).toBe(false)
+  })
+  it('noemt de bestanden en wijst op het plusje, zonder streepjes als leesteken', () => {
+    const m = vasteBestandsmelding(['A_plan.pdf', 'B_plan.pdf'])
+    expect(m).toContain('A_plan.pdf en B_plan.pdf')
+    expect(m).toContain('plusje')
+    expect(m).not.toMatch(/[–—]/)
+  })
+  it('vervangt in het blok de opdracht om zelf te melden', () => {
+    const b = bouwSamenvattingenBlok([{ id: 'a', naam: 'A.pdf', samenvatting: GOED, created_at: '2026-11-10T10:00:00Z' }], false, 'MELDING.')
+    expect(b).not.toContain('MELDING.')
+    expect(b).toContain('Zeg daar niets meer over')
+    expect(b).not.toContain('Zeg in één zin')
   })
 })
