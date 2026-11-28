@@ -10,7 +10,7 @@ import { extractAndStoreEntities } from '@/lib/memoryEntities'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { THEMA_LABELS, parseThemaClassificatie } from '@/lib/themas'
 import { recomputeGroeibalans } from '@/lib/groeibalansServer'
-import { BRONDATA_REGEL, gesprekBlok, samenvattingParams, gerichtHerstelParams, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
+import { BRONDATA_REGEL, gesprekBlok, samenvattingParams, gerichtHerstelParams, feitenParams, gebruikersBron, schoonFeiten } from '@/lib/sessieSamenvatting'
 import { toetsGeheugen, herstelSamenvatting } from '@/lib/geheugenToets'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 import { schoonUitdaging } from '@/lib/actiePatroon'
@@ -339,6 +339,8 @@ ${BRONDATA_REGEL}`,
       console.error(`[session-end] lege feiten, retry (sessie ${sessionId})`)
       feiten = getText(await callFeitenModel().then(r => r.content))
     }
+    // Pas na de herkansing: "GEEN" is een geldig antwoord en wordt leeg opgeslagen.
+    feiten = schoonFeiten(feiten)
     if (!uitdaging && genereerUitdaging) {
       console.error(`[session-end] lege uitdaging, retry (sessie ${sessionId})`)
       uitdaging = schoonUitdaging(getText(await callUitdagingModel().then(r => r.content)).replace(/\*\*/g, ''))

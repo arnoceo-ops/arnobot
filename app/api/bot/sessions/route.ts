@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
-import { samenvattingParams, gerichtHerstelParams, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
+import { samenvattingParams, gerichtHerstelParams, feitenParams, gebruikersBron, schoonFeiten } from '@/lib/sessieSamenvatting'
 import { toetsGeheugen, herstelSamenvatting } from '@/lib/geheugenToets'
 import { embedSessionText } from '@/lib/rag'
 import { extractAndStoreEntities, pruneEntitiesForDeletedSessions } from '@/lib/memoryEntities'
@@ -74,7 +74,7 @@ export async function GET() {
           ])
           summary = getText(summaryRes.content)
           if (!summary) summary = getText((await anthropic.messages.create(samenvattingParams(conversationText, true), aiContext(userId, 'sessie-samenvatting'))).content)
-          feiten = getText(feitenRes.content)
+          feiten = schoonFeiten(getText(feitenRes.content))
           const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten, volledig: conversationText }, userId).catch(() => null)
           if (t?.ingegrepen) {
             feiten = t.feiten

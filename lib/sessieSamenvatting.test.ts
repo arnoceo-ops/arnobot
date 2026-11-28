@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { samenvattingParams, feitenParams, gebruikersBron, GEBRUIKER_BRON_REGEL } from '@/lib/sessieSamenvatting'
+import { samenvattingParams, feitenParams, gebruikersBron, schoonFeiten, GEBRUIKER_BRON_REGEL } from '@/lib/sessieSamenvatting'
 import { RULE_NO_DASH } from '@/lib/systemPrompt'
 
 // Beide schrijvers van arnobot_blog_sessions (session-end en de wees-sessiereparatie) gebruiken
@@ -21,12 +21,21 @@ describe('sessieSamenvatting', () => {
     expect(samenvattingParams('x', true)).toMatchObject({ model: 'claude-haiku-4-5-20251001', max_tokens: 300 })
     expect(samenvattingParams('x', true)).not.toHaveProperty('thinking')
   })
-  it('gebruikersBron houdt gebruikersbeurten volledig en kort ARNO in', () => {
-    const lang = 'A'.repeat(150) + 'MIDDEN'.repeat(100) + 'Z'.repeat(250)
-    const t = gebruikersBron([{ role: 'user', content: lang }, { role: 'arno', content: lang }])
-    expect(t).toContain(`GEBRUIKER: ${lang}`)
-    expect(t).toContain('ARNO (ingekort, alleen context): ' + 'A'.repeat(150) + ' [...] ' + 'Z'.repeat(250))
-    expect(t.split('MIDDEN').length - 1).toBe(100)
+  it('gebruikersBron geeft van ArnoBot alleen de vraag mee waarop de gebruiker antwoordt', () => {
+    const t = gebruikersBron([
+      { role: 'user', content: 'Wat vind je van mijn pitch?' },
+      { role: 'arno', content: 'Ik vind de structuur solide. De pitch bevat een piramide. Hoeveel verkopers heb je?' },
+      { role: 'user', content: 'Zes.' },
+      { role: 'arno', content: 'Dan zou ik beginnen met kwalificeren. Wie leest het?' },
+    ])
+    expect(t).toBe('GEBRUIKER: Wat vind je van mijn pitch?\n\nARNO VROEG (alleen om het antwoord te begrijpen): Hoeveel verkopers heb je?\n\nGEBRUIKER: Zes.')
+  })
+  it('schoonFeiten bewaart "geen feiten" nooit als feit en laat echte feiten staan', () => {
+    expect(schoonFeiten('GEEN')).toBe('')
+    expect(schoonFeiten('**GEEN**.')).toBe('')
+    expect(schoonFeiten('De gebruiker vraagt mijn mening.\n\n**Geen feiten om uit te halen.**')).toBe('')
+    expect(schoonFeiten('Geen aanvullende feiten over de situatie van de gebruiker zijn gedeeld.')).toBe('')
+    expect(schoonFeiten('• Gebruiker heeft zes verkopers\n• Geen budget voor training')).toBe('• Gebruiker heeft zes verkopers\n• Geen budget voor training')
   })
   it('samenvattingprompt heeft streepjesregel en zet het gesprek in <gesprek>-tags', () => {
     const p = samenvattingParams('GEBRUIKER: hoi')

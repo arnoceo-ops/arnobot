@@ -18,23 +18,36 @@ export const gesprekBlok = (tekst: string) => `<gesprek>\n${tekst}\n</gesprek>`
 // volgende sessie speelde het terug als afspraak. Wat ARNO zegt is nooit een feit over de gebruiker.
 export const GEBRUIKER_BRON_REGEL = 'Regels die met GEBRUIKER beginnen zijn wat de gebruiker zelf zegt. Regels die met ARNO beginnen zijn ArnoBot: aannames, cijfers, voorstellen en advies van ArnoBot zijn NOOIT een feit over de gebruiker, ook niet als de gebruiker er niet tegenin gaat. Iets over de situatie van de gebruiker telt alleen als de gebruiker het zelf noemt of er uitdrukkelijk mee instemt. Staat het alleen in een ARNO-regel, laat het dan weg.'
 
-const ARNO_BEURT_KOP = 150
-const ARNO_BEURT_STAART = 250
+const MAX_ARNO_VRAGEN = 2
 
-// Gesprekstekst voor het extraheren en toetsen van feiten: de beurten van de gebruiker volledig, de
-// beurten van ArnoBot ingekort (begin en eind) en als context gelabeld. Zo kan een lang ARNO-antwoord
-// met eigen aannames nooit de bron van een feit worden, terwijl "ja" op een vraag begrijpelijk blijft.
+// De bron voor het extraheren en toetsen van feiten en entiteiten: de beurten van de gebruiker volledig, en van ArnoBot alleen de
+// vragen waarop de gebruiker daarna antwoordt, zodat "ja" of "drie" begrijpelijk blijft. Tot 28 november 2026 ging ook het begin en
+// eind van elk antwoord mee, en dan bewaarde de extractie meningen en waarnemingen van ArnoBot als feit ("Arno vindt de structuur
+// solide", "de pitch bevat een cost of inaction slide"). Bekende grens: instemming met een uitspraak die geen vraag was heeft zo
+// geen context. Het laatste antwoord gaat nooit mee, daar heeft de gebruiker nog niet op gereageerd.
 export function gebruikersBron(berichten: { role: string; content: string }[]): string {
-  return berichten
-    .map(m => {
-      if (m.role === 'user') return `GEBRUIKER: ${m.content}`
-      const t = String(m.content ?? '')
-      const kort = t.length > ARNO_BEURT_KOP + ARNO_BEURT_STAART
-        ? `${t.slice(0, ARNO_BEURT_KOP)} [...] ${t.slice(-ARNO_BEURT_STAART)}`
-        : t
-      return `ARNO (ingekort, alleen context): ${kort}`
-    })
-    .join('\n\n')
+  const delen: string[] = []
+  let vragen: string[] = []
+  for (const m of berichten) {
+    if (m.role !== 'user') {
+      vragen = (String(m.content ?? '').match(/[^.!?\n]*\?/g) ?? []).map(v => v.trim()).filter(v => v.length > 1).slice(-MAX_ARNO_VRAGEN)
+      continue
+    }
+    if (vragen.length) delen.push(`ARNO VROEG (alleen om het antwoord te begrijpen): ${vragen.join(' ')}`)
+    delen.push(`GEBRUIKER: ${m.content}`)
+    vragen = []
+  }
+  return delen.join('\n\n')
+}
+
+/**
+ * Zonder feiten schreef het model een uitlegzin ("Geen feiten om uit te halen"), die dan als feit werd bewaard. Gevraagd is nu het woord
+ * GEEN. Komt er toch uitleg mee, dan blijven alleen echte opsommingsregels over.
+ */
+export function schoonFeiten(tekst: string): string {
+  const geenFeiten = /^[\s*_]*geen[\s*_.]*$/im.test(tekst) || /\bgeen\b[^\n]{0,40}\bfeiten\b/i.test(tekst)
+  if (!geenFeiten) return tekst.trim()
+  return tekst.split('\n').filter(r => /^\s*[•-]\s+\S/.test(r) && !/\bgeen\b[^\n]{0,40}\bfeiten\b/i.test(r)).join('\n').trim()
 }
 
 // Sinds 28 november 2026 schrijft Sonnet 5.5 de samenvatting. Haiku 4.5 gaf een advies van ArnoBot verkeerd weer ("te defensief" kwam
@@ -87,7 +100,7 @@ export const gerichtHerstelParams = (samenvatting: string, vermijd: string[]): A
 export const feitenParams = (conversationText: string): Anthropic.MessageCreateParamsNonStreaming => ({
   model: 'claude-haiku-4-5-20251001',
   max_tokens: 300,
-  system: `Extraheer alleen concrete, feitelijke informatie uit dit gesprek. Denk aan: producten, diensten, bedrijfsnaam, markt, specifieke situaties, namen, cijfers, uitdagingen, doelen. Geen interpretaties, geen advies. Alleen feiten die de gebruiker heeft gedeeld. ${GEBRUIKER_BRON_REGEL} Maximaal 8 korte bullets, elk op een nieuwe regel als losse zin.
+  system: `Extraheer alleen concrete, feitelijke informatie uit dit gesprek. Denk aan: producten, diensten, bedrijfsnaam, markt, specifieke situaties, namen, cijfers, uitdagingen, doelen. Geen interpretaties, geen advies. Alleen feiten die de gebruiker heeft gedeeld. ${GEBRUIKER_BRON_REGEL} Maximaal 8 korte bullets, elk op een nieuwe regel als losse zin. Heeft de gebruiker geen feiten gedeeld, antwoord dan met alleen het woord GEEN, zonder uitleg. Dat de gebruiker iets vraagt is geen feit.
 
 Vertelt de gebruiker over een eigen plan (jaarplan, salesplan, businesscase, strategie)? Leg dat dan vast in aparte bullets die beginnen met "Plan: " (deze tellen niet mee in de maximaal 8), alleen met wat de gebruiker zelf zegt: voor welk jaar, of het bedoeld is om te groeien of om goedgekeurd te worden, hoeveel van de plannen van eerdere jaren gehaald zijn en waarin ze niet slaagden, en of het vorige plan het hele jaar bleef leven of al snel in de la belandde. Verzin niets en vul niets aan.
 
