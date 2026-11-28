@@ -30,3 +30,16 @@ Aanleiding: een externe sales-expert vond Opus 5.5 beter dan Fable 5.2. Blinde A
 **Technische voorwaarde voor elke wissel naar Fable 5.2 of Opus 5.5:** beide denken standaard eerst, en die denktokens tellen mee in `max_tokens`. Gevolg in de test: afgekapte of lege antwoorden bij een te lage limiet. In `lib/metaAnalyse.ts` kapte de zelfbeoordeling met Fable 5.2 af op 12000 tokens, en de retry met meer ruimte crashte omdat de SDK bij zo'n grote limiet streaming eist (`messages.create` moet `.messages.stream(...).finalMessage()` worden). Eerst dit rechtzetten in de Fable-routes, dan pas testen en wisselen.
 
 **Volgende test:** bij de eerstvolgende modelcontrole (cron `model-check`, elke 1e van de maand, volgende 2026-12-01) of de kwartaalcheck van januari, als daar een nieuw model uit komt. Dan Opus 5.5 en Fable 5.2 opnieuw meenemen, inclusief de meta-analyse.
+
+## Actiepunten leveranciers (gevonden bij de Abacus-controle van 2026-11-28)
+
+Gelezen door een controle-agent op 2026-11-28 op de pagina's van de leveranciers, niet apart nagelezen. Eerst zelf op de bron controleren voor je iets wijzigt.
+
+| Leverancier | Wat | Wie | Bron |
+|---|---|---|---|
+| Voyage | `rerank-2.5` staat als Legacy, uit gebruik per 1-9-2027 (vervanger `rerank-3`, zelfde prijs). `voyage-3-large` uit gebruik per 1-12-2027 (vervanger `voyage-4-large`, raakt de hele kennisbank). De pagina zegt alleen over `ai.mongodb.com` te gaan: nog niet vastgesteld of dit voor api.voyageai.com geldt. | Uitzoeken | https://www.mongodb.com/docs/voyageai/models/lifecycle/ |
+| AssemblyAI | `universal-3-5-pro` sinds 17-11-2026 deprecated, geen einddatum (vervanger `assemblyai-stt-3-7`, zelfde prijs). Sprekersherkenning is bij dit model mogelijk duurder ($0,065 in plaats van $0,02 per uur). | Arno: factuur nakijken | https://www.assemblyai.com/docs/getting-started/model-versions-and-deprecations en /pricing |
+| ElevenLabs | De prijspagina's noemen voor Flash minder credits per teken (0,5) of $0,04 per 1.000 tekens, en spreken elkaar tegen. Abacus rekent 1,0, `lib/maandKosten.ts` $0,166 per 1.000. Bij een nieuw tarief grijpt de kostenrem op spraak te vroeg in. | Arno: in het account kijken welk tarief geldt | https://elevenlabs.io/pricing en /pricing/api |
+| Anthropic | `claude-haiku-4-5-20251001`: vroegste einddatum "niet voor 15-10-2026" is voorbij, opzegtermijn minimaal 60 dagen. Geen aankondiging gezien. | Maandcheck | https://platform.claude.com/docs/en/about-claude/model-deprecations |
+
+Ook open: `lib/maandKosten.ts` (kostenrem per gebruiker, buiten Abacus) rekent elke beurt met bijlage tegen Sonnet 4.6, ook als Sonnet 5.5 antwoordde. De embeddings van Voyage hebben in `lib/externGebruik.ts` nog geen prijs ($0,18 en $0,12 per miljoen tokens volgens docs.voyageai.com/docs/pricing).
