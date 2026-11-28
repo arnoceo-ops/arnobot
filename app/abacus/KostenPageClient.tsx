@@ -5,7 +5,7 @@ import KostenCalculatorClient from './KostenCalculatorClient'
 import TrackrecordClient from './TrackrecordClient'
 import BusinessCaseClient from './BusinessCaseClient'
 import GebruikersKostenClient from './GebruikersKostenClient'
-import { DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER, DEFAULT_TEAM_SCENARIO, DEFAULT_TEAM_BILLING_SPLIT, DEFAULT_INPUTS, type Inputs } from '@/lib/kostenTarieven'
+import { DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT, DEFAULT_BETAALPROVIDER, DEFAULT_TEAM_SCENARIO, DEFAULT_TEAM_BILLING_SPLIT, DEFAULT_INPUTS, DEFAULT_SOLO_GEBRUIKERS, type Inputs } from '@/lib/kostenTarieven'
 import type { FxRateResult } from '@/lib/fxRate'
 
 type Tab = 'calculator' | 'trackrecord' | 'gebruikers' | 'businesscase'
@@ -24,7 +24,7 @@ export default function KostenPageClient({ fxRate }: Props) {
   // Gedeeld tussen Calculator (tab 1) en het Scenario-blok op Business case
   // (tab 3): één en dezelfde waarde, instellen op de ene tab beweegt de
   // andere automatisch mee, in beide richtingen.
-  const [nGebruikers, setNGebruikers] = useState(250)
+  const [nGebruikers, setNGebruikers] = useState(DEFAULT_SOLO_GEBRUIKERS)
   // %-verdeling per tier (Basic/Pro) en %-betaalcyclus per tier: gedeeld,
   // zodat tab 1 (Calculator) de betaalprovider-kosten als onderdeel van de
   // totale kosten kan tonen, i.p.v. dat die alleen op tab 3 zichtbaar is.

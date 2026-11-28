@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   SCENARIO_PRIJZEN, SCENARIO_TEAM_PRIJS, DEFAULT_PRIJZEN, DEFAULT_INPUTS, DEFAULT_TIER_VERDELING, DEFAULT_BILLING_SPLIT,
-  DEFAULT_BETAALPROVIDER, DEFAULT_TEAM_SCENARIO, DEFAULT_TEAM_BILLING_SPLIT, berekenScenarioOmzetEnBetaalprovider, computeScenarioKosten,
+  DEFAULT_BETAALPROVIDER, DEFAULT_TEAM_SCENARIO, DEFAULT_TEAM_BILLING_SPLIT, berekenScenarioOmzetEnBetaalprovider, computeScenarioKosten, DEFAULT_SOLO_GEBRUIKERS,
 } from './kostenTarieven'
 import {
   TEAM_BASISTARIEF_MAANDELIJKS, TEAM_BASISTARIEF_JAARLIJKS, TEAM_PRIJS_PER_GEBRUIKER_MAANDELIJKS, TEAM_PRIJS_PER_GEBRUIKER_JAARLIJKS,
@@ -35,19 +35,20 @@ describe('tarieven', () => {
   })
 })
 
-describe('Abacus bij 250 solo users en 5 teams van een manager plus 4', () => {
-  const r = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, DEFAULT_BILLING_SPLIT, DEFAULT_TIER_VERDELING, DEFAULT_BETAALPROVIDER, 250,
+describe('Abacus standaardscenario: 300 solo users en 10 teams van een manager plus 5', () => {
+  const r = berekenScenarioOmzetEnBetaalprovider(SCENARIO_PRIJZEN, DEFAULT_BILLING_SPLIT, DEFAULT_TIER_VERDELING, DEFAULT_BETAALPROVIDER, DEFAULT_SOLO_GEBRUIKERS,
     SCENARIO_TEAM_PRIJS, DEFAULT_TEAM_SCENARIO, DEFAULT_TEAM_BILLING_SPLIT)
   it('telt de manager niet in de omzet per teamlid, wel in de gebruikers', () => {
-    expect(r.teamLeden).toBe(25)
-    expect(Math.round(r.teamOmzet)).toBe(1381)
-    expect(Math.round(r.omzetTotaal)).toBe(8751)
+    expect(r.teamLeden).toBe(60)
+    expect(Math.round(r.teamOmzet)).toBe(3220)
+    expect(Math.round(r.omzetTotaal)).toBe(12970)
   })
   it('geeft de doorgerekende winst bij de koers van 26 november', () => {
     const fx = 1.0949
     const kosten = computeScenarioKosten({ ...DEFAULT_INPUTS, fxRate: fx }, r.basicN, r.proN, r.teamLeden).totaal / fx
     // Marge van 25 euro: wijzigt een kostenaanname, dan is dat geen prijsfout. Op 28 november 2026 van 6609 naar 6290: het afsluiten
     // van gesprekken staat sindsdien als eigen kostenpost in Abacus. Daarna naar 5815: chat en rerank op gemeten tarieven. Daarna naar 5657: Sonnet voor de samenvatting van iedereen.
-    expect(Math.abs(r.omzetTotaal - kosten - r.betaalproviderKosten - 5657)).toBeLessThan(25)
+    // Later die dag een nieuw standaardscenario (Arno), daarmee 8362.
+    expect(Math.abs(r.omzetTotaal - kosten - r.betaalproviderKosten - 8362)).toBeLessThan(25)
   })
 })

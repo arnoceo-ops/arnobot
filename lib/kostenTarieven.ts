@@ -630,8 +630,11 @@ export const DEFAULT_PRIJZEN: Prijzen = { basis: TARIEVEN.prijsBasisEur, premium
 // Basic 29/228, Pro 49/396). Sinds 2026-08-10 importeert app/prijzen/PrijzenClient.tsx deze
 // constanten direct, dezelfde bron, geen losse hardgecodeerde bedragen meer.
 export const SCENARIO_PRIJZEN: ScenarioPrijzen = { basicMaandelijks: 29, basicJaarlijksTotaal: 228, proMaandelijks: 49, proJaarlijksTotaal: 396 }
-export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 40, proPctJaarlijks: 10 }
-export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 80, pro: 20 }
+// Standaardscenario, door Arno gekozen op 28 november 2026 (was 250 solo, 80/20, per jaar 40 en 10, 5 teams van 4 teamleden). Verwachting,
+// niet gemeten: meer Pro en meer jaarabonnementen.
+export const DEFAULT_SOLO_GEBRUIKERS = 300
+export const DEFAULT_BILLING_SPLIT: ScenarioBillingSplit = { basicPctJaarlijks: 50, proPctJaarlijks: 50 }
+export const DEFAULT_TIER_VERDELING: TierVerdeling = { basic: 50, pro: 50 }
 export const DEFAULT_BETAALPROVIDER: Betaalprovider = {
   mdrPct: 1.8, mdrFixed: 0.25, pctCreditcard: 25,
   sepaPct: 0, sepaFixed: 0.35,
@@ -650,7 +653,7 @@ export const SCENARIO_TEAM_PRIJS: ScenarioTeamPrijzen = {
   basisMaandelijks: 97, basisJaarlijksTotaal: 924,
   perGebruikerMaandelijks: 49, perGebruikerJaarlijksTotaal: 396,
 }
-export const DEFAULT_TEAM_SCENARIO: TeamScenario = { aantalKlanten: 5, gemiddeldeLeden: 4 }
+export const DEFAULT_TEAM_SCENARIO: TeamScenario = { aantalKlanten: 10, gemiddeldeLeden: 5 }
 // Startaanname, instelbaar op de Business case-tab: nog geen gemeten data
 // over hoeveel Team-klanten voor jaarlijks kiezen (de optie is nieuw).
 export const DEFAULT_TEAM_BILLING_SPLIT: TeamBillingSplit = { pctJaarlijks: 20 }
