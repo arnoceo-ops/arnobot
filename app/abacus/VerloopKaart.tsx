@@ -98,6 +98,7 @@ export default function VerloopKaart({ nGebruikers, verdeling, billingSplit, bet
 
   const cumulatief = data.reduce((s, d) => s + d.winst, 0)
   const inKas = data.reduce((s, d) => s + d.kas, 0)
+  const kasTotEnMet = (maand: number) => data.slice(0, maand).reduce((s, d) => s + d.kas, 0)
   const laatsteNegatief = data.reduce((acc, d, i) => (d.winst < 0 ? i : acc), -1)
   const breakEven = laatsteNegatief === MAANDEN - 1 ? 'Niet binnen 12 mnd' : `Maand ${laatsteNegatief + 2}`
   const h = data[hover] ?? data[MAANDEN - 1]
@@ -144,11 +145,11 @@ export default function VerloopKaart({ nGebruikers, verdeling, billingSplit, bet
             </tr>
           </thead>
           <tbody>
-            {([['Users', (d: VerloopMaand) => d.users.toLocaleString('nl-NL')], ['Omzet', (d: VerloopMaand) => fmtEUR(d.omzet)], ['Kosten', (d: VerloopMaand) => fmtEUR(d.kosten)], ['Winst', (d: VerloopMaand) => fmtEUR(d.winst)], ['Ontvangen', (d: VerloopMaand) => fmtEUR(d.ontvangen)], ['Kasoverschot', (d: VerloopMaand) => fmtEUR(d.kas)]] as const).map(([naam, f]) => (
+            {([['Users', (d: VerloopMaand) => d.users.toLocaleString('nl-NL')], ['Omzet', (d: VerloopMaand) => fmtEUR(d.omzet)], ['Kosten', (d: VerloopMaand) => fmtEUR(d.kosten)], ['Winst', (d: VerloopMaand) => fmtEUR(d.winst)], ['Ontvangen', (d: VerloopMaand) => fmtEUR(d.ontvangen)], ['Kasoverschot', (d: VerloopMaand) => fmtEUR(d.kas)], ['Kas cumulatief', (d: VerloopMaand) => fmtEUR(kasTotEnMet(d.maand))]] as const).map(([naam, f]) => (
               <tr key={naam} style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 <td style={{ ...statLabel, padding: '6px 8px', whiteSpace: 'nowrap' }}>{naam}</td>
                 {data.map(d => (
-                  <td key={d.maand} style={{ textAlign: 'right', padding: '6px 8px', color: (naam === 'Winst' && d.winst < 0) || (naam === 'Kasoverschot' && d.kas < 0) ? '#ef4444' : '#cbd5e1', whiteSpace: 'nowrap' }}>{f(d)}</td>
+                  <td key={d.maand} style={{ textAlign: 'right', padding: '6px 8px', color: (naam === 'Winst' && d.winst < 0) || (naam === 'Kasoverschot' && d.kas < 0) || (naam === 'Kas cumulatief' && kasTotEnMet(d.maand) < 0) ? '#ef4444' : '#cbd5e1', whiteSpace: 'nowrap' }}>{f(d)}</td>
                 ))}
               </tr>
             ))}
