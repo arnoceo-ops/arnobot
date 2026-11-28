@@ -212,8 +212,14 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
             </div>
 
             <div style={cardStyle}>
+              <div style={cardHeadStyle}><span style={dotStyle} />Gesprekken afsluiten</div>
+              <NumberField label="Vragen per gesprek" hint="19 t/m 28 november gemeten: 4,4" value={inputs.vragenPerGesprek} step={0.1} onChange={v => set('vragenPerGesprek', v)} />
+              <NumberField label="Kosten per afgesloten gesprek ($)" hint="samenvatting, controle en geheugen, alle users; geschat op een kleine meting" value={inputs.afsluitKostenPerGesprek} step={0.001} onChange={v => set('afsluitKostenPerGesprek', v)} />
+            </div>
+
+            <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Overige Anthropic-routes</div>
-              <NumberField label="Overig, per user/maand ($)" hint="session-end (Haiku x3), coaching-precheck, blog-synthese, verfijn, sessies-zoeken" value={inputs.overigeAnthropicPerGebruiker} step={0.01} onChange={v => set('overigeAnthropicPerGebruiker', v)} />
+              <NumberField label="Overig, per user/maand ($)" hint="coaching-precheck, blog-synthese, verfijn, sessies-zoeken" value={inputs.overigeAnthropicPerGebruiker} step={0.01} onChange={v => set('overigeAnthropicPerGebruiker', v)} />
             </div>
 
             <div style={cardStyle}>
@@ -363,6 +369,7 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Analyses</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.analysesKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Fable 5 (coaching + uitdaging)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.fable5Kosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Sparring</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.sparringKosten)}</span></div>
+                <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Gesprekken afsluiten</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.afsluitKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Overige Anthropic-routes</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.overigeAnthropicKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>Waarheidscontrole (wekelijkse mail)</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.waarheidsControleKosten)}</span></div>
                 <div style={breakdownLineStyle}><span style={{ color: '#94a3b8' }}>ElevenLabs ({result.elevenName})</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmtUSD(result.elevenPrice)}</span></div>

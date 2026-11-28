@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
-import { TARIEVEN, elevenLabsCost, resendOverageUsd, vasteKostenPerMaand, voyageKostenPerBericht, waarheidsControleKostenUsd } from '@/lib/kostenTarieven'
+import { TARIEVEN, elevenLabsCost, resendOverageUsd, vasteKostenPerMaand, afsluitKostenUsd, voyageKostenPerBericht, waarheidsControleKostenUsd } from '@/lib/kostenTarieven'
 import { getLiveFxRateEurUsd } from '@/lib/fxRate'
 import { haalAlleRijen } from '@/lib/haalAlleRijen'
 
@@ -136,7 +136,7 @@ function berekenPrognoseKostenUsd(m: Meting, fxRate: number): number {
   const upstashKosten = (upstashOverage / 100000) * TARIEVEN.upstashPricePer100k
 
   return vasteKostenPerMaand(m.gebruikers_count, fxRate) + anthropicKosten + voyageKosten + analysesKosten + fable5Kosten
-    + sparringKosten + overigeAnthropicKosten + eleven.price + whisperKosten + upstashKosten
+    + sparringKosten + overigeAnthropicKosten + afsluitKostenUsd(m.berichten_count) + eleven.price + whisperKosten + upstashKosten
     + resendOverageUsd(m.gebruikers_count)
     + waarheidsControleKostenUsd(m.berichten_count)
 }

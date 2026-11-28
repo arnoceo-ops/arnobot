@@ -65,3 +65,12 @@ describe('Documenten en profielimport in Abacus', () => {
     expect(r.historieImportKosten).toBeCloseTo(10 * (0.02 + 60 * 2000 * 3 / 1e6), 6)
   })
 })
+
+describe('gesprekken afsluiten', () => {
+  it('beweegt mee met het aantal vragen en telt ook voor Basic', () => {
+    const i = { ...DEFAULT_INPUTS, berichten: 44, vragenPerGesprek: 4.4, afsluitKostenPerGesprek: 0.1 }
+    expect(computeScenarioKosten(i, 10, 0).afsluitKosten).toBeCloseTo(10, 6)
+    expect(computeScenarioKosten({ ...i, berichten: 88 }, 10, 0).afsluitKosten).toBeCloseTo(20, 6)
+    expect(computeScenarioKosten({ ...i, vragenPerGesprek: 0 }, 10, 0).afsluitKosten).toBe(0)
+  })
+})

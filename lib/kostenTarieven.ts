@@ -31,13 +31,18 @@ export const TARIEVEN = {
   // Sparring (Sonnet 4.6), $ per bericht + $ per debrief
   kostenPerSparringBericht: 0.006,
   kostenPerDebrief: 0.015,
-  // Vangnet voor kleinere Anthropic-routes (session-end, coaching-precheck,
-  // blog-synthese, verfijn, sessies-zoeken), $ per gebruiker/maand
-  // Was 0,05, toen 0,07; 0,21 sinds 2026-11-19 op de gemeten kosten van het afsluiten van een gesprek (SLUIT): $0,0208 per keer, gemeten over
-  // twee afsluitingen (groeibalans $0,0095, geheugentoets $0,003, samenvatting $0,0022, mailpatroon $0,0016, feiten $0,0016, labels $0,0011,
-  // thema's $0,0009, entiteiten $0,0009) maal ongeveer 10 gesprekken per maand. Twee metingen is weinig: bijwerken met de bronnen sessie-*,
-  // geheugen-*, groeibalans en mail-patroon uit arnobot_ai_gebruik zodra er meer data is.
-  overigeAnthropicPerGebruikerPerMaand: 0.21,
+  // Een gesprek afsluiten (samenvatting, feiten, geheugentoets, groeibalans, uitdaging, thema's, mailpatroon, entiteiten, labels), $ per
+  // gesprek. Gemeten uit arnobot_ai_gebruik, 19 t/m 28 november 2026, zonder testaccounts: $2,30 voor 13 gesprekken met 57 vragen, bij 44
+  // verwerkingen, omdat elk wegklikken de keten opnieuw draaide. Sinds 28 november gebeurt dat na 30 minuten stilte. Nagerekend op
+  // dezelfde berichten zijn dat ongeveer 22 verwerkingen, dus de helft: $0,089 per gesprek. SCHATTING op een kleine meting met veel
+  // testdagen: na een paar dagen met de nieuwe werking opnieuw meten (bronnen sessie-*, geheugen-*, groeibalans, mail-patroon,
+  // blog-redenen). Geldt voor alle gebruikers, ook Basic.
+  afsluitKostenPerGesprekUsd: 0.089,
+  // 57 vragen in 13 gesprekken, dezelfde meting. Over alle gesprekken van echte gebruikers zonder de eigenaar was het 5,5.
+  vragenPerGesprek: 4.4,
+  // Vangnet voor de overige kleine Anthropic-routes (coaching-precheck, blog-synthese, verfijn, sessies-zoeken), $ per gebruiker/maand.
+  // Stond van 19 t/m 28 november op 0,21 inclusief het afsluiten van gesprekken, dat is nu een eigen post hierboven.
+  overigeAnthropicPerGebruikerPerMaand: 0.07,
   // Wekelijkse waarheidscontrole (lib/waarheidsRapport.ts): platformwerk zonder gebruiker. Gemeten op de ene run van 23 november 2026:
   // $5,086 voor 102 beoordelingen plus $0,196 voor 101 taalcontroles, dus $0,052 per antwoord. Eén week is weinig: bijwerken uit de bronnen
   // waarheidscontrole en waarheidscontrole-taal in Abacus (tab Trackrecord). De grens per run gebruikt de controle zelf ook.
@@ -263,6 +268,10 @@ export function waarheidsControleKostenUsd(chatberichtenPerMaand: number, perAnt
   return Math.min(chatberichtenPerMaand, TARIEVEN.waarheidsControleMaxPerWeek * 52 / 12) * perAntwoordUsd
 }
 
+export function afsluitKostenUsd(vragen: number, vragenPerGesprek: number = TARIEVEN.vragenPerGesprek, perGesprekUsd: number = TARIEVEN.afsluitKostenPerGesprekUsd): number {
+  return vragenPerGesprek > 0 ? (vragen / vragenPerGesprek) * perGesprekUsd : 0
+}
+
 export function vasteKostenPerMaand(gebruikersAantal: number, fxRate: number = TARIEVEN.fxRateEurUsd): number {
   return TARIEVEN.vercelSeats * TARIEVEN.vercelPerSeat
     + (TARIEVEN.supabaseProActief ? supabaseBasisKosten() : 0)
@@ -302,6 +311,8 @@ export type Inputs = {
   kostenPerSparringBericht: number
   kostenPerDebrief: number
   overigeAnthropicPerGebruiker: number
+  vragenPerGesprek: number
+  afsluitKostenPerGesprek: number
   waarheidsControlePerAntwoord: number
   pctVoice: number
   voiceInteracties: number
@@ -372,8 +383,9 @@ export const DEFAULT_INPUTS: Inputs = {
   berichtenPerSparringSessie: 12,
   kostenPerSparringBericht: TARIEVEN.kostenPerSparringBericht,
   kostenPerDebrief: TARIEVEN.kostenPerDebrief,
-  // Vangnet voor de rest van de modelinventaris: session-end (Haiku, 3 calls),
-  // coaching-precheck, blog-synthese, verfijn, sessies-zoeken. Stuk voor stuk
+  vragenPerGesprek: TARIEVEN.vragenPerGesprek,
+  afsluitKostenPerGesprek: TARIEVEN.afsluitKostenPerGesprekUsd,
+  // Vangnet voor de rest van de modelinventaris: coaching-precheck, blog-synthese, verfijn, sessies-zoeken. Stuk voor stuk
   // verwaarloosbaar (Haiku of korte Sonnet-calls), hier samengevoegd i.p.v.
   // elke route apart te modelleren.
   overigeAnthropicPerGebruiker: TARIEVEN.overigeAnthropicPerGebruikerPerMaand,
@@ -485,6 +497,9 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
   // met coaching-routes).
   const overigeAnthropicKosten = proEffectief * inputs.overigeAnthropicPerGebruiker
 
+  // Afsluiten van gesprekken: het aantal gesprekken beweegt mee met het aantal vragen, voor alle gebruikers (ook Basic).
+  const afsluitKosten = afsluitKostenUsd(totaalBerichten, inputs.vragenPerGesprek, inputs.afsluitKostenPerGesprek)
+
   const voiceGebruikers = proEffectief * (inputs.pctVoice / 100)
   const totaalInteracties = voiceGebruikers * inputs.voiceInteracties
   const totaalTekens = totaalInteracties * inputs.tekensPerAntwoord
@@ -546,11 +561,11 @@ export function computeScenarioKosten(inputs: Inputs, basicN: number, proN: numb
     + sentryUsd
     + domeinPerMaand
 
-  const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten
+  const totaal = vastKosten + anthropicKosten + analysesKosten + fable5Kosten + sparringKosten + overigeAnthropicKosten + afsluitKosten
     + voyageKosten + eleven.price + whisperKosten + dicteerKosten + audioAnalyseKosten + documentKosten + historieImportKosten + upstashKosten + resendOverageKosten + teamOverheadKosten + waarheidsControleKosten
 
   return {
-    vastKosten, anthropicKosten, voyageKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten,
+    vastKosten, anthropicKosten, voyageKosten, analysesKosten, fable5Kosten, sparringKosten, overigeAnthropicKosten, afsluitKosten,
     elevenPrice: eleven.price, elevenName: eleven.name,
     whisperKosten, dicteerKosten, audioAnalyseKosten, documentKosten, documentBeurtKosten, samenvattingKosten, samenvattingGeheugenKosten, historieImportKosten, upstashKosten, resendOverageKosten, teamOverheadKosten, waarheidsControleKosten, totaal, perGebruiker: n > 0 ? totaal / n : 0,
   }
