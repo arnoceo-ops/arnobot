@@ -626,6 +626,12 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   const stopRequestedRef = useRef(false)
   // Live transcriptie van de lopende opname (null = niet beschikbaar, dan loopt alles via /api/transcribe).
   const liveSessieRef = useRef<LiveSessie | null>(null)
+  // STUUR (of Enter) tijdens het inspreken: eerst de opname afronden, daarna de volledige tekst
+  // versturen. Zonder dit ging de halve tekst weg en zette de nalopende opname hem terug in het veld.
+  const [stuurNaOpname, setStuurNaOpname] = useState(false)
+  const opnameMisluktRef = useRef(false)
+  // Verhoogd bij elke nieuwe of afgebroken opname: een oudere opname mag niets meer in een veld zetten.
+  const opnameIdRef = useRef(0)
 
   useEffect(() => {
     sessionIdRef.current = sessionId
@@ -655,6 +661,14 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     if (recordingRef.current || transcribing || loading || blocked) return
     recordingRef.current = true
     stopRequestedRef.current = false
+    opnameMisluktRef.current = false
+    const opnameId = ++opnameIdRef.current
+    const afgebroken = () => opnameIdRef.current !== opnameId
+    const zetTekst = (tekst: string) => {
+      if (afgebroken()) return
+      setTarget(tekst)
+      if (setTarget === setInput) { dictatedRef.current = true; setResizeInput(true) }
+    }
     // AudioContext synchroon in de klik aanmaken: iOS Safari laat hem anders 'suspended' starten
     // als dat pas na de awaited getUserMedia gebeurt.
     let audioCtx: AudioContext | null = null
@@ -696,13 +710,13 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
         // valt alles hieronder terug op de opname die na het stoppen getranscribeerd wordt.
         const live = liveSessieRef.current
         liveSessieRef.current = null
+        if (afgebroken()) { live?.sluit(); return }
         if (live) {
           setTranscribing(true)
           let liveTekst = ''
           try { liveTekst = (await live.stop()).trim() } catch {} finally { live.sluit() }
           if (liveTekst) {
-            setTarget(prefix + dedupeRepeatedSentence(liveTekst).text)
-            if (setTarget === setInput) { dictatedRef.current = true; setResizeInput(true) }
+            zetTekst(prefix + dedupeRepeatedSentence(liveTekst).text)
             setTranscribing(false)
             return
           }
@@ -750,8 +764,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               transcript = deduped.text
               stopped = true
             }
-            setTarget(prefix + transcript)
-            if (setTarget === setInput) { dictatedRef.current = true; setResizeInput(true) }
+            zetTekst(prefix + transcript)
           }
           while (true) {
             const { done, value } = await reader.read()
@@ -764,7 +777,8 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
           handleLine(buffer)
           if (!transcript.trim()) throw new Error('transcribe_empty')
         } catch {
-          if (!transcript.trim()) setTranscribeFout(true)
+          // Een half getoonde live tekst mag na een mislukte omzetting niet vanzelf verstuurd worden.
+          if (!transcript.trim() && !afgebroken()) { opnameMisluktRef.current = true; setTranscribeFout(true) }
         }
         finally { setTranscribing(false) }
       }
@@ -773,8 +787,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       // loopt hoe dan ook mee als vangnet. Het geluid wordt meteen lokaal opgevangen en gebufferd,
       // dus er gaat niets verloren terwijl de verbinding met OpenAI nog opstart.
       liveSessieRef.current = await startLiveTranscriptie(stream, audioCtx, (t) => {
-        setTarget(prefix + dedupeRepeatedSentence(t).text)
-        if (setTarget === setInput) { dictatedRef.current = true; setResizeInput(true) }
+        zetTekst(prefix + dedupeRepeatedSentence(t).text)
       })
       mediaRecorderRef.current = recorder
       recorder.start()
@@ -790,7 +803,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       } catch {}
       maxTimer = setTimeout(() => stopRecording(), OPNAME_MAX_MS)
       // Stilte-detectie. Alleen actief als de AudioContext echt draait: een 'suspended' context
-      // levert alleen nullen, en dat zou iemand die wel praat na 10 seconden afkappen.
+      // levert alleen nullen, en dat zou iemand die wel praat na de stiltetijd afkappen.
       if (audioCtx) {
         const ctx = audioCtx
         ctx.resume().catch(() => {})
@@ -822,6 +835,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
       stopRequestedRef.current = false
       liveSessieRef.current?.sluit()
       liveSessieRef.current = null
+      setStuurNaOpname(false)
       console.error('[Whisper] getUserMedia mislukt:', err)
     }
   }
@@ -832,6 +846,29 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
     if (recorder && recorder.state === 'recording') recorder.stop()
     else stopRequestedRef.current = true
   }
+
+  function verstuurInvoer() {
+    if (loading || blocked) return
+    if (recordingRef.current || transcribing) {
+      setStuurNaOpname(true)
+      stopRecording()
+    } else ask(input)
+  }
+
+  // Het gesprek wordt gesloten of gereset: een lopende opname telt niet meer mee.
+  function breekOpnameAf() {
+    opnameIdRef.current++
+    setStuurNaOpname(false)
+    stopRecording()
+  }
+
+  // Via een effect en niet vanuit de opname zelf: die kent alleen de gespreksstand van het moment
+  // waarop de opname begon.
+  useEffect(() => {
+    if (!stuurNaOpname || recording || transcribing || recordingRef.current) return
+    setStuurNaOpname(false)
+    if (!opnameMisluktRef.current) ask(input)
+  }, [stuurNaOpname, recording, transcribing])
 
   // Zodra de pagina verborgen raakt tijdens het inspreken: netjes stoppen en bewaren wat er al is.
   // Zonder dit stopt de microfoon stilletjes terwijl de gebruiker doorpraat.
@@ -1135,6 +1172,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   }
 
   function reset({ focus = true }: { focus?: boolean } = {}) {
+    breekOpnameAf()
     const newId = crypto.randomUUID()
     localStorage.setItem('arnobot_session', newId)
     setSessionId(newId)
@@ -1346,6 +1384,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
   // 'true' kunnen lezen en zichzelf opnieuw pauzeren).
   async function afsluitenGesprek() {
     if (showSluiten) setShowSluiten(false)
+    breekOpnameAf()
     setInput('')
     if (inputRef.current) inputRef.current.style.height = '55px'
 
@@ -2655,7 +2694,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                   <button
                     className="spar-send"
                     onClick={startSparring}
-                    disabled={(sparPersona === 'anders' && !sparContext.trim()) || startingSparring}
+                    disabled={(sparPersona === 'anders' && !sparContext.trim()) || startingSparring || recording || transcribing}
                   >
                     {startingSparring ? '...' : 'STUUR →'}
                   </button>
@@ -2885,7 +2924,7 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
                 onKeyDown={e => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()
-                    ask(input)
+                    verstuurInvoer()
                   }
                 }}
                 placeholder={sparModus === 'sparren' ? (started ? "jouw reactie" : "zeg het maar...") : started ? "vervolg het gesprek" : isMobile ? "beschrijf je casus" : "beschrijf je casus of stel je vraag"}
@@ -2956,10 +2995,10 @@ export default function SparClient({ userId, profiel, voiceEnabled, taglineTitle
               )}
               <button
                 className="spar-send"
-                onClick={() => ask(input)}
-                disabled={loading || blocked || !input.trim() || input.length > 4000}
+                onClick={verstuurInvoer}
+                disabled={loading || blocked || stuurNaOpname || (!recording && !transcribing && (!input.trim() || input.length > 4000))}
               >
-                {loading ? '...' : 'STUUR →'}
+                {loading || stuurNaOpname ? '...' : 'STUUR →'}
               </button>
               {started && (
                 <button
