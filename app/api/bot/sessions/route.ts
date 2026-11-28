@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { maakAnthropic, aiContext } from '@/lib/anthropicClient'
 import { getText } from '@/lib/ai'
-import { samenvattingParams, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
+import { samenvattingParams, gerichtHerstelParams, isSamenvattingProef, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
 import { toetsGeheugen, herstelSamenvatting } from '@/lib/geheugenToets'
 import { embedSessionText } from '@/lib/rag'
 import { extractAndStoreEntities, pruneEntitiesForDeletedSessions } from '@/lib/memoryEntities'
@@ -71,13 +71,18 @@ export async function GET() {
           ])
           summary = getText(summaryRes.content)
           feiten = getText(feitenRes.content)
-          const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten }, userId).catch(() => null)
+          const proef = isSamenvattingProef(userId)
+          const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten, volledig: proef ? conversationText : undefined }, userId).catch(() => null)
           if (t?.ingegrepen) {
             feiten = t.feiten
             if (t.vermijd.length) {
               const nieuw = await herstelSamenvatting(anthropic, {
                 volledigGesprek: conversationText, bron: bronTekst, vermijd: t.vermijd,
                 schrijf: async (gesprek, vermijd) => getText((await anthropic.messages.create(samenvattingParams(gesprek, vermijd, userId), aiContext(userId, 'sessie-samenvatting-herstel'))).content),
+                gericht: proef ? {
+                  samenvatting: summary,
+                  pasAan: async (tekst, vermijd) => getText((await anthropic.messages.create(gerichtHerstelParams(tekst, vermijd, userId), aiContext(userId, 'sessie-samenvatting-herstel'))).content),
+                } : undefined,
               }, userId)
               if (nieuw) summary = nieuw
             }

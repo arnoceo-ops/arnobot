@@ -10,7 +10,7 @@ import { extractAndStoreEntities } from '@/lib/memoryEntities'
 import { notifyCronFailure } from '@/lib/cron-notify'
 import { THEMA_LABELS, parseThemaClassificatie } from '@/lib/themas'
 import { recomputeGroeibalans } from '@/lib/groeibalansServer'
-import { BRONDATA_REGEL, gesprekBlok, samenvattingParams, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
+import { BRONDATA_REGEL, gesprekBlok, samenvattingParams, gerichtHerstelParams, isSamenvattingProef, feitenParams, gebruikersBron } from '@/lib/sessieSamenvatting'
 import { toetsGeheugen, herstelSamenvatting } from '@/lib/geheugenToets'
 import { RULE_ENGLISH_TERMS, RULE_NO_CRUDE_LANGUAGE, RULE_NEVER_BREAK_CHARACTER, RULE_NO_INVENTED_DETAILS, RULE_NO_DASH } from '@/lib/systemPrompt'
 import { schoonUitdaging } from '@/lib/actiePatroon'
@@ -438,7 +438,8 @@ ${BRONDATA_REGEL}`,
     let samenvattingDef = summary
     let feitenDef = feiten
     try {
-      const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten }, userId)
+      const proef = isSamenvattingProef(userId)
+      const t = await toetsGeheugen(anthropic, { bron: bronTekst, summary, feiten, volledig: proef ? conversationText : undefined }, userId)
       if (t.ingegrepen) {
         console.warn(`[session-end] geheugentoets greep in (sessie ${sessionId}): ${t.vermijd.length} samenvattingsclaims, feiten ${feiten === t.feiten ? 'ongewijzigd' : 'aangepast'}`)
         feitenDef = t.feiten
@@ -449,6 +450,13 @@ ${BRONDATA_REGEL}`,
               const res = await anthropic.messages.create(samenvattingParams(gesprek, vermijd, userId), aiContext(userId, 'sessie-samenvatting-herstel'))
               return schoonSamenvatting(getText(res.content), res.stop_reason)
             },
+            gericht: proef ? {
+              samenvatting: summary,
+              pasAan: async (tekst, vermijd) => {
+                const res = await anthropic.messages.create(gerichtHerstelParams(tekst, vermijd, userId), aiContext(userId, 'sessie-samenvatting-herstel'))
+                return schoonSamenvatting(getText(res.content), res.stop_reason)
+              },
+            } : undefined,
           }, userId)
           if (nieuw) samenvattingDef = nieuw
         }
