@@ -10,14 +10,11 @@
 export type Tier = { name: string; credits: number; price: number }
 
 export const TARIEVEN = {
-  // Hoofdchat (Sonnet 4.6 + Haiku-herschrijving en moderatie), $ per bericht. Was 0,015 (herkomst onbekend, niet in de docs), daarna 0,10
-  // (2026-11-19, gemeten met 20 kennisbankfragmenten), nu 0,07 met 10 fragmenten (de chat gebruikt sinds 2026-11-19 10, zie CLAUDE_HISTORY).
-  // Onderbouwing: één echt gemeten productiebericht, koud (vaste deel van de systeemprompt nog niet in de cache): $0,0884 antwoord plus
-  // $0,0016 Haiku = $0,090, waarvan de 20 fragmenten ongeveer 12.000 tokens. Met 10 fragmenten ongeveer $0,018 minder: koud $0,072, in een
-  // lopend gesprek (cache gelezen) ongeveer $0,038, bij het huidige verkeer gemengd ongeveer $0,05. Bewust het koude bericht als richtprijs,
-  // zodat de pagina niet te optimistisch is. Dit is dus gemeten maal een gemeten besparing, geen gemiddelde uit veel berichten: bijwerken met
-  // het gemiddelde van bron chat-antwoord uit arnobot_ai_gebruik (zie de tab Gebruikers) zodra er een paar weken data zijn.
-  anthropicPerBericht: 0.07,
+  // Hoofdchat (Sonnet 4.6 met toolrondes, plus Haiku-herschrijving en moderatie), $ per bericht. Was 0,015, daarna 0,10 en 0,07
+  // (19 november, op een enkel gemeten bericht). Sinds 28 november 0,09: gemeten uit arnobot_ai_gebruik (bronnen chat-*), 34 vragen van
+  // echte gebruikers van 24 t/m 28 november gemiddeld $0,088. Vanaf 19 november (59 vragen) was het $0,117. Kleine meting, bewust niet
+  // te gunstig. Bij meer verkeer kan het lager uitvallen doordat de vaste instructie vaker uit de cache komt, hoeveel is niet gemeten.
+  anthropicPerBericht: 0.09,
   // Analyses (voorheen "BIEB", app/api/bot/coaching-analyse, Sonnet 4.6)
   kostenPerAnalyse: 0.007,
   // Fable 5.1: coaching-hoofdsynthese + uitdaging. Geen event-log voor deze
@@ -95,16 +92,13 @@ export const TARIEVEN = {
   pctHistorieImport: 20,
   kostenPerHistorieImport: 0.02,
   tokensHistorieProfiel: 2000,
-  // Voyage AI rerank (rerank-2.5, lib/rag.ts) bij elke chatvraag: $0,05 per 1M tokens
-  // (docs.voyageai.com/docs/pricing, laatst gewijzigd 2026-09-29, gelezen 2026-11-16). Voyage telt
-  // (query-tokens x aantal documenten) + alle documenttokens. SCHATTING, niet gemeten: tot 130
-  // kandidaten (100 vector + 30 fulltext, meer bij de multi-query) van 300 woorden plus een contextzin
-  // = ongeveer 70.000 tokens per rerank. Vervang door het echte verbruik uit het Voyage-dashboard
-  // (Usage). Geen gratis tokens meegerekend: de pagina spreekt zichzelf tegen over de gratis 200M
-  // tokens voor rerank-2.5. Niet meegeteld: de reranks bij sessie-einde en coaching, en de
-  // embeddings (verwaarloosbaar: een zoekvraag is zo'n 30 tokens).
+  // Voyage AI rerank (rerank-2.5, lib/rag.ts): $0,05 per 1M tokens (docs.voyageai.com/docs/pricing, gelezen 2026-11-16). Het aantal
+  // tokens is sinds 28 november teruggerekend uit de meting (bron rag-rerank, echte gebruikers, 19 t/m 28 november): $0,015 per
+  // chatvraag, dus 300.000 tokens. Daarin zit alle rerank, ook buiten de chatvraag zelf (zoals blogtips bij het afsluiten, die niet in
+  // de afsluitkosten zitten). Eerder geschat op 70.000. Geen gratis tokens meegerekend: de pagina van Voyage spreekt zichzelf daarover
+  // tegen. Embeddings niet meegeteld (verwaarloosbaar: een zoekvraag is zo'n 30 tokens).
   voyageRerankPerMiljoenUsd: 0.05,
-  rerankTokensPerBericht: 70000,
+  rerankTokensPerBericht: 300000,
   tiers: [
     { name: 'Starter', credits: 30000, price: 6 },
     { name: 'Creator', credits: 121000, price: 22 },

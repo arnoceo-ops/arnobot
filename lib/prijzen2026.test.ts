@@ -47,7 +47,7 @@ describe('Abacus bij 250 solo users en 5 teams van een manager plus 4', () => {
     const fx = 1.0949
     const kosten = computeScenarioKosten({ ...DEFAULT_INPUTS, fxRate: fx }, r.basicN, r.proN, r.teamLeden).totaal / fx
     // Marge van 25 euro: wijzigt een kostenaanname, dan is dat geen prijsfout. Op 28 november 2026 van 6609 naar 6290: het afsluiten
-    // van gesprekken staat sindsdien als eigen kostenpost in Abacus.
-    expect(Math.abs(r.omzetTotaal - kosten - r.betaalproviderKosten - 6290)).toBeLessThan(25)
+    // van gesprekken staat sindsdien als eigen kostenpost in Abacus. Daarna naar 5815: chat en rerank op gemeten tarieven.
+    expect(Math.abs(r.omzetTotaal - kosten - r.betaalproviderKosten - 5815)).toBeLessThan(25)
   })
 })

@@ -24,13 +24,13 @@ describe('Resend in Abacus', () => {
 })
 
 describe('Voyage rerank in Abacus', () => {
-  it('rekent 70.000 tokens tegen $0,05 per 1M: $0,0035 per bericht', () => {
-    expect(voyageKostenPerBericht()).toBeCloseTo(0.0035, 6)
+  it('rekent 300.000 tokens tegen $0,05 per 1M: $0,015 per bericht', () => {
+    expect(voyageKostenPerBericht()).toBeCloseTo(0.015, 6)
   })
 
   it('telt mee in het totaal, per bericht van alle gebruikers', () => {
     const r = computeScenarioKosten(DEFAULT_INPUTS, 10, 10)
-    expect(r.voyageKosten).toBeCloseTo(20 * DEFAULT_INPUTS.berichten * 0.0035, 6)
+    expect(r.voyageKosten).toBeCloseTo(20 * DEFAULT_INPUTS.berichten * 0.015, 6)
     const nul = computeScenarioKosten({ ...DEFAULT_INPUTS, voyagePerBericht: 0 }, 10, 10)
     expect(r.totaal - nul.totaal).toBeCloseTo(r.voyageKosten, 6)
   })

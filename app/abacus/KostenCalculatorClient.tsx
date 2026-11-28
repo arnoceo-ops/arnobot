@@ -184,8 +184,8 @@ export default function KostenCalculatorClient({ nGebruikers, setNGebruikers, ti
             <div style={cardStyle}>
               <div style={cardHeadStyle}><span style={dotStyle} />Hoofdchat &amp; gebruik</div>
               <NumberField label="Berichten per user per maand" hint="redelijk actief; gemeten gemiddelde juli 2026 was 30" value={inputs.berichten} onChange={v => set('berichten', v)} />
-              <NumberField label="Anthropic kosten per bericht ($)" hint="hoofdchat + Haiku-RAG-herschrijving" value={inputs.anthropicPerBericht} step={0.0001} onChange={v => set('anthropicPerBericht', v)} />
-              <NumberField label="Voyage rerank per bericht ($)" hint="rerank-2.5, $0,05 per 1M tokens, geschat op 70.000 tokens per vraag" value={inputs.voyagePerBericht} step={0.0001} onChange={v => set('voyagePerBericht', v)} />
+              <NumberField label="Anthropic kosten per bericht ($)" hint="hoofdchat met toolrondes, herschrijving en moderatie; 24 t/m 28 november gemeten" value={inputs.anthropicPerBericht} step={0.0001} onChange={v => set('anthropicPerBericht', v)} />
+              <NumberField label="Voyage rerank per bericht ($)" hint="rerank-2.5, $0,05 per 1M tokens, 19 t/m 28 november gemeten" value={inputs.voyagePerBericht} step={0.0001} onChange={v => set('voyagePerBericht', v)} />
             </div>
 
             <div style={cardStyle}>
